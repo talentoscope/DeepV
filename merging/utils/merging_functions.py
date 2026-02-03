@@ -288,6 +288,61 @@ def merge_close(lines, idx, widths, tol=1e-3, max_dist=5, max_angle=15, window_w
             result.append((lines[i]))
     return result
 
+
+def merge_with_graph(lines, widths=None, max_dist=5, max_angle=15):
+    """Graph-based merging: build an undirected graph where edges connect
+    lines that are close (by `dist`) or intersect and have small angle.
+    Each connected component is merged via `merge_close_lines`.
+
+    Args:
+        lines: numpy array of shape (N, 6) with line primitives.
+        widths: optional array of widths per line (N,).
+        max_dist: distance threshold to consider lines connected.
+        max_angle: angle threshold (degrees) to consider lines aligned.
+
+    Returns:
+        list of merged primitives similar to `merge_close` output.
+    """
+    try:
+        import networkx as nx
+    except Exception:
+        # fallback to previous merge_close behavior requires rtree idx and widths
+        raise
+
+    n = len(lines)
+    G = nx.Graph()
+    G.add_nodes_from(range(n))
+
+    for i in range(n):
+        if line_legth(lines[i, :4]) < 3:
+            continue
+        for j in range(i + 1, n):
+            if line_legth(lines[j, :4]) < 3:
+                continue
+            close_condition = (dist(lines[i], lines[j]) < max_dist) or (len(intersect(lines[i], lines[j])) > 0)
+            angle_condition = compute_angle(lines[i], lines[j]) < max_angle
+            if close_condition and angle_condition:
+                G.add_edge(i, j)
+
+    result = []
+    merged = set()
+    for comp in nx.connected_components(G):
+        comp = list(comp)
+        if widths is not None:
+            width = widths[comp].mean(keepdims=True)
+        else:
+            width = np.array([np.mean(lines[comp, 4])]) if len(comp) > 0 else np.array([1.0])
+        new_line = merge_close_lines(lines[comp])
+        result.append(np.concatenate((new_line, width, np.ones(width.shape))))
+        merged.update(comp)
+
+    # add unmerged singletons
+    for i in range(n):
+        if i not in merged:
+            result.append(lines[i])
+
+    return result
+
 def draw_with_skeleton(lines, drawing_scale=1, skeleton_line_width=0, skeleton_node_size=0, max_x=64, max_y=64):
     scaled_primitives = lines.copy()
     scaled_primitives[..., :-1] *= drawing_scale
