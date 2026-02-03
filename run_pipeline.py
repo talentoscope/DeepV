@@ -41,9 +41,12 @@ def split_to_patches(rgb, patch_size, overlap=0):
 
     :param rgb: input RGB image
     :type rgb: numpy.ndarray
-    :param patch_size: size of patches in pixels (assuming
-                        square patches)
-    :type patch_size: int
+    def process_image_worker(image_np, options, image_name, gpu_index=None):
+        # Worker that loads model per-process. If gpu_index is None -> CPU, else use that CUDA device.
+        if gpu_index is None:
+            device_local = torch.device('cpu')
+        else:
+            device_local = torch.device(f'cuda:{gpu_index}')
     :param overlap: amount in pixels of how much the patches
                     can overlap with each other (useful for merging)
     :type overlap: int
