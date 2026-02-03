@@ -234,6 +234,22 @@ def main(options):
             results = pool.starmap(process_image_worker, image_args)
         return results
 
+    # ensure output directories exist when saving is enabled
+    if getattr(options, 'save_outputs', True):
+        subdirs = [
+            'merging_output',
+            'iou_postprocess',
+            'lines_matching',
+            'intermediate_output',
+            'after_optimization'
+        ]
+        for sd in subdirs:
+            try:
+                os.makedirs(os.path.join(options.output_dir, sd), exist_ok=True)
+            except Exception:
+                # best-effort: continue if directory cannot be created
+                pass
+
     # sequential processing (uses preloaded model if GPU selected)
     for it, image in enumerate(images):
         image_tensor = image.unsqueeze(0).to(device)
@@ -330,6 +346,8 @@ def parse_args():
     parser.add_argument('--workers', type=int, default=1, help='Number of CPU workers for batch processing (CPU-only).')
     parser.add_argument('--use_cleaning', action='store_true', default=False, help='Run cleaning model before vectorization.')
     parser.add_argument('--cleaning_model_path', type=str, default=None, help='Path to cleaning model file (torch saved model).')
+    parser.add_argument('--no-save-outputs', action='store_false', dest='save_outputs', default=True,
+                        help='Disable writing merging/refinement outputs to disk (useful for dry runs).')
     options = parser.parse_args()
 
     return options
