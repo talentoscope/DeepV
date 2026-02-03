@@ -1,6 +1,20 @@
 from refinement.our_refinement.utils.lines_refinement_functions import *
 import argparse
 from util_files.metrics.iou import calc_iou__vect_image
+import signal
+
+
+def register_sigint_flag(flag_list):
+    """Register a SIGINT handler that sets flag_list[0] = True.
+
+    `flag_list` should be a mutable sequence (e.g., `[False]`).
+    This avoids defining inner functions repeatedly and centralizes signal handling.
+    """
+
+    def _handler(*_args):
+        flag_list[0] = True
+
+    signal.signal(signal.SIGINT, _handler)
 def render_optimization_hard(patches_rgb, patches_vector, device, options, name):
     '''
 
@@ -112,9 +126,7 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
         vector_rendering = render_lines_pt(lines_batch.detach())
 
         its_time_to_stop = [False]
-
-        def plotting_sigint(*args):
-            its_time_to_stop[0] = True
+        register_sigint_flag(its_time_to_stop)
 
         iou_mass = []
         iters_n = options.diff_render_it
@@ -205,7 +217,6 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
                 its_time_to_stop[0] = True
 
             # 6. Prepare the results for logging
-            sigint = signal.signal(signal.SIGINT, plotting_sigint)
 
             if (i % 20 == 0) or its_time_to_stop[0]:
                 # 6.1. Record the current values of parameters separately

@@ -63,6 +63,22 @@ and for [line](https://disk.yandex.ru/d/FKJuMvNJuy-K9g) .
 3. Run scripts/run_pipeline.sh with correct paths for trained model, data dir and output dir. Don't forget to chose primitive type and primitive count in one patch.
 
 P.s. currently cleaning model not included there.
+
+Quick developer checks
+---------------------
+
+Before running heavy training or the full pipeline, run the environment validator and the test suite locally:
+
+```bash
+# Validate Python and key packages
+python scripts/validate_env.py
+
+# Run unit tests (recommended inside a virtualenv or container)
+pip install -r requirements.txt
+pip install pytest
+pytest -q
+```
+
    
 ## Dockerfile 
 
@@ -81,6 +97,40 @@ When running container mount folder with reporitory into code/, folder with data
 ```bash
 docker run --rm -it --shm-size 128G -p 4045:4045 --mount type=bind,source=/home/code,target=/code --mount type=bind,source=/home/data,target=/data --mount type=bind,source=/home/logs,target=/logs  --name=container_name owner/name:version /bin/bash
 ```
+
+Windows / WSL notes
+-------------------
+
+On Windows use WSL2 or Docker Desktop with WSL integration enabled. Example (powershell / WSL):
+
+```powershell
+# Build image (run in repo root)
+docker build -t deepv:latest .
+
+# Run container (example mounts for Windows paths)
+docker run --rm -it --shm-size 128G -p 4045:4045 \
+  --mount type=bind,source="C:/path/to/DeepV",target=/code \
+  --mount type=bind,source="C:/path/to/data",target=/data \
+  --mount type=bind,source="C:/path/to/logs",target=/logs \
+  --name deepv-container deepv:latest /bin/bash
+```
+
+If using WSL, use the Linux paths from inside WSL (e.g., `/home/username/...`) when mounting.
+
+Activating the packaged environment inside container:
+
+```bash
+. /opt/.venv/vect-env/bin/activate/
+```
+
+Note on `util_files` helpers
+----------------------------
+
+This repository previously included `util_files/os.py` which shadowed the Python standard library `os` module. It has been renamed to `util_files/file_utils.py` to avoid conflicts. When editing or importing utilities, prefer:
+
+- `from util_files import file_utils as fu` (explicit alias), or
+- `from util_files.file_utils import require_empty`
+
 
 Anaconda with packages are installed in follder opt/ . Environement with packages that needed are installed in environment vect-env.
 . To activate it run in container

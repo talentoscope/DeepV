@@ -8,7 +8,7 @@ Purpose: give an AI coding agent the minimal, actionable context needed to be pr
   - **Run full pipeline:** [run_pipeline.py](run_pipeline.py)
   - **Cleaning training / entrypoint:** [cleaning/scripts/main_cleaning.py](cleaning/scripts/main_cleaning.py)
   - **Module code:** `cleaning/`, `vectorization/`, `refinement/`, `merging/` folders
-  - **Utilities & gotchas:** [util_files/os.py](util_files/os.py) (note: name shadows stdlib `os`)
+  - **Utilities & gotchas:** [util_files/file_utils.py](util_files/file_utils.py) (renamed from `os.py` to avoid shadowing stdlib `os`)
 
 - **How to run (examples)** — most scripts use `argparse` and have hardcoded defaults that assume the repository is mounted under `/code`, datasets under `/data`, and logs under `/logs` (Docker defaults in README). Use these or override flags.
 
@@ -37,7 +37,7 @@ Purpose: give an AI coding agent the minimal, actionable context needed to be pr
   - Patching strategy: images are padded to multiples of 32 (see `cleaning/scripts/main_cleaning.py` and `run_pipeline.py`'s `read_data`/padding logic).
   - Vectorization works on square patches (often 64px) extracted using `util_files/patchify.py` (`patchify` call in `run_pipeline.py`).
   - Checkpoint & tensorboard locations: many defaults point to `/logs/...` and the code uses `tensorboardX` (SummaryWriter). Configure `--output_dir`/`--model_path` and TB dir explicitly for reproducibility.
-  - Some utility filenames shadow stdlib modules (e.g., `util_files/os.py`) — import by package path (e.g., `from util_files import os as uos`) or rename locally when editing.
+  - Some utility filenames previously shadowed stdlib modules (e.g., `util_files/os.py`). The file has been renamed to `util_files/file_utils.py` — prefer `from util_files import file_utils as fu` or `from util_files.file_utils import require_empty` when importing.
 
 - **Developer workflows & environment**
   - Recommended: use the provided Dockerfile (see `docker/Dockerfile`) or run inside Linux/WSL. The README includes Docker build/run examples and notes about mounted paths.

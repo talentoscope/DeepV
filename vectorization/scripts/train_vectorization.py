@@ -20,7 +20,7 @@ sys.path[1:1] = [__dir__]
 from util_files.logging import create_logger
 import util_files.dataloading as dataloading
 from vectorization import load_model
-from util_files.os import require_empty
+from util_files.file_utils import require_empty
 from util_files.visualization import make_ranked_images_from_loader_and_model
 from util_files.data.graphics_primitives import PT_QBEZIER
 from util_files.optimization.optimizer.scheduled_optimizer import ScheduledOptimizer

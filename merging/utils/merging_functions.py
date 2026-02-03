@@ -53,29 +53,27 @@ def clip_to_box(y_pred, box_size=(64, 64)):
         return np.asarray([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
 
 def assemble_vector_patches_curves(patches_vector, patches_offsets):
-    primitives = []
-    i = 0
-    for patch_vector, patch_offset in zip(patches_vector, patches_offsets):
-        i += 1
-
-        patch_vector[:, [0, 2, 4]] += patch_offset[1]
-
-
-        patch_vector[:, [1, 3, 5]] += patch_offset[0]
-        primitives.append(patch_vector)
-    return np.array(primitives)
+    return _assemble_vector_patches(patches_vector, patches_offsets, x_indices=[0, 2, 4], y_indices=[1, 3, 5])
 
 def assemble_vector_patches_lines(patches_vector, patches_offsets):
+    return _assemble_vector_patches(patches_vector, patches_offsets, x_indices=[0, 2], y_indices=[1, 3])
+
+
+def _assemble_vector_patches(patches_vector, patches_offsets, x_indices, y_indices):
+    """Assemble per-patch primitive coordinates into global coordinates.
+
+    - `patches_vector` is an iterable of (n_primitives, params) arrays for each patch.
+    - `patches_offsets` is an iterable of (y_offset, x_offset) pairs for each patch.
+    - `x_indices`/`y_indices` specify which columns in the primitive array correspond to x/y coordinates.
+
+    This helper copies per-patch arrays before offsetting to avoid mutating caller data.
+    """
     primitives = []
-    i = 0
     for patch_vector, patch_offset in zip(patches_vector, patches_offsets):
-        i += 1
-
-        patch_vector[:, [0, 2]] += patch_offset[1]
-
-        patch_vector[:, [1, 3]] += patch_offset[0]
-
-        primitives.append(patch_vector)
+        pv = patch_vector.copy()
+        pv[:, x_indices] += patch_offset[1]
+        pv[:, y_indices] += patch_offset[0]
+        primitives.append(pv)
     return np.array(primitives)
 
 def tensor_vector_graph_numpy(y_pred_render, patches_offsets, options):
