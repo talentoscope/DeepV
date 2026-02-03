@@ -44,6 +44,10 @@ Purpose: give an AI coding agent the minimal, actionable context needed to be pr
   - On Windows, use WSL or Docker for compatibility (dataset download scripts and shell helpers assume Linux).
   - There is no automated test suite; run small experiments and validate with the notebooks in `notebooks/` when iterating.
 
+- **Repository workflow (personal project)**
+  - This is a personal project; active development is done directly on the `master` branch by default. Small edits, CI tweaks and tests are typically committed to `master` and pushed to `origin`.
+  - If you want to experiment separately, create short-lived branches named `draft/<topic>` and merge back into `master` when ready.
+
 - **Common pitfalls to watch for**
   - Hardcoded default paths may cause silent failures if files are not at expected locations.
   - Some code expects GPU/CPU behavior via `--gpu` flags and sets CUDA env vars manually (`CUDA_VISIBLE_DEVICES`) — be explicit when testing multi-GPU.
