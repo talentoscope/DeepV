@@ -64,6 +64,14 @@ and for [line](https://disk.yandex.ru/d/FKJuMvNJuy-K9g) .
 
 P.s. currently cleaning model not included there.
    
+Quick notes for the updated CLI
+- `--use_cleaning`: run the cleaning UNet model before vectorization (model path via `--cleaning_model_path`).
+- `--workers N`: run inference in parallel using N worker processes (CPU or GPU-aware). Each worker loads its own model instance.
+- `--no-save-outputs`: run pipeline without writing output files (useful for dry-runs or benchmarking).
+- `--use_graph_merging`: enable optional NetworkX-based graph merging for lines (opt-in; NetworkX required).
+- `--log_level LEVEL`: set Python logging level (e.g., `INFO`, `DEBUG`).
+
+There is an example runner at `scripts/example_run.py` showing programmatic usage of `run_pipeline.main(options)`.
 ## Dockerfile 
 
 Build the docker image:
