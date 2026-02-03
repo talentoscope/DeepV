@@ -19,6 +19,19 @@ from util_files.optimization.primitives.quadratic_bezier_tensor import Quadratic
 from util_files.simplification.join_qb import join_quad_beziers
 
 
+def build_vectorimage(patches, patch_offsets, image_size, control_points_n, patch_size, scale,
+                      min_width, min_confidence, min_length):
+    """Top-level helper to build a VectorImage from per-patch primitives.
+
+    This extracts the call to `vector_image_from_patches` out of the `main` scope so it
+    can be reused or unit-tested more easily.
+    """
+    return vector_image_from_patches(primitives=patches, patch_offsets=patch_offsets, image_size=image_size,
+                                     control_points_n=control_points_n, patch_size=patch_size,
+                                     pixel_center_coodinates_are_integer=False, scale=scale,
+                                     min_width=min_width, min_confidence=min_confidence, min_length=min_length)
+
+
 
 def main(options, intermediate_output=None, control_points_n=3, dtype=torch.float32, device='cuda',
          primitives_n=None, primitive_type=None, merge_period=60, lr=.05, the_width_percentile=90,
@@ -102,10 +115,9 @@ def main(options, intermediate_output=None, control_points_n=3, dtype=torch.floa
 
     # 4. Define the function to assemble patches into VectorImage
     def get_vectorimage(patches):
-        return vector_image_from_patches(primitives=patches, patch_offsets=patch_offsets, image_size=whole_image_size,
-                                         control_points_n=control_points_n, patch_size=[patch_width, patch_height],
-                                         pixel_center_coodinates_are_integer=False, scale=repatch_scale,
-                                         min_width=min_width, min_confidence=min_confidence, min_length=min_length)
+        return build_vectorimage(patches, patch_offsets, whole_image_size, control_points_n,
+                                 patch_size=[patch_width, patch_height], scale=repatch_scale,
+                                 min_width=min_width, min_confidence=min_confidence, min_length=min_length)
 
     if (not options.init_random) and (not append_iters_to_outdir):
         model_output_path = f'{options.output_dir}/model_output/{sample_name}.svg'
