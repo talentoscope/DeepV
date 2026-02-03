@@ -293,6 +293,9 @@ The Deep Vectorization project aims to convert raster technical drawings (e.g., 
 ### Testing
 - No test suite; critical for reliability.
 - Suggestions: Add pytest, aim for 70%+ coverage, include integration tests for pipeline, use GitHub Actions for CI. Include integration tests for new features.
+### Testing
+- No test suite; critical for reliability.
+- Suggestions: Add `pytest`, aim for 70%+ coverage, and include integration tests for the pipeline. Run tests and linters locally (see `CONTRIBUTING.md`) and optionally add CI later if you want automated runs on a remote service.
 
 ### Documentation
 - READMEs are basic; missing API docs, installation guides.
@@ -338,7 +341,7 @@ The Deep Vectorization project aims to convert raster technical drawings (e.g., 
 
 ### Phase 1: Foundation (1 month)
 - Update all dependencies to latest versions.
-- Set up CI/CD with testing and linting.
+ - Set up testing and linting (run locally; optionally add CI later if desired).
 - Add basic unit tests for core functions.
 - Fix critical bugs and improve error handling.
 - Refactor obvious code quality issues (naming, structure).
