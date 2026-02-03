@@ -24,7 +24,7 @@ fsspec==0.8.5
 future==0.18.2
 fvcore==0.1.2.post20210128
 gitdb==4.0.5
-gitpython==3.1.12
+gitpython==3.1.46
 google-auth-oauthlib==0.4.2
 google-auth==1.24.0
 grpcio==1.35.0
