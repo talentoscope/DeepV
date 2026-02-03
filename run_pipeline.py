@@ -168,7 +168,7 @@ def main(options):
         model.load_state_dict(checkpoint['model_state_dict'])
 
     # helper for CPU multiprocessing
-    def process_image_worker(image_np, options):
+    def process_image_worker(image_np, options, image_name):
         # CPU-only worker that loads model per-process
         device_local = torch.device('cpu')
         model_local = load_model(options.json_path).to(device_local)
@@ -180,6 +180,10 @@ def main(options):
         img = torch.from_numpy(image_np)
         image_tensor = img.unsqueeze(0)
         orig_chw = image_tensor.numpy()[0]
+
+        # set per-image names so downstream merging saves to correct filenames
+        options.image_name = [image_name]
+        options.sample_name = image_name
 
         # optional cleaning on CPU
         if getattr(options, 'use_cleaning', False):
@@ -225,7 +229,7 @@ def main(options):
     results = []
     # multiprocessing for CPU-only
     if getattr(options, 'workers', 1) > 1 and len(options.gpu) == 0:
-        image_args = [(img.cpu().numpy(), options) for img in images]
+        image_args = [(img.cpu().numpy(), options, name) for img, name in zip(images, options.image_name)]
         with multiprocessing.Pool(processes=options.workers) as pool:
             results = pool.starmap(process_image_worker, image_args)
         return results
