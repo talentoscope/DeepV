@@ -74,6 +74,24 @@ Quick notes for the updated CLI
 - `--log_level LEVEL`: set Python logging level (e.g., `INFO`, `DEBUG`).
 
 There is an example runner at `scripts/example_run.py` showing programmatic usage of `run_pipeline.main(options)`.
+
+## Developer: Run tests locally
+
+Create a virtual environment, install dependencies, then run the test suite:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # or `.venv\Scripts\activate` on Windows
+pip install -U pip
+pip install -r requirements-dev.txt
+pytest -q
+```
+
+If you want to run only the merging test (useful when iterating on merging logic):
+
+```bash
+pytest -q tests/test_merging.py
+```
 ## Dockerfile 
 
 Build the docker image:
