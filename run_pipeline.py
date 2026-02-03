@@ -11,6 +11,7 @@ import argparse
 import os
 import numpy as np
 import torch
+import logging
 
 from refinement.our_refinement.refinement_for_curves import main as curve_refinement
 
@@ -159,6 +160,11 @@ def main(options):
         prefetch_data = True
         parallel = True
 
+    # configure logging early
+    log_level = getattr(options, 'log_level', 'INFO')
+    numeric_level = getattr(logging, log_level.upper(), logging.INFO)
+    logging.basicConfig(level=numeric_level, format='%(asctime)s %(levelname)s [%(process)d] %(message)s')
+
     # normalize and validate output directory early
     options.output_dir = os.path.abspath(options.output_dir)
     if getattr(options, 'save_outputs', True):
@@ -179,68 +185,96 @@ def main(options):
         model.load_state_dict(checkpoint['model_state_dict'])
 
     # helper for CPU multiprocessing
-    def process_image_worker(image_np, options, image_name):
-        # CPU-only worker that loads model per-process
-        device_local = torch.device('cpu')
+    def process_image_worker(image_np, options, image_name, gpu_index=None):
+        # Worker that loads model per-process. If gpu_index is None -> CPU, else use that CUDA device.
+        if gpu_index is None:
+            device_local = torch.device('cpu')
+        else:
+            device_local = torch.device(f'cuda:{gpu_index}')
+
+        logger = logging.getLogger(__name__)
+        logger.info(f"Worker start: image={image_name} device={device_local} pid={os.getpid()}")
+
         model_local = load_model(options.json_path).to(device_local)
         checkpoint_local = serialize(torch.load(options.model_path, map_location='cpu'))
         model_local.load_state_dict(checkpoint_local['model_state_dict'])
         model_local.eval()
 
-        # image_np is CHW numpy
-        img = torch.from_numpy(image_np)
-        image_tensor = img.unsqueeze(0)
-        orig_chw = image_tensor.numpy()[0]
+        try:
+            # image_np is CHW numpy
+            img = torch.from_numpy(image_np)
+            image_tensor = img.unsqueeze(0)
+            orig_chw = image_tensor.numpy()[0]
 
-        # set per-image names so downstream merging saves to correct filenames
-        options.image_name = [image_name]
-        options.sample_name = image_name
+            # set per-image names so downstream merging saves to correct filenames
+            options.image_name = [image_name]
+            options.sample_name = image_name
 
-        # optional cleaning on CPU
-        if getattr(options, 'use_cleaning', False):
-            if not options.cleaning_model_path:
-                raise Exception('--use_cleaning set but --cleaning_model_path not provided')
-            cleaning_model_local = torch.load(options.cleaning_model_path, map_location='cpu')
-            cleaning_model_local.eval()
-            rgb = orig_chw.astype(np.float32)
-            if rgb.max() > 1.0:
-                rgb = rgb / 255.0
-            h, w = rgb.shape[1:]
-            pad_h = ((h - 1) // 8 + 1) * 8 - h
-            pad_w = ((w - 1) // 8 + 1) * 8 - w
-            input_np = np.pad(rgb, [(0, 0), (0, pad_h), (0, pad_w)], mode='constant', constant_values=1)
-            input_t = torch.from_numpy(np.ascontiguousarray(input_np[None])).float()
-            with torch.no_grad():
-                cleaned, _ = cleaning_model_local(input_t)
-            cleaned_np = cleaned[0, 0].cpu().numpy()
-            cleaned_np = cleaned_np[:h, :w]
-            cleaned_chw = np.expand_dims(cleaned_np, 0)
-            patches_rgb, patches_offsets, input_rgb = split_to_patches(cleaned_chw * 255, 64, options.overlap)
-        else:
-            patches_rgb, patches_offsets, input_rgb = split_to_patches(orig_chw * 255, 64, options.overlap)
+            # optional cleaning on CPU/GPU-local
+            if getattr(options, 'use_cleaning', False):
+                if not options.cleaning_model_path:
+                    raise Exception('--use_cleaning set but --cleaning_model_path not provided')
+                cleaning_model_local = torch.load(options.cleaning_model_path, map_location=device_local)
+                cleaning_model_local.to(device_local)
+                cleaning_model_local.eval()
+                rgb = orig_chw.astype(np.float32)
+                if rgb.max() > 1.0:
+                    rgb = rgb / 255.0
+                h, w = rgb.shape[1:]
+                pad_h = ((h - 1) // 8 + 1) * 8 - h
+                pad_w = ((w - 1) // 8 + 1) * 8 - w
+                input_np = np.pad(rgb, [(0, 0), (0, pad_h), (0, pad_w)], mode='constant', constant_values=1)
+                input_t = torch.from_numpy(np.ascontiguousarray(input_np[None])).to(device_local).float()
+                with torch.no_grad():
+                    cleaned, _ = cleaning_model_local(input_t)
+                cleaned_np = cleaned[0, 0].cpu().numpy()
+                cleaned_np = cleaned_np[:h, :w]
+                cleaned_chw = np.expand_dims(cleaned_np, 0)
+                patches_rgb, patches_offsets, input_rgb = split_to_patches(cleaned_chw * 255, 64, options.overlap)
+            else:
+                patches_rgb, patches_offsets, input_rgb = split_to_patches(orig_chw * 255, 64, options.overlap)
 
-        patches_vector = vector_estimation(patches_rgb, model_local, device_local, 0, options)
+            patches_vector = vector_estimation(patches_rgb, model_local, device_local, 0, options)
 
-        if options.primitive_type == "curve":
-            intermediate_output = {'options': options, 'patches_offsets': patches_offsets,
-                                   'patches_vector': patches_vector,
-                                   'cleaned_image_shape': (image_tensor.shape[1], image_tensor.shape[2]),
-                                   'patches_rgb': patches_rgb}
-            primitives_after_optimization, patch__optim_offsets, repatch_scale, optim_vector_image = curve_refinement(
-                options, intermediate_output, optimization_iters_n=options.diff_render_it)
-            merging_result = curve_merging(options, vector_image_from_optimization=optim_vector_image)
-        elif options.primitive_type == "line":
-            vector_after_opt = render_optimization_hard(patches_rgb, patches_vector, device_local, options, options.image_name[0])
-            merging_result, rendered_merged_image = postprocess(vector_after_opt,patches_offsets,input_rgb,image_tensor,0,options)
-        else:
-            raise ( options.primitive_type+"not implemented, please choose between line or curve")
+            if options.primitive_type == "curve":
+                intermediate_output = {'options': options, 'patches_offsets': patches_offsets,
+                                       'patches_vector': patches_vector,
+                                       'cleaned_image_shape': (image_tensor.shape[1], image_tensor.shape[2]),
+                                       'patches_rgb': patches_rgb}
+                primitives_after_optimization, patch__optim_offsets, repatch_scale, optim_vector_image = curve_refinement(
+                    options, intermediate_output, optimization_iters_n=options.diff_render_it)
+                merging_result = curve_merging(options, vector_image_from_optimization=optim_vector_image)
+            elif options.primitive_type == "line":
+                vector_after_opt = render_optimization_hard(patches_rgb, patches_vector, device_local, options, options.image_name[0])
+                merging_result, rendered_merged_image = postprocess(vector_after_opt,patches_offsets,input_rgb,image_tensor,0,options)
+            else:
+                raise ( options.primitive_type+"not implemented, please choose between line or curve")
 
-        return merging_result
+            return merging_result
+        except Exception:
+            logger.exception(f"Worker error for image={image_name}")
+            raise
+        finally:
+            logger.info(f"Worker finish: image={image_name} device={device_local} pid={os.getpid()}")
 
     results = []
     # multiprocessing for CPU-only
+    # GPU-aware multiprocessing: assign GPU indices to worker processes when GPUs provided
+    if getattr(options, 'workers', 1) > 1 and len(options.gpu) > 0:
+        # options.gpu contains GPU indices as strings; normalize to ints
+        gpu_indices = [int(g) for g in options.gpu]
+        # build args with round-robin GPU assignment across images
+        image_args = []
+        for i, (img, name) in enumerate(zip(images, options.image_name)):
+            gpu_idx = gpu_indices[i % len(gpu_indices)]
+            image_args.append((img.cpu().numpy(), options, name, gpu_idx))
+        with multiprocessing.Pool(processes=options.workers) as pool:
+            results = pool.starmap(process_image_worker, image_args)
+        return results
+
+    # CPU-only multiprocessing
     if getattr(options, 'workers', 1) > 1 and len(options.gpu) == 0:
-        image_args = [(img.cpu().numpy(), options, name) for img, name in zip(images, options.image_name)]
+        image_args = [(img.cpu().numpy(), options, name, None) for img, name in zip(images, options.image_name)]
         with multiprocessing.Pool(processes=options.workers) as pool:
             results = pool.starmap(process_image_worker, image_args)
         return results
@@ -359,6 +393,7 @@ def parse_args():
     parser.add_argument('--cleaning_model_path', type=str, default=None, help='Path to cleaning model file (torch saved model).')
     parser.add_argument('--no-save-outputs', action='store_false', dest='save_outputs', default=True,
                         help='Disable writing merging/refinement outputs to disk (useful for dry runs).')
+    parser.add_argument('--log_level', type=str, default='INFO', help='Logging level: DEBUG, INFO, WARNING, ERROR')
     options = parser.parse_args()
 
     return options
