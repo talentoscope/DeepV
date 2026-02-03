@@ -156,6 +156,14 @@ def main(options):
         prefetch_data = True
         parallel = True
 
+    # normalize and validate output directory early
+    options.output_dir = os.path.abspath(options.output_dir)
+    if getattr(options, 'save_outputs', True):
+        try:
+            os.makedirs(options.output_dir, exist_ok=True)
+        except Exception as e:
+            raise Exception(f"Cannot create or access output_dir '{options.output_dir}': {e}")
+
     ##reading images
     images = read_data(options, image_type='L')
 
