@@ -394,6 +394,8 @@ def parse_args():
     parser.add_argument('--no-save-outputs', action='store_false', dest='save_outputs', default=True,
                         help='Disable writing merging/refinement outputs to disk (useful for dry runs).')
     parser.add_argument('--log_level', type=str, default='INFO', help='Logging level: DEBUG, INFO, WARNING, ERROR')
+    parser.add_argument('--use_graph_merging', action='store_true', default=False,
+                        help='Enable NetworkX-based graph merging in merging stage (fallback to legacy if unavailable).')
     options = parser.parse_args()
 
     return options

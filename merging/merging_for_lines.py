@@ -29,12 +29,16 @@ def postprocess(y_pred_render, patches_offsets, input_rgb, cleaned_image, it, op
         idx.insert(i, ordered_line)
         ordered_lines.append(ordered_line)
 
-    # Prefer graph-based merging when networkx is available (better global connectivity)
-    try:
-        result = np.array(merge_with_graph(lines, widths=widths, max_dist=options.max_distance_to_connect,
-                                           max_angle=options.max_angle_to_connect))
-    except Exception:
-        # fallback to legacy rtree-based merging
+    # Use graph-based merging only when explicitly requested; otherwise use legacy merging.
+    if getattr(options, 'use_graph_merging', False):
+        try:
+            result = np.array(merge_with_graph(lines, widths=widths, max_dist=options.max_distance_to_connect,
+                                               max_angle=options.max_angle_to_connect))
+        except Exception:
+            # fallback to legacy rtree-based merging
+            result = np.array(merge_close(lines, idx, widths, max_angle=options.max_angle_to_connect, window_width=200,
+                                          max_dist=options.max_distance_to_connect))
+    else:
         result = np.array(merge_close(lines, idx, widths, max_angle=options.max_angle_to_connect, window_width=200,
                                       max_dist=options.max_distance_to_connect))
     save_svg(result, cleaned_image.shape, options.image_name[it], options.output_dir + 'merging_output/')
