@@ -1,0 +1,26 @@
+# requirements-updated.txt
+# Suggested dependency upgrades (draft). Verify compatibility with your CUDA/toolchain before applying.
+# Apply incrementally and run tests; major upgrades may require code changes.
+
+# Core ML stack (pick wheel that matches your CUDA runtime; CPU-only is also available)
+# Example (CPU): `pip install torch==2.1.0+cpu torchvision==0.15.2+cpu -f https://download.pytorch.org/whl/torch_stable.html`
+torch==2.1.0
+torchvision==0.15.2
+numpy==1.25.0
+
+# Imaging & utils
+opencv-python==4.8.1
+pillow==9.5.0
+
+# Differentiable and helper libs
+kornia==0.7.4
+pytorch-lightning==2.0.2
+
+# Rendering / vector helpers
+cairocffi==1.3.0
+tensorboardx==2.6
+
+# Notes:
+# - Upgrading `torch` requires choosing a wheel built for your CUDA runtime.
+# - Prefer installing `torch`/`torchvision` from the official PyTorch index matching your CUDA (see https://pytorch.org/get-started/locally/).
+# - After upgrades, run `pytest` and a small end-to-end smoke run (use small input) to validate behavior.
