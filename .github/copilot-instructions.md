@@ -47,6 +47,8 @@ Purpose: give an AI coding agent the minimal, actionable context needed to be pr
 - **Repository workflow (personal project)**
   - This is a personal project; active development is done directly on the `master` branch by default. Small edits, CI tweaks and tests are typically committed to `master` and pushed to `origin`.
   - If you want to experiment separately, create short-lived branches named `draft/<topic>` and merge back into `master` when ready.
+  - This is a personal project; active development is done directly on the `master` branch by default. All development and checks are run locally — there is no CI configured for this repo.
+  - If you want to experiment separately, create short-lived branches named `draft/<topic>` and merge back into `master` when ready.
 
 - **Common pitfalls to watch for**
   - Hardcoded default paths may cause silent failures if files are not at expected locations.

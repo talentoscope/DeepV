@@ -67,6 +67,11 @@ P.s. currently cleaning model not included there.
 Quick developer checks
 ---------------------
 
+Quick developer checks
+---------------------
+
+This repository is maintained as a personal project. There is no CI configured — run all checks and tests locally before pushing.
+
 Before running heavy training or the full pipeline, run the environment validator and the test suite locally:
 
 ```bash

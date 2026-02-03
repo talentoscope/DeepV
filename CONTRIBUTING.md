@@ -26,17 +26,15 @@ pip install pytest
 pytest -q
 ```
 
-CI / Linting
-- This repo has a GitHub Actions workflow in `.github/workflows/ci.yml` that runs on push/PR. It performs:
-  - `flake8` linting
-  - `black --check` format verification
-  - `pytest` unit tests
-  - a `smoke` job that runs a minimal validate + tests on Ubuntu (CPU-only)
+Local linting and formatting
 
-- To run `black` locally and fix formatting:
+- This repository does not use GitHub Actions or remote CI. Run all checks and tests locally before pushing.
+
+- To lint/format locally:
 
 ```bash
-pip install black
+pip install flake8 black
+flake8 .
 black .
 ```
 
