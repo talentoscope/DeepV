@@ -20,6 +20,7 @@ from merging.merging_for_lines import postprocess
 from cleaning.scripts import run as cleaning_run
 
 
+import multiprocessing
 
 def serialize(checkpoint):
     model_state_dict = checkpoint['model_state_dict']
@@ -47,13 +48,9 @@ def split_to_patches(rgb, patch_size, overlap=0):
                     can overlap with each other (useful for merging)
     :type overlap: int
 
-    :returns patches, patches_offsets
-    :rtype Tuple[numpy.ndarray, numpy.ndarray]
-    """
+    :returns patches, patches_offsets, padded_rgb
+
     rgb = rgb.transpose(1, 2, 0)
-    rgb_t = np.ones((rgb.shape[0] + 33, rgb.shape[1] + 33, rgb.shape[2])) * 255.
-    rgb_t[:rgb.shape[0], :rgb.shape[1], :] = rgb
-    rgb = rgb_t
 
     height, width, channels = rgb.shape
 
@@ -135,10 +132,10 @@ def vector_estimation(patches_rgb, model, device, it, options):
             it_batches = patch_images.shape[0]
         with torch.no_grad():
             if (it_start == 0):
-                patches_vector = model(patch_images[it_start:it_batches].cuda().float(),
+                patches_vector = model(patch_images[it_start:it_batches].to(device).float(),
                                        options.model_output_count).detach().cpu().numpy()
             else:
-                patches_vector = np.concatenate((patches_vector, model(patch_images[it_start:it_batches].cuda().float(),
+                patches_vector = np.concatenate((patches_vector, model(patch_images[it_start:it_batches].to(device).float(),
                                                                        options.model_output_count).detach().cpu().numpy()),
                                                 axis=0)
     patches_vector = torch.tensor(patches_vector) * 64
@@ -163,12 +160,77 @@ def main(options):
     images = read_data(options, image_type='L')
 
 
+    ##loading model (for sequential/GPU runs)
+    model = None
+    if len(options.gpu) > 0:
+        model = load_model(options.json_path).to(device)
+        checkpoint = serialize(torch.load(options.model_path))
+        model.load_state_dict(checkpoint['model_state_dict'])
 
-    ##loading model
-    model = load_model(options.json_path).to(device)
-    checkpoint = serialize(torch.load(options.model_path))
-    model.load_state_dict(checkpoint['model_state_dict'])
-    ## iterating through images and calculating
+    # helper for CPU multiprocessing
+    def process_image_worker(image_np, options):
+        # CPU-only worker that loads model per-process
+        device_local = torch.device('cpu')
+        model_local = load_model(options.json_path).to(device_local)
+        checkpoint_local = serialize(torch.load(options.model_path, map_location='cpu'))
+        model_local.load_state_dict(checkpoint_local['model_state_dict'])
+        model_local.eval()
+
+        # image_np is CHW numpy
+        img = torch.from_numpy(image_np)
+        image_tensor = img.unsqueeze(0)
+        orig_chw = image_tensor.numpy()[0]
+
+        # optional cleaning on CPU
+        if getattr(options, 'use_cleaning', False):
+            if not options.cleaning_model_path:
+                raise Exception('--use_cleaning set but --cleaning_model_path not provided')
+            cleaning_model_local = torch.load(options.cleaning_model_path, map_location='cpu')
+            cleaning_model_local.eval()
+            rgb = orig_chw.astype(np.float32)
+            if rgb.max() > 1.0:
+                rgb = rgb / 255.0
+            h, w = rgb.shape[1:]
+            pad_h = ((h - 1) // 8 + 1) * 8 - h
+            pad_w = ((w - 1) // 8 + 1) * 8 - w
+            input_np = np.pad(rgb, [(0, 0), (0, pad_h), (0, pad_w)], mode='constant', constant_values=1)
+            input_t = torch.from_numpy(np.ascontiguousarray(input_np[None])).float()
+            with torch.no_grad():
+                cleaned, _ = cleaning_model_local(input_t)
+            cleaned_np = cleaned[0, 0].cpu().numpy()
+            cleaned_np = cleaned_np[:h, :w]
+            cleaned_chw = np.expand_dims(cleaned_np, 0)
+            patches_rgb, patches_offsets, input_rgb = split_to_patches(cleaned_chw * 255, 64, options.overlap)
+        else:
+            patches_rgb, patches_offsets, input_rgb = split_to_patches(orig_chw * 255, 64, options.overlap)
+
+        patches_vector = vector_estimation(patches_rgb, model_local, device_local, 0, options)
+
+        if options.primitive_type == "curve":
+            intermediate_output = {'options': options, 'patches_offsets': patches_offsets,
+                                   'patches_vector': patches_vector,
+                                   'cleaned_image_shape': (image_tensor.shape[1], image_tensor.shape[2]),
+                                   'patches_rgb': patches_rgb}
+            primitives_after_optimization, patch__optim_offsets, repatch_scale, optim_vector_image = curve_refinement(
+                options, intermediate_output, optimization_iters_n=options.diff_render_it)
+            merging_result = curve_merging(options, vector_image_from_optimization=optim_vector_image)
+        elif options.primitive_type == "line":
+            vector_after_opt = render_optimization_hard(patches_rgb, patches_vector, device_local, options, options.image_name[0])
+            merging_result, rendered_merged_image = postprocess(vector_after_opt,patches_offsets,input_rgb,image_tensor,0,options)
+        else:
+            raise ( options.primitive_type+"not implemented, please choose between line or curve")
+
+        return merging_result
+
+    results = []
+    # multiprocessing for CPU-only
+    if getattr(options, 'workers', 1) > 1 and len(options.gpu) == 0:
+        image_args = [(img.cpu().numpy(), options) for img in images]
+        with multiprocessing.Pool(processes=options.workers) as pool:
+            results = pool.starmap(process_image_worker, image_args)
+        return results
+
+    # sequential processing (uses preloaded model if GPU selected)
     for it, image in enumerate(images):
         image_tensor = image.unsqueeze(0).to(device)
         options.sample_name = options.image_name[it]
@@ -233,7 +295,9 @@ def main(options):
         else:
             raise ( options.primitive_type+"not implemented, please choose between line or curve")
 
-        return merging_result
+        results.append(merging_result)
+
+    return results
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -259,6 +323,9 @@ def parse_args():
     parser.add_argument('--json_path', type=str,
                         default="/code/Deep-Vectorization-of-Technical-Drawings/vectorization/models/specs/resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json",
                         help='dir to folder for json file for transformer')
+    parser.add_argument('--workers', type=int, default=1, help='Number of CPU workers for batch processing (CPU-only).')
+    parser.add_argument('--use_cleaning', action='store_true', default=False, help='Run cleaning model before vectorization.')
+    parser.add_argument('--cleaning_model_path', type=str, default=None, help='Path to cleaning model file (torch saved model).')
     options = parser.parse_args()
 
     return options
