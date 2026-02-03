@@ -17,6 +17,7 @@ from refinement.our_refinement.refinement_for_curves import main as curve_refine
 from merging.merging_for_curves import main as curve_merging
 from refinement.our_refinement.refinement_for_lines import render_optimization_hard
 from merging.merging_for_lines import postprocess
+from cleaning.scripts import run as cleaning_run
 
 
 
@@ -171,8 +172,51 @@ def main(options):
     for it, image in enumerate(images):
         image_tensor = image.unsqueeze(0).to(device)
         options.sample_name = options.image_name[it]
-        # splitting image
-        patches_rgb, patches_offsets, input_rgb = split_to_patches(image_tensor.cpu().numpy()[0] * 255, 64, options.overlap)
+        # prepare numpy image in CHW format (channels, H, W)
+        orig_chw = image_tensor.cpu().numpy()[0]
+
+        # optional cleaning step: run cleaning model before splitting to patches
+        if getattr(options, 'use_cleaning', False):
+            if not options.cleaning_model_path:
+                raise Exception('--use_cleaning set but --cleaning_model_path not provided')
+            cleaning_model = torch.load(options.cleaning_model_path)
+            cleaning_model.to(device)
+            cleaning_model.eval()
+
+            def _clean_with_model(rgb_chw, cleaning_model, device):
+                # rgb_chw: (C, H, W) or (H, W) / (H, W, C)
+                if rgb_chw.ndim == 2:
+                    rgb_chw = np.expand_dims(rgb_chw, 0)
+                if rgb_chw.ndim == 3 and rgb_chw.shape[0] != 3 and rgb_chw.shape[0] != 1:
+                    # maybe HWC
+                    rgb_hwc = rgb_chw
+                    rgb_chw = np.transpose(rgb_hwc, (2, 0, 1))
+
+                # normalize to [0,1]
+                rgb = rgb_chw.astype(np.float32)
+                if rgb.max() > 1.0:
+                    rgb = rgb / 255.0
+
+                # pad to divisible by 8 as cleaning expects
+                h, w = rgb.shape[1:]
+                pad_h = ((h - 1) // 8 + 1) * 8 - h
+                pad_w = ((w - 1) // 8 + 1) * 8 - w
+                input_np = np.pad(rgb, [(0, 0), (0, pad_h), (0, pad_w)], mode='constant', constant_values=1)
+
+                input_t = torch.from_numpy(np.ascontiguousarray(input_np[None])).to(device).float()
+                with torch.no_grad():
+                    cleaned, _ = cleaning_model(input_t)
+                cleaned_np = cleaned[0, 0].cpu().numpy()  # Hpad x Wpad
+                # crop to original size
+                cleaned_np = cleaned_np[:h, :w]
+                # return as CHW with single channel
+                return np.expand_dims(cleaned_np, 0)
+
+            cleaned_chw = _clean_with_model(orig_chw, cleaning_model, device)
+            patches_rgb, patches_offsets, input_rgb = split_to_patches(cleaned_chw * 255, 64, options.overlap)
+        else:
+            # splitting image
+            patches_rgb, patches_offsets, input_rgb = split_to_patches(orig_chw * 255, 64, options.overlap)
         patches_vector = vector_estimation(patches_rgb, model, device, it, options)
 
         if options.primitive_type == "curve":
