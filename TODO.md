@@ -29,13 +29,13 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 ## Phase 3 — Enhancements
 - [ ] Add support for arcs, splines, and variable primitive counts per patch.
 - [ ] Upgrade vectorization with transformer/diffusion models for generative and multimodal vectorization.
-- [ ] Add CAD export and sequence-to-CAD conversion for parametric downstream usage.
+- [x] Add CAD export and sequence-to-CAD conversion for parametric downstream usage.
 - [x] Build a simple web UI (Gradio) to visualize and test results interactively.
 
 ## Phase 4 — Maintenance & Community
-- [ ] Add automated dependency security scans (`safety`) and periodic update cadence.
-- [ ] Add an issues/labels template and contribution guide for external contributors.
-- [ ] Optionally add CI with a separation of lightweight vs heavy tests (local-first policy recommended).
+- [x] Add automated dependency security scans (`safety`) and periodic update cadence.
+- [x] Add an issues/labels template and contribution guide for external contributors.
+- [x] Optionally add CI with a separation of lightweight vs heavy tests (local-first policy recommended).
 
 ## Quick wins (done)
 - [x] Tests: small unit tests for merging and util_files added.

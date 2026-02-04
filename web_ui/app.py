@@ -14,6 +14,12 @@ import numpy as np
 import torch
 from PIL import Image
 
+# Import CAD export functionality
+try:
+    from cad.export import export_to_dxf
+except ImportError:
+    export_to_dxf = None
+
 # Import DeepV components
 from util_files.rendering.bezier_splatting import BezierSplatting
 from refinement.our_refinement.utils.lines_refinement_functions import render_lines_with_type
@@ -74,7 +80,10 @@ def demo_vectorize_image(input_image, rendering_type="bezier_splatting", primiti
         # Create simple SVG representation
         svg_content = create_svg_from_lines(lines_batch[0], width, height)
 
-        return rendered_image, svg_content, f"Demo completed with {rendering_type} rendering!"
+        # Create DXF representation
+        dxf_content = create_dxf_from_lines(lines_batch[0], width, height)
+
+        return rendered_image, svg_content, dxf_content, f"Demo completed with {rendering_type} rendering!"
 
     except Exception as e:
         error_msg = f"Error during demo: {str(e)}"
@@ -83,19 +92,32 @@ def demo_vectorize_image(input_image, rendering_type="bezier_splatting", primiti
         return error_image, "<svg></svg>", error_msg
 
 
-def create_svg_from_lines(lines, width, height):
-    """Create simple SVG from line data."""
-    svg_lines = []
-    for line in lines:
-        x1, y1, x2, y2, w = line.tolist()
-        svg_lines.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="black" stroke-width="{w}"/>')
+def create_dxf_from_lines(lines, width, height):
+    """Create DXF from line data using CAD export module."""
+    if export_to_dxf is None:
+        return "CAD export module not available"
 
-    svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
-<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
-{chr(10).join(svg_lines)}
-</svg>'''
+    # Create temporary file for DXF
+    with tempfile.NamedTemporaryFile(mode='w+', suffix='.dxf', delete=False) as tmp_file:
+        tmp_path = tmp_file.name
 
-    return svg_content
+    try:
+        # Export to temporary DXF file
+        success = export_to_dxf(lines, tmp_path, width, height)
+        if not success:
+            return "DXF export failed"
+
+        # Read the DXF content
+        with open(tmp_path, 'r') as f:
+            dxf_content = f.read()
+
+        return dxf_content
+    finally:
+        # Clean up temporary file
+        try:
+            os.unlink(tmp_path)
+        except:
+            pass
 
 
 def create_interface():
@@ -114,7 +136,7 @@ def create_interface():
         **Features:**
         - Compare analytical vs Bézier splatting rendering
         - Real-time rendering preview
-        - SVG export
+        - SVG and DXF export for CAD software
         - Support for line primitives
         """)
 
@@ -160,18 +182,27 @@ def create_interface():
                 )
 
         with gr.Row():
-            svg_output = gr.Code(
-                label="SVG Output",
-                language="xml",
-                lines=15,
-                show_label=True
-            )
+            with gr.Column():
+                svg_output = gr.Code(
+                    label="SVG Output (Web/CAD)",
+                    language="xml",
+                    lines=10,
+                    show_label=True
+                )
+
+            with gr.Column():
+                dxf_output = gr.Code(
+                    label="DXF Output (CAD Software)",
+                    language="plaintext",
+                    lines=10,
+                    show_label=True
+                )
 
         # Connect the interface
         submit_btn.click(
             fn=demo_vectorize_image,
             inputs=[input_image, rendering_type, primitive_type],
-            outputs=[output_image, svg_output, status_text]
+            outputs=[output_image, svg_output, dxf_output, status_text]
         )
 
         # Add some info
