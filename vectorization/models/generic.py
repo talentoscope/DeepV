@@ -45,11 +45,16 @@ class GenericVectorizationNet(ParameterizedModule):
         self.fc_from_conv = fc_from_conv
         self.fc_from_hidden = fc_from_hidden
 
-    def forward(self, images, n):
+    def forward(self, images, n=None):
         x = self.features(images)
         x = self.fc_from_conv(x)
         x = x.reshape([x.shape[0], x.shape[1], -1]).transpose(1, 2)  # [b, h * w, c]
-        x = self.hidden(x, n)
+        if hasattr(self.hidden, 'max_primitives'):
+            # Variable length decoder
+            x = self.hidden(x)
+        else:
+            # Fixed length decoder
+            x = self.hidden(x, n)
         x = self.fc_from_hidden(x)
         x = self.output(x)
         return x

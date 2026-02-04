@@ -16,9 +16,10 @@ from PIL import Image
 
 # Import CAD export functionality
 try:
-    from cad.export import export_to_dxf
+    from cad.export import export_to_dxf, export_to_svg
 except ImportError:
     export_to_dxf = None
+    export_to_svg = None
 
 # Import DeepV components
 from util_files.rendering.bezier_splatting import BezierSplatting

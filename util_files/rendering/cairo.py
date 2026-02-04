@@ -3,15 +3,23 @@ from sys import byteorder
 import cairocffi as cairo
 import numpy as np
 
-from util_files.data.graphics.primitives import CBezier, Line, QBezier
-from util_files.data.graphics_primitives import (
-    PT_ARC,
-    PT_CBEZIER,
-    PT_LINE,
-    PT_POINT,
-    PT_QBEZIER,
-    PT_QBEZIER_B,
-)
+# Try to import graphics primitives, but make it optional
+try:
+    from util_files.data.graphics.primitives import CBezier, Line, QBezier
+    from util_files.data.graphics_primitives import (
+        PT_ARC,
+        PT_CBEZIER,
+        PT_LINE,
+        PT_POINT,
+        PT_QBEZIER,
+        PT_QBEZIER_B,
+    )
+    HAS_GRAPHICS_PRIMITIVES = True
+except ImportError:
+    # Fallback if svgpathtools import fails
+    CBezier = Line = QBezier = None
+    PT_ARC = PT_CBEZIER = PT_LINE = PT_POINT = PT_QBEZIER = PT_QBEZIER_B = None
+    HAS_GRAPHICS_PRIMITIVES = False
 
 from .skeleton import make_skeleton_vahe
 from .utils import qbezier_to_cbezier
@@ -186,14 +194,20 @@ def draw_point_vahe(ctx, point):
     ctx.fill()
 
 
-_draw_prim = {Line: draw_line, CBezier: draw_bezier, QBezier: draw_qbezier}
-_draw_repr = {
-    PT_LINE: draw_line_vahe,
-    PT_CBEZIER: draw_bezier_vahe,
-    PT_QBEZIER: draw_qbezier_vahe,
-    PT_QBEZIER_B: draw_qbezier_vahe,
-    PT_POINT: draw_point_vahe,
-}
+
+if HAS_GRAPHICS_PRIMITIVES:
+    _draw_prim = {Line: draw_line, CBezier: draw_bezier, QBezier: draw_qbezier}
+    _draw_repr = {
+        PT_LINE: draw_line_vahe,
+        PT_CBEZIER: draw_bezier_vahe,
+        PT_QBEZIER: draw_qbezier_vahe,
+        PT_QBEZIER_B: draw_qbezier_vahe,
+        PT_POINT: draw_point_vahe,
+    }
+else:
+    _draw_prim = {}
+    _draw_repr = {}
+
 _render_data = {"paths": render_paths, "vahe": render_vahe}
 _make_skeleton = {"vahe": make_skeleton_vahe}
 _linecaps = {"square": cairo.LINE_CAP_SQUARE, "butt": cairo.LINE_CAP_BUTT, "round": cairo.LINE_CAP_ROUND}

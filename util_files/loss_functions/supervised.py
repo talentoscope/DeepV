@@ -257,10 +257,66 @@ pseudoLap1_loop = partial(pseudoLap1_func, func=pseudoLap1_weight_loop)
 pseudoLap1_no_loop = partial(pseudoLap1_func, func=pseudoLap1_weight_no_loop)
 
 
+def variable_vectran_loss(y_pred, y_true, mask=None, l2_weight=0.5, bce_weight=0.5, reduction="mean", **kwargs):
+    """
+    Loss function for variable-length primitive sequences.
+
+    :param y_pred: predicted primitives [batch, max_primitives, features]
+    :param y_true: ground truth primitives [batch, max_primitives, features]
+    :param mask: mask indicating valid primitives [batch, max_primitives]
+    :param l2_weight: weight of l2 loss in convex function
+    :param bce_weight: weight of bce loss in convex function
+    :param reduction: default mean, if none return loss per sample
+    :return: loss value
+    """
+    if mask is None:
+        # If no mask provided, assume all primitives are valid
+        mask = torch.ones_like(y_true[..., 0])
+
+    l1 = torch.nn.L1Loss(reduction="none")
+    mse = torch.nn.MSELoss(reduction="none")
+    bce = torch.nn.BCELoss(reduction="none")
+
+    # For variable length, we assume the last feature is a confidence/logit
+    # Split predictions and targets
+    cpoints_pred, logits_pred = y_pred[..., :-1], y_pred[..., -1]
+    cpoints_true, logits_true = y_true[..., :-1], y_true[..., -1]
+
+    # Compute losses
+    l1_loss = l1(cpoints_pred, cpoints_true)  # [batch, max_primitives, features-1]
+    l2_loss = mse(cpoints_pred, cpoints_true)  # [batch, max_primitives, features-1]
+    bce_loss = bce(torch.sigmoid(logits_pred), torch.sigmoid(logits_true))  # [batch, max_primitives]
+
+    # Apply mask
+    l1_loss = (l1_loss * mask.unsqueeze(-1)).sum(dim=-1)  # [batch, max_primitives]
+    l2_loss = (l2_loss * mask.unsqueeze(-1)).sum(dim=-1)  # [batch, max_primitives]
+    bce_loss = bce_loss * mask  # [batch, max_primitives]
+
+    # Average over valid primitives
+    valid_count = mask.sum(dim=-1, keepdim=True).clamp(min=1)  # Avoid division by zero
+    l1_loss = l1_loss.sum(dim=-1, keepdim=True) / valid_count
+    l2_loss = l2_loss.sum(dim=-1, keepdim=True) / valid_count
+    bce_loss = bce_loss.sum(dim=-1, keepdim=True) / valid_count
+
+    # Combine losses
+    endpoint_loss = convex(l2_loss, l1_loss, l2_weight)
+    loss = convex(bce_loss, endpoint_loss, bce_weight)
+
+    if reduction == "mean":
+        return loss.mean()
+    elif reduction == "sum":
+        return loss.sum()
+    elif reduction == "none":
+        return loss.squeeze(-1)
+    else:
+        raise ValueError(f"Unknown reduction: {reduction}")
+
+
 prepare_losses = {
     "vectran_loss": vectran_loss,
     "vectran_mapping_L2": vectran_mapping_L2,
     "vectran_mapping_L1": vectran_mapping_L1,
+    "variable_vectran_loss": variable_vectran_loss,
     "pseudoLap1_loop": pseudoLap1_loop,
     "pseudoLap1_no_loop": pseudoLap1_no_loop,
     "lovasz_hinge": lovasz_hinge,

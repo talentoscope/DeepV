@@ -134,24 +134,18 @@ def vector_estimation(patches_rgb, model, device, it, options):
         if it_batches > patch_images.shape[0]:
             it_batches = patch_images.shape[0]
         with torch.no_grad():
-            if it_start == 0:
-                patches_vector = (
-                    model(patch_images[it_start:it_batches].cuda().float(), options.model_output_count)
-                    .detach()
-                    .cpu()
-                    .numpy()
-                )
+            # Check if model supports variable length output
+            if hasattr(model.hidden, 'max_primitives'):
+                # Variable length model - no need for model_output_count
+                batch_output = model(patch_images[it_start:it_batches].cuda().float()).detach().cpu().numpy()
             else:
-                patches_vector = np.concatenate(
-                    (
-                        patches_vector,
-                        model(patch_images[it_start:it_batches].cuda().float(), options.model_output_count)
-                        .detach()
-                        .cpu()
-                        .numpy(),
-                    ),
-                    axis=0,
-                )
+                # Fixed length model - use model_output_count
+                batch_output = model(patch_images[it_start:it_batches].cuda().float(), options.model_output_count).detach().cpu().numpy()
+
+            if it_start == 0:
+                patches_vector = batch_output
+            else:
+                patches_vector = np.concatenate((patches_vector, batch_output), axis=0)
     patches_vector = torch.tensor(patches_vector) * 64
     return patches_vector
 

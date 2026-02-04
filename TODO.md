@@ -27,7 +27,7 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 - [x] Optimize merging algorithms with spatial indices (R-tree) to reduce O(n^2) behavior.
 
 ## Phase 3 — Enhancements
-- [ ] Add support for arcs, splines, and variable primitive counts per patch.
+- [x] Add support for arcs, splines, and variable primitive counts per patch.
 - [ ] Upgrade vectorization with transformer/diffusion models for generative and multimodal vectorization.
 - [x] Add CAD export and sequence-to-CAD conversion for parametric downstream usage.
 - [x] Build a simple web UI (Gradio) to visualize and test results interactively.

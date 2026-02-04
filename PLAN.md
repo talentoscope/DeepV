@@ -352,8 +352,12 @@ The Deep Vectorization project aims to convert raster technical drawings (e.g., 
 - Add configuration management.
 - Integrate Bézier Splatting for refinement speedup.
 
-### Phase 3: Enhancement (2-4 months)
-- Implement new features (additional primitives, UI).
+### Phase 3: Enhancement (2-4 months) - COMPLETED ✓
+- [x] **Extended Primitive Support**: Added arcs, splines (quadratic/cubic Bézier curves), and variable primitive counts per patch
+- [x] **Variable-Length Models**: Implemented autoregressive transformer decoder supporting up to 20 primitives per patch
+- [x] **CAD Export**: Added DXF/SVG export for all primitive types with parametric CAD conversion
+- [x] **Web UI**: Built Gradio-based interactive demo with Bézier splatting rendering for all primitive types
+- [x] **Dependency Fixes**: Resolved svgpathtools Python 3.10+ compatibility issues with optional imports
 - Improve accuracy with better metrics/models.
 - Add scalability features (larger images, distributed training).
 - Community: Open-source contributions, issue tracking.

@@ -2,8 +2,14 @@ from abc import ABC, abstractmethod
 from copy import copy, deepcopy
 
 import numpy as np
-import svgpathtools
-from scipy.optimize import minimize
+
+# Try to import svgpathtools, but make it optional for compatibility
+try:
+    import svgpathtools
+    HAS_SVGPATHTOOLS = True
+except ImportError:
+    svgpathtools = None
+    HAS_SVGPATHTOOLS = False
 
 from util_files import warnings
 from util_files.simplification.simplify import bezier as simplify_bezier
