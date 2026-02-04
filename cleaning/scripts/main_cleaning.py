@@ -31,6 +31,24 @@ def parse_args(args=None):
         default=False,
         help="Enable mixed precision training (FP16/FP32) for improved speed and memory efficiency",
     )
+    parser.add_argument(
+        "--early-stopping",
+        action="store_true",
+        default=False,
+        help="Enable early stopping based on validation loss",
+    )
+    parser.add_argument(
+        "--early-stopping-patience",
+        type=int,
+        default=10,
+        help="Number of epochs to wait before early stopping",
+    )
+    parser.add_argument(
+        "--early-stopping-min-delta",
+        type=float,
+        default=1e-3,
+        help="Minimum improvement to reset early stopping patience",
+    )
 
     return parser.parse_args(args)
 
@@ -137,6 +155,8 @@ def validate(tb, val_loader, model, loss_func, global_step):
     tb.add_image(tag="val_out_extract", img_tensor=out_grid, global_step=global_step)
     tb.add_image(tag="val_input", img_tensor=input_grid, global_step=global_step)
 
+    return np.mean(val_loss_epoch)
+
 
 def save_model(model, path):
     print('Saving model to "%s"' % path)
@@ -158,6 +178,7 @@ def main(args):
     import torch
     from tensorboardX import SummaryWriter
     from tqdm import tqdm
+    from util_files.early_stopping import create_early_stopping_for_cleaning
     from util_files.mixed_precision import MixedPrecisionTrainer
 
     tb_dir = "/logs/tb_logs_article/cleaning" + (args.name or "")
@@ -179,6 +200,14 @@ def main(args):
     # Initialize mixed precision trainer
     mp_trainer = MixedPrecisionTrainer(enabled=getattr(args, 'mixed_precision', False))
     print(f"Mixed precision training: {'enabled' if mp_trainer.is_enabled() else 'disabled'}")
+
+    # Initialize early stopping
+    early_stopping = create_early_stopping_for_cleaning(
+        patience=getattr(args, 'early_stopping_patience', 10),
+        min_delta=getattr(args, 'early_stopping_min_delta', 1e-3)
+    ) if getattr(args, 'early_stopping', False) else None
+    if early_stopping:
+        print(f"Early stopping enabled: patience={early_stopping.patience}, min_delta={early_stopping.min_delta}")
 
     global_step = 0
 
@@ -210,9 +239,18 @@ def main(args):
 
                 model.eval()
                 with torch.no_grad():
-                    validate(tb, val_loader, model, loss_func, global_step=global_step)
+                    val_loss = validate(tb, val_loader, model, loss_func, global_step=global_step)
                 model.train()
                 save_model(model, os.path.join(tb_dir, "model_it_%s.pth" % global_step))
+
+                # Check early stopping at the end of each epoch
+                if early_stopping is not None and (global_step + 1) % (len(train_loader) // args.n_epochs) == 0:
+                    epoch = global_step // (len(train_loader) // args.n_epochs)
+                    should_stop = early_stopping(val_loss, model, epoch)
+                    if should_stop:
+                        print(f"Early stopping triggered at epoch {epoch}")
+                        early_stopping.restore_weights(model)
+                        break
 
             del logits_extract
             del logits_restor

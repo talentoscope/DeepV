@@ -34,7 +34,7 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 - [x] Profile and optimize refinement bottlenecks (target: <2s per 64x64 patch). [COMPLETED - Identified rendering as bottleneck, created 3.5x faster GPU renderer]
 - [x] Add mixed-precision training support for memory-efficient large model training.
 - [x] Implement checkpoint resumption to enable long training runs without interruption.
-- [ ] Add early stopping validation on training script.
+- [x] Add early stopping validation on training script.
 
 ### Dataset & Evaluation
 - [ ] Add benchmarking pipeline for ArchCAD, CAD-VGDrawing datasets.

@@ -23,6 +23,7 @@ import util_files.dataloading as dataloading
 import util_files.loss_functions.supervised as supervised_loss
 import util_files.metrics.vector_metrics as vmetrics
 from util_files.data.graphics_primitives import PT_QBEZIER
+from util_files.early_stopping import create_early_stopping_for_vectorization
 from util_files.file_utils import require_empty
 from util_files.logging import create_logger
 from util_files.mixed_precision import MixedPrecisionTrainer
@@ -163,11 +164,21 @@ def main(options):
     mp_trainer = MixedPrecisionTrainer(enabled=getattr(options, 'mixed_precision', False))
     logger.info(f"Mixed precision training: {'enabled' if mp_trainer.is_enabled() else 'disabled'}")
 
+    # Initialize early stopping
+    early_stopping = create_early_stopping_for_vectorization(
+        patience=getattr(options, 'early_stopping_patience', 15),
+        min_delta=getattr(options, 'early_stopping_min_delta', 1e-4)
+    ) if getattr(options, 'early_stopping', False) else None
+    if early_stopping:
+        logger.info(f"Early stopping enabled: patience={early_stopping.patience}, min_delta={early_stopping.min_delta}")
+
     if options.init_model_filename:
         checkpoint = torch.load(options.init_model_filename)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         mp_trainer.load_state_dict(checkpoint.get("mp_trainer_state_dict", {}))
+        if early_stopping and "early_stopping_state_dict" in checkpoint:
+            early_stopping.load_state_dict(checkpoint["early_stopping_state_dict"])
         epochs_completed = checkpoint["epoch"]
         batches_completed_in_epoch = checkpoint["batch"]
         optimizer.n_current_steps = checkpoint["iter"]
@@ -254,6 +265,8 @@ def main(options):
             "Computed {key} over {num_items} images: {value:.4f}", metrics_scalars, num_items=len(val_loss)
         )
 
+        return mean_val_loss
+
     # TODO @mvkolos: add training on multiple GPUs (4x batches / sec.)
     for epoch_i in range(epochs_completed, epochs_completed + options.epochs):
         for batch_i, batch_data in islice(enumerate(train_loader), batches_completed_in_epoch, len(train_loader)):
@@ -316,7 +329,7 @@ def main(options):
                 )
 
                 logger.info("Running mini validation with {} batches".format(len(val_mini_loader)))
-                validate(val_mini_loader, iter_i, prefix="mini")
+                mini_val_loss = validate(val_mini_loader, iter_i, prefix="mini")
 
             if batch_i % options.batches_before_save == 0:
                 weights_filename = "{prefix}_{batch_id}.weights".format(
@@ -330,6 +343,7 @@ def main(options):
                         "model_state_dict": model.state_dict(),
                         "optimizer_state_dict": optimizer.state_dict(),
                         "mp_trainer_state_dict": mp_trainer.state_dict(),
+                        "early_stopping_state_dict": early_stopping.state_dict() if early_stopping else None,
                         "loss": loss,
                     },
                     weights_filename,
@@ -339,7 +353,15 @@ def main(options):
         batches_completed_in_epoch = 0
 
         logger.info("Running validation on the whole validation dataset with {} batches".format(len(val_loader)))
-        validate(val_loader, (epoch_i + 1) * len(train_loader))
+        val_loss = validate(val_loader, (epoch_i + 1) * len(train_loader))
+
+        # Check early stopping
+        if early_stopping is not None:
+            should_stop = early_stopping(val_loss, model, epoch_i)
+            if should_stop:
+                logger.info(f"Early stopping triggered at epoch {epoch_i}")
+                early_stopping.restore_weights(model)
+                break
 
     if options.tboard_json_logging_file:
         writer.export_scalars_to_json(options.tboard_json_logging_file)
@@ -513,6 +535,27 @@ def parse_args():
         default=False,
         dest="mixed_precision",
         help="Enable mixed precision training (FP16/FP32) for improved speed and memory efficiency [default: False].",
+    )
+    parser.add_argument(
+        "--early-stopping",
+        action="store_true",
+        default=False,
+        dest="early_stopping",
+        help="Enable early stopping based on validation loss [default: False].",
+    )
+    parser.add_argument(
+        "--early-stopping-patience",
+        type=int,
+        default=15,
+        dest="early_stopping_patience",
+        help="Number of epochs to wait before early stopping [default: 15].",
+    )
+    parser.add_argument(
+        "--early-stopping-min-delta",
+        type=float,
+        default=1e-4,
+        dest="early_stopping_min_delta",
+        help="Minimum improvement to reset early stopping patience [default: 1e-4].",
     )
 
     # add two more args corresponding to the parsing of job args
