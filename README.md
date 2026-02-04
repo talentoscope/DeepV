@@ -37,7 +37,7 @@ from the project website or contact the authors.
 
 ## Dataset
 
-**Note**: This repository provides synthetic dataset generation for testing and benchmarking. For production use with real datasets, acquire appropriate datasets from relevant sources.
+**Note**: This repository provides synthetic dataset generation for testing and benchmarking. For production use with real datasets, see [DATA_SOURCES.md](DATA_SOURCES.md) for a comprehensive list of publicly available datasets suitable for deep vectorization tasks.
 
 ### Synthetic Dataset Generation
 

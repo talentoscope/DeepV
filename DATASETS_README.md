@@ -17,9 +17,9 @@ python scripts/create_test_datasets.py
 
 This creates test datasets in `data/` directory with PNG and DXF files for benchmarking.
 
-### 2. Manual Dataset Acquisition
+### 2. Real Dataset Acquisition
 
-For production use, acquire real datasets from academic repositories or contact original authors when sources become available again.
+For production use with real datasets, see [DATA_SOURCES.md](DATA_SOURCES.md) for a comprehensive catalog of publicly available datasets suitable for deep vectorization tasks, including detailed information about formats, access links, licenses, and preprocessing tips.
 
 ## Repository Hygiene
 

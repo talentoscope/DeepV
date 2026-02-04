@@ -16,7 +16,7 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 **Overall Assessment:**
 - The fork has made excellent progress since the original Vahe1994 repository: Phase 3 enhancements are fully implemented, transforming the project from a research prototype into a more practical tool with CAD export and user-facing demo.
 - Remaining pain points typical of evolved academic codebases persist: incomplete docstrings (especially in refinement/merging), partial type hint coverage (~20–30% in critical areas), scattered magic numbers/hardcoded tolerances, limited integration/end-to-end testing, and unprofiled performance bottlenecks (particularly refinement).
-- Strong opportunities remain in 2025–2026 trends: diffusion transformers for generative vectorization, multimodal (text+image) conditioned synthesis, panoptic symbol spotting on large technical drawing datasets, and tighter integration with emerging SVG generation models (e.g., OmniSVG-style VLM+distillation approaches or LayerTracer diffusion transformers).
+- Strong opportunities remain in 2025–2026 trends: diffusion transformers for generative vectorization, multimodal (text+image) conditioned synthesis, panoptic symbol spotting on datasets like ArchCAD-400K and FloorPlanCAD, and tighter integration with emerging SVG generation models (e.g., OmniSVG-style VLM+distillation approaches or LayerTracer diffusion transformers).
 - Prioritize stability/documentation/refactoring first, then leverage new datasets and generative techniques for accuracy leaps beyond traditional supervised methods.
 
 ## Module-by-Module Analysis
@@ -42,7 +42,7 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 - Add hyperparameter search integration (Optuna/Ray Tune) for sequence length, loss weights.
 - Explore conditioning on text prompts via CLIP or modern VLMs for guided vectorization.
 - Incorporate recent generative approaches (diffusion transformers, score distillation) for zero-shot or few-shot adaptation.
-- Add panoptic symbol spotting head (leveraging large technical drawing datasets) to detect/ vectorize discrete elements (doors, windows, furniture symbols).
+- Add panoptic symbol spotting head (leveraging ArchCAD-400K and FloorPlanCAD annotations) to detect/ vectorize discrete elements (doors, windows, furniture symbols).
 - Strengthen evaluation with curve-aware metrics (Hausdorff already added; consider Chamfer distance variants, vector edit distance).
 
 ### Refinement Module
@@ -74,7 +74,7 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 **Current State:** Python-based downloads with checksums; supports synthetic datasets and custom formats.
 
 **Suggestions (Updated):**
-- Integrate large technical drawing datasets with panoptic annotations.
+- Integrate high-priority datasets: ArchCAD-400K (413k chunks, panoptic), FloorPlanCAD (15k CAD drawings), CAD-VGDrawing (161k SVG-to-CAD pairs), and CubiCasa5K (5k scanned floorplans) (see [DATA_SOURCES.md](DATA_SOURCES.md) for comprehensive catalog).
 - Add multimodal loaders (raster + SVG + text descriptions where available).
 - Use DVC for large dataset versioning/tracking.
 - Expand synthetic engine to include realistic symbols, text, varying line styles/thicknesses.
@@ -123,12 +123,12 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 
 ### Features
 - Multimodal / text-guided vectorization
-- Symbol spotting + vectorization on technical drawing datasets
+- Symbol spotting + vectorization on ArchCAD-400K and FloorPlanCAD datasets
 - Plugin system for new primitives / renderers
 
 ### Accuracy / Benchmarks
 - Build evaluation harness: F1/IoU/Hausdorff vs VectorGraphNET, newer diffusion-based methods.
-- Report on large technical drawing dataset symbol spotting + vectorization quality.
+- Report on ArchCAD-400K and CAD-VGDrawing symbol spotting + vectorization quality.
 
 ## Roadmap (Refined February 2026)
 
@@ -144,7 +144,7 @@ Extended primitives, variable-length autoregressive model, CAD export, Gradio UI
 - Full integration/end-to-end + regression tests
 - Magic numbers → configs; structured logging
 - Profile-guided optimization (refinement target <2 s/patch)
-- Large technical drawing dataset integration + benchmarking suite
+- ArchCAD-400K and FloorPlanCAD integration + benchmarking suite
 
 ### Phase 5: Advanced & Next-Gen (Ongoing, 3–9 months)
 - Diffusion-transformer generative vectorization (text+image conditioning)
@@ -168,5 +168,5 @@ Extended primitives, variable-length autoregressive model, CAD export, Gradio UI
 3. **2–4 months Long Term**  
    - Reach high type-hint coverage + strict mypy  
    - Full performance profiling + targeted optimizations  
-   - Integrate large technical drawing datasets + symbol spotting evaluation  
+   - Integrate ArchCAD-400K and CAD-VGDrawing + symbol spotting evaluation  
    - Explore diffusion-transformer prototype for generative mode
