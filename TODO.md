@@ -37,8 +37,8 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 - [x] Add early stopping validation on training script.
 
 ### Dataset & Evaluation
-- [ ] Add benchmarking pipeline for ArchCAD, CAD-VGDrawing datasets.
-- [ ] Implement comprehensive evaluation suite (compare F1, IoU, Hausdorff vs SOTA).
+- [x] Add benchmarking pipeline for ArchCAD, CAD-VGDrawing datasets.
+- [x] Implement comprehensive evaluation suite (compare F1, IoU, Hausdorff vs SOTA).
 - [ ] Add dataset-specific evaluation reports and visualization.
 - [ ] Support for synthetic dataset generation with variable complexity.
 

@@ -64,6 +64,40 @@ and for [line](https://disk.yandex.ru/d/FKJuMvNJuy-K9g) .
 
 P.s. currently cleaning model not included there.
 
+## Benchmarking and Evaluation
+
+DeepV includes a comprehensive benchmarking pipeline for evaluating vectorization models across multiple datasets and comparing against state-of-the-art baselines.
+
+### Quick Benchmarking
+
+```bash
+# Run evaluation on ABC dataset
+python scripts/benchmark_pipeline.py \
+  --data-root /path/to/datasets \
+  --deepv-model-path /path/to/trained/model \
+  --datasets abc
+
+# Run comprehensive benchmark across multiple datasets
+python scripts/benchmark_pipeline.py \
+  --data-root /path/to/datasets \
+  --deepv-model-path /path/to/trained/model \
+  --datasets abc archcad cad_vg_drawing \
+  --output-dir benchmark_results
+```
+
+### Supported Datasets
+- **ABC Dataset**: 3D CAD model vectorization
+- **ArchCAD Dataset**: Architectural CAD drawings
+- **CAD-VG-Drawing Dataset**: Vector graphics CAD drawings
+- **Precision Floorplan Dataset**: High-precision architectural floorplans
+
+### Evaluation Metrics
+- **Vector Metrics**: F1 Score, IoU, Hausdorff Distance, Chamfer Distance
+- **Raster Metrics**: PSNR, MSE, SSIM
+- **Comprehensive Reports**: Automated comparison against baselines
+
+See `scripts/README_benchmarking.md` for detailed usage instructions.
+
 Quick developer checks
 ---------------------
 

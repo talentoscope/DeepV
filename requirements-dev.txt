@@ -10,6 +10,7 @@ scipy==1.10.1
 scikit-learn==1.2.2
 cairocffi==1.7.1
 svgpathtools==1.7.2
+seaborn==0.12.2
 
 # Linting and developer tooling
 black==24.3.0

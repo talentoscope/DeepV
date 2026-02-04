@@ -1,0 +1,145 @@
+{
+  "benchmark_name": "DeepV_Comprehensive_Benchmark",
+  "version": "1.0.0",
+  "description": "Comprehensive benchmarking suite for DeepV vectorization models",
+
+  "datasets": {
+    "abc": {
+      "name": "ABC Dataset",
+      "description": "ABC dataset for 3D CAD model vectorization",
+      "path": "data/abc",
+      "splits": ["train", "val", "test"],
+      "format": "svg",
+      "ground_truth_format": "vector_paths"
+    },
+    "archcad": {
+      "name": "ArchCAD Dataset",
+      "description": "Architectural CAD drawings dataset",
+      "path": "data/archcad",
+      "splits": ["train", "val", "test"],
+      "format": "png",
+      "ground_truth_format": "dxf"
+    },
+    "cad_vg_drawing": {
+      "name": "CAD-VG-Drawing Dataset",
+      "description": "Vector graphics CAD drawings dataset",
+      "path": "data/cad_vg_drawing",
+      "splits": ["train", "val", "test"],
+      "format": "png",
+      "ground_truth_format": "svg"
+    },
+    "precision_floorplan": {
+      "name": "Precision Floorplan Dataset",
+      "description": "High-precision architectural floorplans",
+      "path": "data/precision_floorplan",
+      "splits": ["train", "val", "test"],
+      "format": "pdf",
+      "ground_truth_format": "dxf"
+    }
+  },
+
+  "models": {
+    "deepv_current": {
+      "name": "DeepV (Current)",
+      "description": "Current DeepV implementation",
+      "type": "deepv",
+      "model_path": null,
+      "config_path": "vectorization/models/specs/model_spec.json"
+    },
+    "vectran_baseline": {
+      "name": "VecTran Baseline",
+      "description": "VecTran: Learning to Construct Vector Transcripts",
+      "type": "baseline",
+      "model_path": "models/baselines/vectran",
+      "paper_url": "https://arxiv.org/abs/2101.03482"
+    },
+    "im2vec_baseline": {
+      "name": "Im2Vec Baseline",
+      "description": "Im2Vec: Synthesizing Vector Graphics without Vector Supervision",
+      "type": "baseline",
+      "model_path": "models/baselines/im2vec",
+      "paper_url": "https://arxiv.org/abs/2008.08171"
+    },
+    "diffvg_baseline": {
+      "name": "DiffVG Baseline",
+      "description": "Differentiable Vector Graphics Rasterization",
+      "type": "baseline",
+      "model_path": "models/baselines/diffvg",
+      "paper_url": "https://arxiv.org/abs/2007.14620"
+    }
+  },
+
+  "metrics": {
+    "vector_metrics": {
+      "f1_score": {
+        "name": "F1 Score",
+        "description": "F1 score for vector primitives",
+        "type": "vector",
+        "thresholds": [0.01, 0.05, 0.1]
+      },
+      "iou_score": {
+        "name": "IoU Score",
+        "description": "Intersection over Union for vector primitives",
+        "type": "vector",
+        "thresholds": [0.01, 0.05, 0.1]
+      },
+      "hausdorff_score": {
+        "name": "Hausdorff Distance",
+        "description": "Hausdorff distance between predicted and ground truth",
+        "type": "vector",
+        "normalize": true
+      },
+      "cd_score": {
+        "name": "Chamfer Distance",
+        "description": "Chamfer distance between point sets",
+        "type": "vector",
+        "normalize": true
+      }
+    },
+    "raster_metrics": {
+      "psnr": {
+        "name": "PSNR",
+        "description": "Peak Signal-to-Noise Ratio",
+        "type": "raster"
+      },
+      "mse": {
+        "name": "MSE",
+        "description": "Mean Squared Error",
+        "type": "raster"
+      },
+      "ssim": {
+        "name": "SSIM",
+        "description": "Structural Similarity Index",
+        "type": "raster"
+      }
+    }
+  },
+
+  "evaluation_settings": {
+    "raster_resolution": [256, 256],
+    "vector_tolerance": 0.01,
+    "max_primitives": 1000,
+    "timeout_seconds": 300,
+    "parallel_evaluation": true,
+    "num_workers": 4
+  },
+
+  "reporting": {
+    "generate_plots": true,
+    "generate_tables": true,
+    "include_confidence_intervals": true,
+    "statistical_tests": ["t_test", "wilcoxon"],
+    "output_formats": ["markdown", "latex", "json"]
+  },
+
+  "synthetic_data": {
+    "enabled": false,
+    "generator_config": {
+      "complexity_levels": ["simple", "medium", "complex"],
+      "primitive_types": ["lines", "curves", "arcs", "mixed"],
+      "noise_levels": [0.0, 0.01, 0.05],
+      "distortion_types": ["none", "perspective", "affine"],
+      "canvas_sizes": [[256, 256], [512, 512], [1024, 1024]]
+    }
+  }
+}

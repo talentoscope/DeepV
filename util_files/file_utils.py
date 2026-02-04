@@ -10,3 +10,8 @@ def require_empty(d, recreate=False):
         else:
             raise OSError("Path {} exists and no --overwrite set. Exiting".format(d))
     os.makedirs(d)
+
+
+def ensure_dir(path):
+    """Ensure directory exists, creating it if necessary."""
+    os.makedirs(path, exist_ok=True)
