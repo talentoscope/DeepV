@@ -63,7 +63,7 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 
 ### 2–6 weeks Medium Term
 - [ ] Refactor refinement long functions → classes/modules.
-- [ ] Build basic end-to-end integration test suite.
+- [x] Build basic end-to-end integration test suite.
 - [ ] Add structured logging + exception hierarchy.
 
 ### 2–4 months Long Term

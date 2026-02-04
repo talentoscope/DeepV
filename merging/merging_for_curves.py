@@ -7,7 +7,6 @@ import numpy as np
 
 sys.path.append("/code")
 from util_files.data.graphics.graphics import Path, VectorImage
-from util_files.job_tuples.calculate_results_for_curves import job_tuples
 from util_files.optimization.optimizer.logging import Logger
 from util_files.rendering.cairo import PT_LINE, PT_QBEZIER
 from util_files.simplification.join_qb import join_quad_beziers
@@ -16,26 +15,10 @@ from util_files.simplification.join_qb import join_quad_beziers
 def main(options, vector_image_from_optimization=None, width_percentile=90, fit_tol=0.5, w_tol=np.inf, join_tol=0.5):
     logger = Logger.prepare_logger(loglevel="info", logfile=None)
     if vector_image_from_optimization is None:
-        _, _, options.image_name, options.output_dir = job_tuples[options.dataset][options.job_id]
-        sample_name = options.image_name[:-4]
-        intermediate_output_path = f"{options.output_dir}/intermediate_output/{sample_name}.pickle"
-        logger.info(f"1. Load intermediate output from {intermediate_output_path}")
-        with open(intermediate_output_path, "rb") as handle:
-            intermediate_output = pickle.load(handle)
+        raise ValueError("vector_image_from_optimization must be provided - job_tuples mode not supported")
 
-        for k, v in options.__dict__.items():
-            setattr(intermediate_output["options"], k, v)
-        options = intermediate_output["options"]
-
-        init_dir_name = "random_initialization" if options.init_random else "model_initialization"
-        options.output_dir = f"{options.output_dir}/{init_dir_name}"
-
-        optimization_output_path = f"{options.output_dir}/after_optimization/{sample_name}.svg"
-        logger.info(f"2. Load vector image after optimization from {optimization_output_path}")
-        vector_image = VectorImage.from_svg(optimization_output_path)
-    else:
-        sample_name = options.sample_name[:-4]
-        vector_image = vector_image_from_optimization
+    sample_name = options.sample_name[:-4]
+    vector_image = vector_image_from_optimization
     logger.info("3. Simplify curves")
     lines, curves = vector_image.vahe_representation()
     logger.info(f"\tinitial number of lines is {len(lines)}")

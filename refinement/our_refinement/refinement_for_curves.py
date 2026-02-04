@@ -11,7 +11,6 @@ from tqdm import trange
 
 sys.path.append("/code")
 from util_files.evaluation_utils import vector_image_from_patches
-from util_files.job_tuples.calculate_results_for_curves import job_tuples
 from util_files.optimization.optimizer.adam import Adam
 from util_files.optimization.optimizer.logging import Logger
 from util_files.optimization.primitives.line_tensor import LineTensor
@@ -72,12 +71,7 @@ def main(
         intermediate_output_path = f"{options.output_dir}/intermediate_output/{sample_name}.pickle"
         logger.info(f"1. Load intermediate output from {intermediate_output_path}")
     else:
-        _, _, options.image_name, options.output_dir = job_tuples[options.dataset][options.job_id]
-        sample_name = options.image_name[:-4]
-        intermediate_output_path = f"{options.output_dir}/intermediate_output/{sample_name}.pickle"
-        logger.info(f"1. Load intermediate output from {intermediate_output_path}")
-        with open(intermediate_output_path, "rb") as handle:
-            intermediate_output = pickle.load(handle)
+        raise ValueError("intermediate_output must be provided - job_tuples mode not supported")
     for k, v in options.__dict__.items():
         setattr(intermediate_output["options"], k, v)
     options = intermediate_output["options"]
