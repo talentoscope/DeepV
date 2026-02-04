@@ -19,7 +19,7 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 - [x] Add structured logging to critical paths (training, inference, refinement).
 
 ### Code Quality & Refactoring (HIGH PRIORITY)
-- [x] Refactor long functions in refinement (400+ lines) into smaller units with clear responsibilities.
+- [x] Refactor long functions in refinement (400+ lines) into smaller units with clear responsibilities. [COMPLETED - Refactored refinement_for_curves.py (443→654 lines) into DataLoader, Optimizer, MetricsLogger, OutputGenerator, and RefinementPipeline classes]
 - [x] Extract magic numbers and hardcoded values into configurable parameters (Hydra configs).
 - [x] Add configuration files for tolerance-based merging and refinement hyperparameters.
 - [x] Consolidate separate line/curve refinement and merging pipelines into unified interfaces.
@@ -62,7 +62,7 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 - [x] Extend type hints in refinement pipeline.
 
 ### 2–6 weeks Medium Term
-- [ ] Refactor refinement long functions → classes/modules.
+- [x] Refactor refinement long functions → classes/modules. [COMPLETED - Refactored refinement_for_curves.py into modular classes]
 - [x] Build basic end-to-end integration test suite.
 - [ ] Add structured logging + exception hierarchy.
 
@@ -97,3 +97,4 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 - [x] Add configuration management (Hydra).
 - [x] Profile and optimize rendering (Bézier Splatting implemented).
 - [x] Optimize merging with spatial indices.
+- [x] Convert all shell scripts (.sh, .ps1) to cross-platform Python equivalents.
