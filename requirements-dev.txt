@@ -27,3 +27,8 @@ safety==2.3.5
 ezdxf==1.3.0
 
 # Note: Keep these minimal. If you prefer containerized runs, use the provided Dockerfile.
+
+# Developer support for dataset downloads (Google Drive)
+gdown==4.7.0
+# SVG rasterization for dataset preprocessing
+cairosvg==2.6.0

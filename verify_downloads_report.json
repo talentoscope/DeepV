@@ -1,0 +1,263 @@
+[
+  {
+    "dataset": "floorplancad",
+    "exists": true,
+    "num_files": 5,
+    "nonempty_files": 5,
+    "total_size_bytes": 60419280,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "archcad",
+    "exists": true,
+    "num_files": 1,
+    "nonempty_files": 1,
+    "total_size_bytes": 319,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "cubicasa5k",
+    "exists": true,
+    "num_files": 1,
+    "nonempty_files": 1,
+    "total_size_bytes": 316,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "quickdraw",
+    "exists": true,
+    "num_files": 1,
+    "nonempty_files": 1,
+    "total_size_bytes": 362,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "tuberlin",
+    "exists": true,
+    "num_files": 4,
+    "nonempty_files": 4,
+    "total_size_bytes": 292510180,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "sesyd",
+    "exists": true,
+    "num_files": 1,
+    "nonempty_files": 1,
+    "total_size_bytes": 312,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "impact",
+    "exists": true,
+    "num_files": 1,
+    "nonempty_files": 1,
+    "total_size_bytes": 282,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "msd",
+    "exists": true,
+    "num_files": 1,
+    "nonempty_files": 1,
+    "total_size_bytes": 389,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "cvcfp",
+    "exists": true,
+    "num_files": 246,
+    "nonempty_files": 246,
+    "total_size_bytes": 37422314,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "sketchgraphs",
+    "exists": true,
+    "num_files": 117,
+    "nonempty_files": 116,
+    "total_size_bytes": 16142635,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "deeppatent2",
+    "exists": true,
+    "num_files": 1,
+    "nonempty_files": 1,
+    "total_size_bytes": 640,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "abc",
+    "exists": true,
+    "num_files": 30,
+    "nonempty_files": 30,
+    "total_size_bytes": 9746772,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "drivaernet",
+    "exists": true,
+    "num_files": 58,
+    "nonempty_files": 58,
+    "total_size_bytes": 2942077,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "engsymbols",
+    "exists": true,
+    "num_files": 38,
+    "nonempty_files": 38,
+    "total_size_bytes": 84442010,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "rplan",
+    "exists": true,
+    "num_files": 1,
+    "nonempty_files": 1,
+    "total_size_bytes": 344,
+    "metadata_present": true,
+    "note": ""
+  },
+  {
+    "dataset": "cadvgdrawing",
+    "exists": true,
+    "num_files": 2,
+    "nonempty_files": 2,
+    "total_size_bytes": 442343342,
+    "metadata_present": true,
+    "note": "Google Drive folder: https://drive.google.com/drive/folders/1t9uO2iFh1eVDXRCKUEonKPBu8WGYA8wU"
+  },
+  {
+    "dataset": "deeppatent",
+    "exists": false,
+    "num_files": 0,
+    "nonempty_files": 0,
+    "total_size_bytes": 0,
+    "metadata_present": false,
+    "note": "Download from GitHub: https://github.com/GoFigure-LANL/DeepPatent-dataset"
+  },
+  {
+    "dataset": "pdtw150k",
+    "exists": false,
+    "num_files": 0,
+    "nonempty_files": 0,
+    "total_size_bytes": 0,
+    "metadata_present": false,
+    "note": "Download from GitHub: https://github.com/ncyuMARSLab/PDTW150K"
+  },
+  {
+    "dataset": "patentdesc",
+    "exists": false,
+    "num_files": 0,
+    "nonempty_files": 0,
+    "total_size_bytes": 0,
+    "metadata_present": false,
+    "note": "Download from arXiv: https://arxiv.org/abs/2501.15074"
+  },
+  {
+    "dataset": "cadsketchnet",
+    "exists": false,
+    "num_files": 0,
+    "nonempty_files": 0,
+    "total_size_bytes": 0,
+    "metadata_present": false,
+    "note": "Contact authors (Computers & Graphics paper)"
+  },
+  {
+    "dataset": "videocad",
+    "exists": false,
+    "num_files": 0,
+    "nonempty_files": 0,
+    "total_size_bytes": 0,
+    "metadata_present": false,
+    "note": "Download from GitHub: https://github.com/ghadinehme/VideoCAD or Harvard Dataverse"
+  },
+  {
+    "dataset": "cfp",
+    "exists": false,
+    "num_files": 0,
+    "nonempty_files": 0,
+    "total_size_bytes": 0,
+    "metadata_present": false,
+    "note": "Contact authors - no public repo"
+  },
+  {
+    "dataset": "cadbimcollection",
+    "exists": false,
+    "num_files": 0,
+    "nonempty_files": 0,
+    "total_size_bytes": 0,
+    "metadata_present": false,
+    "note": "Contact authors - site unavailable"
+  },
+  {
+    "dataset": "holicity",
+    "exists": false,
+    "num_files": 0,
+    "nonempty_files": 0,
+    "total_size_bytes": 0,
+    "metadata_present": false,
+    "note": "Visit: https://holicity.io/ - requires agreement"
+  },
+  {
+    "dataset": "blendednet",
+    "exists": false,
+    "num_files": 0,
+    "nonempty_files": 0,
+    "total_size_bytes": 0,
+    "metadata_present": false,
+    "note": "Download from Harvard Dataverse: https://dataverse.harvard.edu/"
+  },
+  {
+    "dataset": "iamhandwriting",
+    "exists": false,
+    "num_files": 0,
+    "nonempty_files": 0,
+    "total_size_bytes": 0,
+    "metadata_present": false,
+    "note": "Register for download: https://fki.tic.heia-fr.ch/databases/iam-handwriting-database"
+  },
+  {
+    "dataset": "fplanpoly",
+    "exists": false,
+    "num_files": 0,
+    "nonempty_files": 0,
+    "total_size_bytes": 0,
+    "metadata_present": false,
+    "note": "Download from CVC site: http://www.cvc.uab.es/~marcal/FPLAN-POLY/index.html"
+  },
+  {
+    "dataset": "dld",
+    "exists": false,
+    "num_files": 0,
+    "nonempty_files": 0,
+    "total_size_bytes": 0,
+    "metadata_present": false,
+    "note": "Contact authors (ECCV 2020 paper)"
+  },
+  {
+    "dataset": "resplan",
+    "exists": false,
+    "num_files": 0,
+    "nonempty_files": 0,
+    "total_size_bytes": 0,
+    "metadata_present": false,
+    "note": "Request access via arXiv: https://arxiv.org/abs/2508.14006"
+  }
+]

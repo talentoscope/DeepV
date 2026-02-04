@@ -20,6 +20,12 @@ pytorch-lightning==2.0.2
 cairocffi==1.3.0
 tensorboardx==2.6
 
+# Drive downloader for dataset scripts
+gdown==4.7.0
+
+# SVG rasterization helper
+cairosvg==2.6.0
+
 # Notes:
 # - Upgrading `torch` requires choosing a wheel built for your CUDA runtime.
 # - Prefer installing `torch`/`torchvision` from the official PyTorch index matching your CUDA (see https://pytorch.org/get-started/locally/).
