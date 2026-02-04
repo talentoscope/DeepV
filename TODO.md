@@ -31,6 +31,8 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 - [ ] Upgrade vectorization with transformer/diffusion models for generative and multimodal vectorization.
 - [x] Add CAD export and sequence-to-CAD conversion for parametric downstream usage.
 - [x] Build a simple web UI (Gradio) to visualize and test results interactively.
+- [x] Improve accuracy with better metrics/models (added curve-based Hausdorff distance metric).
+- [x] Add scalability features (larger images, distributed training).
 
 ## Phase 4 — Maintenance & Community
 - [x] Add automated dependency security scans (`safety`) and periodic update cadence.

@@ -10,6 +10,8 @@ import numpy as np
 import torch
 import torch.nn
 import torch.optim
+import torch.distributed as dist
+import torch.multiprocessing as mp
 
 __dir__ = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 sys.path[1:1] = [__dir__]
@@ -27,6 +29,20 @@ from util_files.optimization.optimizer.scheduled_optimizer import ScheduledOptim
 from util_files.tensorboard import SummaryWriter
 from util_files.visualization import make_ranked_images_from_loader_and_model
 from vectorization import load_model
+
+
+def setup_distributed(rank, world_size, backend='nccl'):
+    """Initialize distributed training."""
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
+
+    # Initialize the process group
+    dist.init_process_group(backend, rank=rank, world_size=world_size)
+
+
+def cleanup_distributed():
+    """Clean up distributed training."""
+    dist.destroy_process_group()
 
 
 def prepare_batch_on_device(batch_data, device):
@@ -63,6 +79,7 @@ def main(options):
     l2_weight_change = options.l2_weight_change
     l2_weight = options.l2_weight_init
     parallel = False
+    distributed = getattr(options, 'distributed', False)
     print(options.gpu)
     if len(options.gpu) == 0:
         device = torch.device("cpu")
@@ -71,11 +88,23 @@ def main(options):
         device = torch.device("cuda:{}".format(options.gpu[0]))
         prefetch_data = True
     else:
-        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(options.gpu)
-        device = torch.device("cuda:{}".format(options.gpu[0]))
-        prefetch_data = True
-        parallel = True
+        if distributed:
+            # Use torch.distributed for multi-node/multi-GPU training
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(options.gpu)
+            device = torch.device("cuda:{}".format(options.gpu[0]))
+            prefetch_data = True
+            parallel = False  # Let distributed handle parallelism
+            # Initialize distributed training
+            world_size = len(options.gpu)
+            dist.init_process_group(backend='nccl', rank=0, world_size=world_size)
+        else:
+            # Use DataParallel for single-node multi-GPU
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
+            os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(options.gpu)
+            device = torch.device("cuda:{}".format(options.gpu[0]))
+            prefetch_data = True
+            parallel = True
     RASTER_RES = (options.render_res, options.render_res)
 
     METRIC_PARAMS_AVG = {"average": "mean", "binarization": "median", "raster_res": RASTER_RES}
@@ -141,8 +170,12 @@ def main(options):
         batches_completed_in_epoch = 0
 
     # Loss function choose
-    if parallel:
-        print("parallel")
+    if distributed:
+        print("distributed training")
+        print(f"world size: {dist.get_world_size()}")
+        model = torch.nn.parallel.DistributedDataParallel(model)
+    elif parallel:
+        print("parallel (DataParallel)")
         print(torch.cuda.device_count())
         model = torch.nn.DataParallel(model)
     make_loss_fn = supervised_loss.prepare_losses[options.loss_funct]
@@ -304,10 +337,15 @@ def main(options):
         writer.export_scalars_to_json(options.tboard_json_logging_file)
     writer.close()
 
+    # Clean up distributed training
+    if distributed:
+        dist.destroy_process_group()
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-g", "--gpu", action="append", help="GPU to use, can use multiple [default: use CPU].")
+    parser.add_argument("--distributed", action="store_true", help="Use distributed training across multiple GPUs/nodes.")
 
     parser.add_argument("-e", "--epochs", type=int, default=1, help="how many epochs to train [default: 1].")
     parser.add_argument(
