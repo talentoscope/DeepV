@@ -4,6 +4,7 @@ from typing import Any
 
 from refinement.our_refinement.utils.lines_refinement_functions import *
 from util_files.metrics.iou import calc_iou__vect_image
+from util_files.optimization.optimizer.logging import Logger
 
 
 def register_sigint_flag(flag_list):
@@ -29,6 +30,9 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
     :param name:
     :return:  patches with refined vectors [b,line_count,5](check this)
     """
+    logger = Logger.prepare_logger(loglevel="info", logfile=None)
+    logger.info(f"Starting refinement optimization for {name}")
+    
     patches_rgb_im = np.copy(patches_rgb)
 
     first_encounter = True
@@ -36,9 +40,9 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
     patches_vector = torch.tensor(patches_vector)
     y_pred_rend = torch.zeros((patches_vector.shape[0], patches_vector.shape[1], patches_vector.shape[2] - 1))
     patches_rgb = 1 - torch.tensor(patches_rgb).squeeze(3).unsqueeze(1) / 255.0
-    print("init_random", options.init_random)
+    logger.info(f"init_random: {options.init_random}")
     if options.init_random:
-        print("init_random", options.init_random)
+        logger.info("Initializing with random vectors")
         patches_vector = torch.rand((patches_vector.shape)) * 64
         patches_vector[..., 4] = 1
 
@@ -289,7 +293,7 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
                 iou_mass.append(calc_iou__vect_image(lines_batch_final.data / 64, patches_rgb_im[take_batches]))
                 mass_for_iou_one.append(lines_batch_final.cpu().data.detach().numpy())
 
-        print(it_start)
+        logger.info(f"Processed batch starting at index {it_start}")
         if first_encounter:
             first_encounter = False
             iou_all = np.array(iou_mass)

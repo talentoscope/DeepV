@@ -13,9 +13,7 @@ from PIL import Image
 from tqdm import tqdm
 
 ### Todo check this metric or change it
-from util_files.metrics.raster_metrics import iou_score
-from util_files.rendering.bezier_splatting import BezierSplatting
-from util_files.rendering.cairo import PT_LINE
+from util_files.exceptions import EmptyPixelError, OptimizationError
 from util_files.rendering.cairo import render as original_render
 from util_files.rendering.cairo import (
     render_with_skeleton as original_render_with_skeleton,
@@ -786,13 +784,15 @@ class MeanFieldEnergyComputer:
         candidates &= empty
         points_to_the_right = canonical_raster_y >= 0
         candidates_one_side = points_to_the_right & candidates
-        assert candidates_one_side.any(dim=-1).all(), "Couldn't find any empty pixel to the right"
+        if not candidates_one_side.any(dim=-1).all():
+            raise EmptyPixelError("Couldn't find any empty pixel to the right during excess charge weighting")
         max_y = canonical_raster_y.masked_fill(~candidates_one_side, np.inf)
         max_y = max_y.min(dim=-1)[0]
         candidates_one_side = ~points_to_the_right
         del points_to_the_right
         candidates_one_side &= candidates
-        assert candidates_one_side.any(dim=-1).all(), "Couldn't find any empty pixel to the left"
+        if not candidates_one_side.any(dim=-1).all():
+            raise EmptyPixelError("Couldn't find any empty pixel to the left during excess charge weighting")
         del candidates
         min_y = canonical_raster_y.masked_fill(~candidates_one_side, -np.inf)
         del candidates_one_side
@@ -1039,13 +1039,15 @@ def size_energy(
         candidates &= empty
         points_to_the_right = canonical_raster_y >= 0
         candidates_one_side = points_to_the_right & candidates
-        assert candidates_one_side.any(dim=-1).all(), "Couldn't find any empty pixel to the right"
+        if not candidates_one_side.any(dim=-1).all():
+            raise EmptyPixelError("Couldn't find any empty pixel to the right during size energy calculation")
         max_y = canonical_raster_y.masked_fill(~candidates_one_side, np.inf)
         max_y = max_y.min(dim=-1)[0]
         candidates_one_side = ~points_to_the_right
         del points_to_the_right
         candidates_one_side &= candidates
-        assert candidates_one_side.any(dim=-1).all(), "Couldn't find any empty pixel to the left"
+        if not candidates_one_side.any(dim=-1).all():
+            raise EmptyPixelError("Couldn't find any empty pixel to the left during size energy calculation")
         del candidates
         min_y = canonical_raster_y.masked_fill(~candidates_one_side, -np.inf)
         del candidates_one_side

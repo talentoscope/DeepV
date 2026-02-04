@@ -15,20 +15,20 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 ### Documentation & Type Safety (HIGH PRIORITY)
 - [x] Add comprehensive docstrings to all functions (focus: refinement/merging modules, e.g., lines_refinement_functions.py).
 - [x] Add type hints to function signatures (target 80%+ coverage across codebase). [PARTIALLY COMPLETE - Added to key functions in merging and refinement modules]
-- [ ] Improve error handling with specific exception types (refinement/merging operations).
-- [ ] Add structured logging to critical paths (training, inference, refinement).
+- [x] Improve error handling with specific exception types (refinement/merging operations).
+- [x] Add structured logging to critical paths (training, inference, refinement).
 
 ### Code Quality & Refactoring (HIGH PRIORITY)
 - [x] Refactor long functions in refinement (400+ lines) into smaller units with clear responsibilities.
 - [x] Extract magic numbers and hardcoded values into configurable parameters (Hydra configs).
 - [x] Add configuration files for tolerance-based merging and refinement hyperparameters.
-- [ ] Consolidate separate line/curve refinement and merging pipelines into unified interfaces.
+- [x] Consolidate separate line/curve refinement and merging pipelines into unified interfaces.
 
 ### Testing & Validation
 - [x] Expand unit test coverage to 70%+ (focus: refinement pipeline, merging logic). [PARTIALLY COMPLETE - Added basic tests for refactored functions, existing tests verified working]
-- [ ] Add integration tests for full pipeline (cleaning → vectorization → refinement → merging).
+- [x] Add integration tests for full pipeline (cleaning → vectorization → refinement → merging).
 - [ ] Add regression tests comparing outputs against baseline results.
-- [ ] Add performance benchmarks with expected time/memory targets.
+- [x] Add performance benchmarks with expected time/memory targets.
 
 ### Performance & Optimization
 - [ ] Profile and optimize refinement bottlenecks (target: <2s per 64x64 patch).

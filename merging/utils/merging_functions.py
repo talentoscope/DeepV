@@ -20,6 +20,7 @@ from tqdm import tqdm
 
 import util_files.data.graphics_primitives as graphics_primitives
 from util_files.data.graphics_primitives import PT_CBEZIER, PT_LINE, PT_QBEZIER
+from util_files.exceptions import ClippingError, MergeError
 from util_files.geometric import liang_barsky_screen
 from util_files.rendering.cairo import render, render_with_skeleton
 
@@ -56,8 +57,8 @@ def clip_to_box(y_pred: np.ndarray, box_size: Tuple[int, int] = (64, 64)) -> np.
     point1, point2 = y_pred[:2], y_pred[2:4]
     try:
         clipped_point1, clipped_point2, is_drawn = liang_barsky_screen(point1, point2, bbox)
-    except:
-        return np.asarray([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
+    except Exception as e:
+        raise ClippingError(f"Line clipping failed: {e}") from e
 
     if clipped_point1 and clipped_point2:
         return np.asarray([clipped_point1, clipped_point2, y_pred[4:]]).ravel()
@@ -145,7 +146,8 @@ def merge_close_lines(lines: np.ndarray, threshold: float = 0.5) -> np.ndarray:
         inlier_mask = ransac.inlier_mask_
 
         lr.fit(dt[inlier_mask].reshape(-1, 1), y_t[inlier_mask])
-    except:
+    except Exception as e:
+        # Fallback to simple linear regression if RANSAC fails
         lr.fit(dt.reshape(-1, 1), y_t)
 
     if abs(lr.coef_) >= threshold:  # vertical line
@@ -348,7 +350,8 @@ def compute_angle(line0, line1):
 
     try:
         angle = math.degrees(angle_radians(pt1, pt2))
-    except:
+    except Exception as e:
+        # Return 0 angle if angle calculation fails
         angle = 0
     if angle >= 90 and angle <= 270:
         angle = np.abs(180 - angle)
