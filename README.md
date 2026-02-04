@@ -13,7 +13,6 @@ Each folder has Readme with more details. Here is the brief content of each fold
 * vectorization - NN models, script to train
 * refinement - refinement module for curves and lines
 * merging - merging module for curves and lines
-* dataset - scripts to download datasets, scripts to modify data into patches, and memory-mapped them.
 * notebooks - a playground to show some function in action
 * utils - loss functions, rendering, metrics
 * scripts - scripts to run training and evaluation
@@ -35,35 +34,12 @@ To compare with us without running code, you can download our results on the ful
 from the project website or contact the authors.
 
 
-## Dataset
-
-**Note**: This repository provides synthetic dataset generation for testing and benchmarking. For production use with real datasets, see [DATA_SOURCES.md](DATA_SOURCES.md) for a comprehensive list of publicly available datasets suitable for deep vectorization tasks.
-
-### Synthetic Dataset Generation
-
-Generate synthetic datasets for development and testing:
-
-```bash
-# Generate synthetic test datasets
-python scripts/create_test_datasets.py
-```
-
-This creates test datasets in `data/` directory with PNG and DXF files for benchmarking.
-
-### Real Datasets
-
-For production use, acquire real technical drawing datasets from appropriate sources. The pipeline supports:
-- PNG + DXF format pairs
-- SVG vector graphics
-- PDF technical drawings
-
-See `DATASETS_README.md` for detailed dataset management information. 
-## Notebooks 
+## Notebooks
 
 To show how some of the usability of the functions, there are several notebooks in the notebooks folder.
 1) Rendering notebook
 2) Dataset loading, model loading, model training, loss function loading
-3) Notebook that illustrates  how to work with pretrained model and how to do refinement on lines(without merging) 
+3) Notebook that illustrates  how to work with pretrained model and how to do refinement on lines(without merging)
 4) Notebook that illustrates how to work with pretrained model and how to do refinement on curves(without merging)
 
 ## Models

@@ -69,15 +69,14 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 - Validate merged output against original raster using SSIM + vector IoU.
 
 ### Dataset Module
-**Purpose:** Data downloading, preprocessing, synthetic generation.
+**Purpose:** Data loading and preprocessing for training/evaluation.
 
-**Current State:** Python-based downloads with checksums; supports synthetic datasets and custom formats.
+**Current State:** Core data loading functionality for existing datasets; no automated downloading.
 
 **Suggestions (Updated):**
-- Integrate high-priority datasets: ArchCAD-400K (413k chunks, panoptic), FloorPlanCAD (15k CAD drawings), CAD-VGDrawing (161k SVG-to-CAD pairs), and CubiCasa5K (5k scanned floorplans) (see [DATA_SOURCES.md](DATA_SOURCES.md) for comprehensive catalog).
+- Focus on data loading efficiency and preprocessing pipelines for user-provided datasets.
 - Add multimodal loaders (raster + SVG + text descriptions where available).
-- Use DVC for large dataset versioning/tracking.
-- Expand synthetic engine to include realistic symbols, text, varying line styles/thicknesses.
+- Use DVC for large dataset versioning/tracking when datasets are manually acquired.
 
 ### Util Files
 **Purpose:** Rendering, metrics, I/O helpers.

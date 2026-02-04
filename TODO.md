@@ -40,12 +40,6 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 - [x] Add benchmarking pipeline for custom datasets.
 - [x] Implement comprehensive evaluation suite (compare F1, IoU, Hausdorff vs SOTA).
 - [x] Add dataset-specific evaluation reports and visualization.
-- [x] Support for synthetic dataset generation with variable complexity.
-- [ ] Integrate ArchCAD-400K dataset (413k chunks, panoptic annotations) for symbol spotting evaluation.
-- [ ] Integrate FloorPlanCAD dataset (15k CAD drawings) for architectural vectorization benchmarking.
-- [ ] Integrate CAD-VGDrawing dataset (161k SVG-to-CAD pairs) for parametric CAD tasks.
-- [ ] Add evaluation on CubiCasa5K (5k scanned floorplans) for noisy real-world data.
-- [ ] Implement automated dataset downloading and preprocessing scripts for priority datasets.
 
 ## Phase 5 — Advanced & Next-Gen (Ongoing, 3–9 months)
 - [ ] Explore diffusion-transformer models for generative vectorization (text+image conditioning).
@@ -69,16 +63,7 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 ### 2–4 months Long Term
 - [ ] Reach high type-hint coverage + strict mypy.
 - [ ] Full performance profiling + targeted optimizations.
-- [ ] Integrate ArchCAD-400K and CAD-VGDrawing evaluation and symbol spotting.
 - [ ] Explore diffusion-transformer prototype for generative mode.
-
-### 3–6 months Dataset Integration
-- [ ] Create automated download scripts for ArchCAD-400K, FloorPlanCAD, and CAD-VGDrawing.
-- [ ] Implement dataset-specific preprocessing pipelines (format conversion, validation).
-- [ ] Add panoptic symbol spotting evaluation on ArchCAD-400K annotations.
-- [ ] Benchmark parametric CAD conversion on CAD-VGDrawing dataset.
-- [ ] Add real-world robustness testing on CubiCasa5K noisy scans.
-- [ ] Create comprehensive evaluation reports comparing performance across all integrated datasets.
 
 ## Maintenance & Community (Ongoing)
 - [x] Add automated dependency security scans and periodic updates.
