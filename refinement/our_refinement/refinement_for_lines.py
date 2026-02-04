@@ -107,7 +107,7 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
         size_optimizer.step()
 
         patches_to_optimize = np.full(
-            lines_batch.shape[0], True, np.bool
+            lines_batch.shape[0], True, bool
         )  # my_iou_score(vector_rendering, rasters_batch) < .98
         cx_final = torch.empty_like(cx)
         cy_final = torch.empty_like(cy)

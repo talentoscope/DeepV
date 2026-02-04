@@ -25,6 +25,12 @@ def parse_args(args=None):
     parser.add_argument("--name", type=str, help="Name of the experiment")
     parser.add_argument("--added_part", type=str, default="No", help='["No"],["Yes"]')
     parser.add_argument("--model_path", type=str, default=None, help="Path to model checkpoint")
+    parser.add_argument(
+        "--mixed-precision",
+        action="store_true",
+        default=False,
+        help="Enable mixed precision training (FP16/FP32) for improved speed and memory efficiency",
+    )
 
     return parser.parse_args(args)
 
@@ -152,6 +158,7 @@ def main(args):
     import torch
     from tensorboardX import SummaryWriter
     from tqdm import tqdm
+    from util_files.mixed_precision import MixedPrecisionTrainer
 
     tb_dir = "/logs/tb_logs_article/cleaning" + (args.name or "")
     tb = SummaryWriter(tb_dir)
@@ -169,6 +176,10 @@ def main(args):
 
     opt = torch.optim.Adam(model.parameters(), lr=0.001)
 
+    # Initialize mixed precision trainer
+    mp_trainer = MixedPrecisionTrainer(enabled=getattr(args, 'mixed_precision', False))
+    print(f"Mixed precision training: {'enabled' if mp_trainer.is_enabled() else 'disabled'}")
+
     global_step = 0
 
     for epoch in range(args.n_epochs):
@@ -177,16 +188,16 @@ def main(args):
             x_input = torch.FloatTensor(x_input).cuda()
             y_extract = y_extract.type(torch.FloatTensor).cuda()
 
-            logits_restor, logits_extract = None, model(x_input)  # restoration + extraction
+            with mp_trainer.autocast_context():
+                logits_restor, logits_extract = None, model(x_input)  # restoration + extraction
 
             if args.added_part == "Yes":
                 loss = loss_func(logits_extract, logits_restor, y_extract, y_restor)
             else:
                 loss = loss_func(logits_extract, logits_restor, y_restor, y_extract)
 
-            loss.backward()
-            opt.step()
-            opt.zero_grad()
+            mp_trainer.backward(loss)
+            mp_trainer.step_optimizer(opt)
 
             tb.add_scalar("train_loss", loss.cpu().data.numpy(), global_step=global_step)
 

@@ -1,0 +1,33 @@
+{
+  "test_name": "simple_lines_line",
+  "output_hash": "bfe1573137623734dbca4f53897cc4cc27b4d5f6a9124d2bddb270baa2cfc9ce",
+  "output_type": "dict",
+  "timestamp": "2026-02-04",
+  "metadata": {
+    "pattern": "simple_lines",
+    "primitive_type": "line",
+    "image_size": "256x256"
+  },
+  "output": {
+    "test_name": "simple_lines_line",
+    "primitive_type": "line",
+    "primitives": [
+      [
+        10,
+        10,
+        100,
+        10,
+        2,
+        1
+      ],
+      [
+        10,
+        10,
+        10,
+        100,
+        2,
+        1
+      ]
+    ]
+  }
+}

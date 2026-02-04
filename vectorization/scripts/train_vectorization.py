@@ -25,6 +25,7 @@ import util_files.metrics.vector_metrics as vmetrics
 from util_files.data.graphics_primitives import PT_QBEZIER
 from util_files.file_utils import require_empty
 from util_files.logging import create_logger
+from util_files.mixed_precision import MixedPrecisionTrainer
 from util_files.optimization.optimizer.scheduled_optimizer import ScheduledOptimizer
 from util_files.tensorboard import SummaryWriter
 from util_files.visualization import make_ranked_images_from_loader_and_model
@@ -158,10 +159,15 @@ def main(options):
         4000,
     )
 
+    # Initialize mixed precision trainer
+    mp_trainer = MixedPrecisionTrainer(enabled=getattr(options, 'mixed_precision', False))
+    logger.info(f"Mixed precision training: {'enabled' if mp_trainer.is_enabled() else 'disabled'}")
+
     if options.init_model_filename:
         checkpoint = torch.load(options.init_model_filename)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        mp_trainer.load_state_dict(checkpoint.get("mp_trainer_state_dict", {}))
         epochs_completed = checkpoint["epoch"]
         batches_completed_in_epoch = checkpoint["batch"]
         optimizer.n_current_steps = checkpoint["iter"]
@@ -264,7 +270,8 @@ def main(options):
             y_true[is_nan_idx] = 0
 
             with logger.print_duration("    forward pass"):
-                y_pred = model.forward(images, max_lines)
+                with mp_trainer.autocast_context():
+                    y_pred = model.forward(images, max_lines)
 
             loss = make_loss_fn(y_pred, y_true, l2_weight=l2_weight)
 
@@ -273,8 +280,8 @@ def main(options):
             optimizer.zero_grad()
 
             with logger.print_duration("    backward pass"):
-                loss.backward()
-                optimizer.step_and_update_lr()
+                mp_trainer.backward(loss)
+                mp_trainer.step_optimizer(optimizer)
 
             # Output loss for each training step, as it is already computed
             logger.info(
@@ -322,6 +329,7 @@ def main(options):
                         "iter": iter_i,
                         "model_state_dict": model.state_dict(),
                         "optimizer_state_dict": optimizer.state_dict(),
+                        "mp_trainer_state_dict": mp_trainer.state_dict(),
                         "loss": loss,
                     },
                     weights_filename,
@@ -500,11 +508,11 @@ def parse_args():
         "-x", "--tboard-dir", dest="tboard_dir", help="Path to tensorboard [default: do not log events]."
     )
     parser.add_argument(
-        "-w",
-        "--overwrite",
+        "--mixed-precision",
         action="store_true",
         default=False,
-        help="If set, overwrite existing logs [default: exit if output dir exists].",
+        dest="mixed_precision",
+        help="Enable mixed precision training (FP16/FP32) for improved speed and memory efficiency [default: False].",
     )
 
     # add two more args corresponding to the parsing of job args

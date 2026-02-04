@@ -1,0 +1,33 @@
+{
+  "test_name": "simple_lines_curve",
+  "output_hash": "1637783886abecdf7068890d9b8036f506c982fb5b3f4041ce075a1c95b8a891",
+  "output_type": "dict",
+  "timestamp": "2026-02-04",
+  "metadata": {
+    "pattern": "simple_lines",
+    "primitive_type": "curve",
+    "image_size": "256x256"
+  },
+  "output": {
+    "test_name": "simple_lines_curve",
+    "primitive_type": "curve",
+    "primitives": [
+      [
+        10,
+        10,
+        100,
+        10,
+        2,
+        1
+      ],
+      [
+        10,
+        10,
+        10,
+        100,
+        2,
+        1
+      ]
+    ]
+  }
+}

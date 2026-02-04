@@ -1,0 +1,57 @@
+{
+  "test_name": "complex_shapes_line",
+  "output_hash": "35289b64ce449fae7cc27e06d84692458b4f6a6362f1a815313e2bc71c3deea8",
+  "output_type": "dict",
+  "timestamp": "2026-02-04",
+  "metadata": {
+    "pattern": "complex_shapes",
+    "primitive_type": "line",
+    "image_size": "256x256"
+  },
+  "output": {
+    "test_name": "complex_shapes_line",
+    "primitive_type": "line",
+    "primitives": [
+      [
+        50,
+        50,
+        150,
+        50,
+        2,
+        1
+      ],
+      [
+        50,
+        50,
+        50,
+        150,
+        2,
+        1
+      ],
+      [
+        50,
+        150,
+        150,
+        150,
+        2,
+        1
+      ],
+      [
+        150,
+        50,
+        150,
+        150,
+        2,
+        1
+      ],
+      [
+        50,
+        50,
+        150,
+        150,
+        2,
+        1
+      ]
+    ]
+  }
+}
