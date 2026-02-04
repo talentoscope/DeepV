@@ -30,7 +30,7 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 - [ ] Add support for arcs, splines, and variable primitive counts per patch.
 - [ ] Upgrade vectorization with transformer/diffusion models for generative and multimodal vectorization.
 - [ ] Add CAD export and sequence-to-CAD conversion for parametric downstream usage.
-- [ ] Build a simple web UI (Gradio) to visualize and test results interactively.
+- [x] Build a simple web UI (Gradio) to visualize and test results interactively.
 
 ## Phase 4 — Maintenance & Community
 - [ ] Add automated dependency security scans (`safety`) and periodic update cadence.
@@ -45,9 +45,3 @@ This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use i
 - [x] INSTALL.md: Created with installation guide and troubleshooting.
 - [x] Linting: Added black, isort, flake8 configs and scripts; applied formatting to codebase.
 - [x] Tests: All 14 tests pass, including smoke tests for pipeline import.
-
----
-
-If you'd like, I can:
-- Pin a CPU-only `torch` and `torchvision` variant into `requirements-dev.txt` to run ML-dependent smoke tests locally (longer install).
-- Start implementing Phase 1 refactors (e.g., `main_cleaning.py` refactor and unit tests for data loaders).
