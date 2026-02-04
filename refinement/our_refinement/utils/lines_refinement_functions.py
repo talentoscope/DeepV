@@ -572,7 +572,7 @@ def line_to_point_energy(lines_batch, point_charges, division_epsilon=1e-12, R_c
     return energies
 
 
-def line_to_vector_energy(lines_batch, vector_field, division_epsilon=1e-12, R_close=1):
+def line_to_vector_energy(lines_batch, vector_field, division_epsilon=1e-12, R_close=1, collinearity_beta=None, collinearity_field_weight=2):
     r"""For each line in `lines_batch` gives the total energy of interaction of this line with `vector_field`.
 
     Parameters
@@ -584,8 +584,8 @@ def line_to_vector_energy(lines_batch, vector_field, division_epsilon=1e-12, R_c
         of shape [2, batch_size, lines_n, rasters_n]
     """
 
-    collinearity_beta = 1 / ((np.abs(np.cos(15 * np.pi / 180)) - 1) ** 2)
-    collinearity_field_weight = 2
+    if collinearity_beta is None:
+        collinearity_beta = 1 / ((np.abs(np.cos(15 * np.pi / 180)) - 1) ** 2)
 
     batch_size, lines_n = lines_batch.shape[:2]
     rasters_n = vector_field.shape[-1]
@@ -646,12 +646,15 @@ def line_to_vector_energy(lines_batch, vector_field, division_epsilon=1e-12, R_c
 class MeanFieldEnergyComputer:
     """Computes mean field energy for line refinement using excess charge fields."""
 
-    def __init__(self, empty_charge=0, close_range_weight=2 * (1 / 0.5), elementary_halfwidth=1 / 2, visibility_padding=2, division_epsilon=1e-12):
+    def __init__(self, empty_charge=0, close_range_weight=2 * (1 / 0.5), elementary_halfwidth=1 / 2, visibility_padding=2, division_epsilon=1e-12, r_close=1, r_far=32, far_weight=1/50):
         self.empty_charge = empty_charge
         self.close_range_weight = close_range_weight
         self.elementary_halfwidth = elementary_halfwidth
         self.visibility_padding = visibility_padding
         self.division_epsilon = division_epsilon
+        self.r_close = r_close
+        self.r_far = r_far
+        self.far_weight = far_weight
 
     def compute(self, lines_batch, rasters_batch):
         """
@@ -712,7 +715,7 @@ class MeanFieldEnergyComputer:
         excess_raster = self._weight_visible_excess_charge(excess_raster, rasters_batch, x1, x2, y1, y2, lx, ly)
 
         # 9. For each line calculate the energy of its interaction with the excess raster field
-        mean_field_energy = line_to_point_energy(lines_batch, excess_raster).sum(-1).mean()
+        mean_field_energy = line_to_point_energy(lines_batch, excess_raster, division_epsilon=self.division_epsilon, R_close=self.r_close, R_far=self.r_far, far_weight=self.far_weight).sum(-1).mean()
         del excess_raster
         return mean_field_energy
 
@@ -832,6 +835,9 @@ def mean_field_energy_lines(
     elementary_halfwidth=1 / 2,
     visibility_padding=2,
     division_epsilon=1e-12,
+    r_close=1,
+    r_far=32,
+    far_weight=1/50,
 ):
     """
     Compute mean field energy for lines batch using MeanFieldEnergyComputer.
@@ -854,6 +860,12 @@ def mean_field_energy_lines(
         Padding for visibility calculations
     division_epsilon : float
         Small value to avoid division by zero
+    r_close : float
+        Close range parameter for energy computation
+    r_far : float
+        Far range parameter for energy computation
+    far_weight : float
+        Weight for far range energy
     """
     computer = MeanFieldEnergyComputer(
         empty_charge=empty_charge,
@@ -861,11 +873,14 @@ def mean_field_energy_lines(
         elementary_halfwidth=elementary_halfwidth,
         visibility_padding=visibility_padding,
         division_epsilon=division_epsilon,
+        r_close=r_close,
+        r_far=r_far,
+        far_weight=far_weight,
     )
     return computer.compute(lines_batch, rasters_batch)
 
 
-def mean_vector_field_energy_lines(lines_batch, supersampling_strategy=RegularSupersampling(4), division_epsilon=1e-12):
+def mean_vector_field_energy_lines(lines_batch, supersampling_strategy=RegularSupersampling(4), division_epsilon=1e-12, r_close=1, collinearity_beta=None, collinearity_field_weight=2):
     r"""...
     Algorithm is (for each batch):
     1. Render each line on binary supersample grid and subsample
@@ -908,13 +923,13 @@ def mean_vector_field_energy_lines(lines_batch, supersampling_strategy=RegularSu
         del patch_vector_fields, individual_vector_fields
 
     # 5. For each line calculate the energy of its interaction with complementary vector charge field
-    mean_field_energy = line_to_vector_energy(lines_batch, complimentary_vector_fields).sum(-1).mean()
+    mean_field_energy = line_to_vector_energy(lines_batch, complimentary_vector_fields, division_epsilon=division_epsilon, R_close=r_close, collinearity_beta=collinearity_beta, collinearity_field_weight=collinearity_field_weight).sum(-1).mean()
     del complimentary_vector_fields
     return mean_field_energy
 
 
 def size_energy(
-    lines_batch, rasters_batch, empty_charge=0, elementary_halfwidth=1 / 2, visibility_padding=2, division_epsilon=1e-12
+    lines_batch, rasters_batch, empty_charge=0, elementary_halfwidth=1 / 2, visibility_padding=2, division_epsilon=1e-12, r_close=1, r_far=32, far_weight=1/50
 ):
     r"""...
     Algorithm is (for each batch):
@@ -1064,7 +1079,7 @@ def size_energy(
         ### ax_debug.imshow(excess_raster[0, 0].detach().cpu().reshape(padded_h, padded_w))
 
     # 8. For each line calculate the energy of its interaction with the excess raster field
-    mean_field_energy = line_to_point_energy(lines_batch, excess_raster).sum(-1).mean()
+    mean_field_energy = line_to_point_energy(lines_batch, excess_raster, division_epsilon=division_epsilon, R_close=r_close, R_far=r_far, far_weight=far_weight).sum(-1).mean()
     del excess_raster
     return mean_field_energy
 

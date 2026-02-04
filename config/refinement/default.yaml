@@ -14,5 +14,14 @@ learning_rate_curves: 0.05  # lr=0.05 for curves
 max_reinit_iter: 100
 optimization_iters_n: 100
 
-# Energy weights (if any, to be added)
-# TODO: Extract energy computation weights
+# Energy computation parameters
+energy:
+  empty_charge: 0
+  close_range_weight: 2.0  # 2 * (1 / 0.5)
+  elementary_halfwidth: 0.5  # 1 / 2
+  visibility_padding: 2
+  r_close: 1
+  r_far: 32
+  far_weight: 0.02  # 1 / 50
+  collinearity_beta: 0.0718  # 1 / ((abs(cos(15*pi/180)) - 1)^2)
+  collinearity_field_weight: 2

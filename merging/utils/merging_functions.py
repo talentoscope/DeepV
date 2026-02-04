@@ -3,6 +3,7 @@ from __future__ import division
 
 import os
 import sys
+from typing import Tuple, List, Optional, Union
 
 sys.path.append("..")
 sys.path.append(os.path.join(os.getcwd(), ".."))
@@ -23,7 +24,7 @@ from util_files.geometric import liang_barsky_screen
 from util_files.rendering.cairo import render, render_with_skeleton
 
 
-def ordered(line):
+def ordered(line: np.ndarray) -> np.ndarray:
     """Reorder line coordinates to ensure min_x, min_y, max_x, max_y order for spatial indexing.
     
     Args:
@@ -40,7 +41,7 @@ def ordered(line):
     return np.array([min_x, min_y, max_x, max_y])
 
 
-def clip_to_box(y_pred, box_size=(64, 64)):
+def clip_to_box(y_pred: np.ndarray, box_size: Tuple[int, int] = (64, 64)) -> np.ndarray:
     """Clip line coordinates to fit within the specified box using Liang-Barsky algorithm.
     
     Args:
@@ -110,7 +111,7 @@ def tensor_vector_graph_numpy(y_pred_render, patches_offsets, options):
     return nump
 
 
-def merge_close_lines(lines, threshold=0.5):
+def merge_close_lines(lines: np.ndarray, threshold: float = 0.5) -> np.ndarray:
     """Merge collinear lines that are close together using RANSAC regression.
     
     Args:
@@ -168,7 +169,7 @@ def merge_close_lines(lines, threshold=0.5):
     return np.array([dt[0], y_pred[0], dt[-1], y_pred[-1]])
 
 
-def point_to_line_distance(point, line):
+def point_to_line_distance(point: Tuple[float, float], line: Tuple[float, float, float, float]) -> float:
     """Calculate the perpendicular distance from a point to an infinite line.
     
     Args:
@@ -224,7 +225,7 @@ def point_segment_distance(point, line):
     return math.hypot(dx, dy)
 
 
-def dist(line0, line1):
+def dist(line0: np.ndarray, line1: np.ndarray) -> float:
     """Calculate the minimum distance between two lines, or 9999 if too far apart.
     
     Args:
@@ -356,7 +357,7 @@ def compute_angle(line0, line1):
     return angle
 
 
-def merge_close(lines, idx, widths, tol=1e-3, max_dist=5, max_angle=15, window_width=100):
+def merge_close(lines: np.ndarray, idx, widths: np.ndarray, tol: float = 1e-3, max_dist: float = 5, max_angle: float = 15, window_width: int = 100):
     window = [-window_width, -window_width, window_width, window_width]
     n = len(lines)
     close = [[] for _ in range(n)]

@@ -9,4 +9,18 @@ max_distance_to_connect: 3
 window_width: 200  # in merge_close function
 lines_matching_frac: 0.07  # fraction in lines_matching
 
+# Parameters for merge_close function
+merge_close:
+  tol: 0.001  # tolerance for merging
+  max_dist: 5  # maximum distance for merging
+  max_angle: 15  # maximum angle difference for merging
+  window_width: 100  # search window width
+
+# Parameters for curve merging
+curve_merging:
+  width_percentile: 90  # percentile for width calculation
+  fit_tol: 0.5  # fitting tolerance
+  w_tol: .inf  # width tolerance (infinity = no limit)
+  join_tol: 0.5  # joining tolerance
+
 # TODO: Extract other tolerances and parameters
