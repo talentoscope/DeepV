@@ -17,8 +17,9 @@ These datasets often include real-world variations like noise, distortions, or m
 - **CAD-VGDrawing (Drawing2CAD)**  
   Size: 157k–161k SVG-to-CAD pairs (from CAD models; 4 views: Front, Top, Right, Isometric).  
   Formats: SVG vectors, raster PNG (derived), JSON/sequences for parametric CAD commands.  
-  Features: Aligns vector primitives (lines, arcs, curves) with editable CAD operations; preserves geometry and design intent; path reordering/normalization. Derived from DeepCAD models via FreeCAD. Split: 90% train, 5% val/test.  
+  Features: Aligns vector primitives (lines, arcs, curves) with editable CAD operations; preserves geometry and design intent; path reordering/normalization. Original CAD models for this dataset are sourced from the rundiwu/DeepCAD project (see link below); dataset conversion and packaging are provided in the lllssc/Drawing2CAD repository. Conversion/export to viewable SVGs was performed via FreeCAD. Split: 90% train, 5% val/test.  
   Access: [Google Drive](https://drive.google.com/drive/folders/1t9uO2iFh1eVDXRCKUEonKPBu8WGYA8wU?usp=sharing).  
+  Repositories: [lllssc/Drawing2CAD](https://github.com/lllssc/Drawing2CAD) (dataset + conversion scripts), [rundiwu/DeepCAD](https://github.com/rundiwu/DeepCAD) (original CAD models).  
   License: Academic/research.  
   Suitability: Vector-to-parametric tasks; rasterize SVGs for full raster-to-vector pipelines. Preprocessing: Limit sequences to 100 primitives.
 
@@ -58,7 +59,7 @@ These datasets often include real-world variations like noise, distortions, or m
   Size: 5,000 scanned floorplans.  
   Formats: High-res raster (up to 6k px), SVG annotations.  
   Features: 80+ semantic labels (rooms, furniture, walls); Finnish real estate CAD-sourced.  
-  Access: [GitHub](https://github.com/CubiCasa/CubiCasa5k).  
+  Access: [GitHub](https://github.com/CubiCasa/CubiCasa5k) / [Zenodo](https://zenodo.org/record/2613548).  
   License: CC BY-NC 4.0.  
   Suitability: Noisy raster-to-vector. Preprocessing: Align pairs.
 
@@ -82,7 +83,7 @@ These datasets often include real-world variations like noise, distortions, or m
   Size: ~122 floorplans (4 subsets).  
   Formats: Raster with masks; vector derivable.  
   Features: Semantic segmentation; architectural.  
-  Access: [CVC Site](http://dag.cvc.uab.es/floorplan/).  
+  Access: Contact authors (ECCV paper; original site unavailable).  
   License: Research.  
   Suitability: Baseline vector traces. Preprocessing: Pair masks.
 
@@ -90,7 +91,7 @@ These datasets often include real-world variations like noise, distortions, or m
   Size: 350k+ patent drawings.  
   Formats: PNG (from TIF), XML metadata.  
   Features: Design patents (2018-2019); multi-view.  
-  Access: Google Drive (per GitHub).  
+  Access: Contact authors (original paper; no public repo or direct link found).  
   License: CC0.  
   Suitability: Patent retrieval/vectorization. Preprocessing: Query sampling.
 
@@ -98,7 +99,7 @@ These datasets often include real-world variations like noise, distortions, or m
   Size: 81 photos/scans of floorplans.  
   Formats: Raster (raw/cleaned), vector targets.  
   Features: Real noise/text; inpainted lines.  
-  Access: Contact authors (ECCV 2020).  
+  Access: Contact authors (ECCV 2020 paper; no public repo found).  
   License: Research.  
   Suitability: Degraded raster-to-vector.
 
@@ -113,7 +114,7 @@ These datasets often include real-world variations like noise, distortions, or m
   Size: 150k+ patents, 850k+ drawings.  
   Formats: Images, text metadata, bounding boxes.  
   Features: Multi-view figures; object/viewpoint info.  
-  Access: MMM 2024 paper; contact authors.  
+  Access: Contact authors (MMM 2024 paper; no public repo found).  
   License: Not specified.  
   Suitability: Patent retrieval/vectorization. Preprocessing: Segment figures.
 
@@ -121,7 +122,7 @@ These datasets often include real-world variations like noise, distortions, or m
   Size: ~355k figures from 60k+ documents.  
   Formats: Images, captions, metadata.  
   Features: Multimodal descriptions; sparse illustrations.  
-  Access: arXiv 2501.15074; release pending.  
+  Access: [arXiv](https://arxiv.org/abs/2501.15074) (dataset release pending).  
   License: Research.  
   Suitability: Image-to-vector with captions.
 
@@ -137,7 +138,7 @@ These datasets often include real-world variations like noise, distortions, or m
   Size: 1k+ annotated sketches.  
   Formats: Sketches paired with 3D CAD.  
   Features: 3D retrieval.  
-  Access: Contact authors (Computers & Graphics).  
+  Access: Contact authors (Computers & Graphics paper; no public repo found).  
   License: Research.  
   Suitability: Sketch-to-vector/CAD.
 
@@ -145,7 +146,7 @@ These datasets often include real-world variations like noise, distortions, or m
   Size: 41k+ CAD UI videos.  
   Formats: Videos, 3D models, UI traces.  
   Features: Long-horizon UI for generation.  
-  Access: OpenReview; code available.  
+  Access: Contact authors (OpenReview paper; no public repo found).  
   License: Open.  
   Suitability: Dynamic vectorization/UI-CAD.
 
@@ -153,7 +154,7 @@ These datasets often include real-world variations like noise, distortions, or m
   Size: 100k+ elements (high-res images).  
   Formats: Raster with vector points (quartets for shapes).  
   Features: Diverse plans; sparse boundaries.  
-  Access: Contact authors.  
+  Access: Contact authors (no public repo found).  
   License: Research.  
   Suitability: Minimal-point vectorization.
 
@@ -161,7 +162,7 @@ These datasets often include real-world variations like noise, distortions, or m
   Size: 4,596 IFC, 6,471 RVT, 156,024 DWG.  
   Formats: Vector CAD/BIM files.  
   Features: Automated from architectural sites.  
-  Access: DataDrivenConstruction.io.  
+  Access: Contact authors (site unavailable).  
   License: Varies (public).  
   Suitability: Large-scale vector analysis. Preprocessing: For ML.
 
@@ -169,7 +170,7 @@ These datasets often include real-world variations like noise, distortions, or m
   Size: City-scale 3D models.  
   Formats: CAD (DXF/IFC/OBJ/STL).  
   Features: Urban buildings/parcels/roads; vector maps.  
-  Access: AccuCities/TopoExport.  
+  Access: Contact vendors (sites unavailable).  
   License: Commercial/research.  
   Suitability: Large-area technical vectorization; 2D/3D.
 
@@ -185,7 +186,7 @@ These datasets often include real-world variations like noise, distortions, or m
   Size: 999 blended wing body geometries (~9 conditions each; 8,830 cases).  
   Formats: Geometries, RANS simulations (Spalart-Allmaras).  
   Features: Aerodynamic; 9-14M cells/case.  
-  Access: Public (per paper).  
+  Access: Contact authors (paper; no public repo found).  
   License: Apache 2.0 variant.  
   Suitability: Aerospace mechanical vectorization.
 
@@ -213,7 +214,7 @@ These provide controlled data for initial training or augmentation.
   Size: ~48 polygonal floorplans.  
   Formats: Vector.  
   Features: Room shapes/connectivity.  
-  Access: Contact authors (ECCV).  
+  Access: Contact authors (ECCV paper; no public repo found).  
   License: Research.  
   Suitability: Simple vector-graph. Preprocessing: Render inputs.
 
@@ -237,7 +238,7 @@ These provide controlled data for initial training or augmentation.
   Size: 20k sketches (250 categories, 80 each).  
   Formats: Raster/vector.  
   Features: Freehand sketches.  
-  Access: Public.  
+  Access: Contact authors or check university archives (no direct link found).  
   License: Research.  
   Suitability: Sketch recognition/vectorization.
 
@@ -245,6 +246,6 @@ These provide controlled data for initial training or augmentation.
   Size: 115k word images (offline), 13k lines (online; 70k words).  
   Formats: Raster (offline), point coordinates (online).  
   Features: Sequence recognition.  
-  Access: IAM site.  
+  Access: Contact authors (site unavailable; check academic repos).  
   License: Research.  
   Suitability: Handwriting vectorization; rasterize online for pairs.
