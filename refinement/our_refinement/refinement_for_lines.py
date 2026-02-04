@@ -1,5 +1,6 @@
 import argparse
 import signal
+from typing import Any
 
 from refinement.our_refinement.utils.lines_refinement_functions import *
 from util_files.metrics.iou import calc_iou__vect_image
@@ -18,7 +19,7 @@ def register_sigint_flag(flag_list):
     signal.signal(signal.SIGINT, _handler)
 
 
-def render_optimization_hard(patches_rgb, patches_vector, device, options, name):
+def render_optimization_hard(patches_rgb, patches_vector, device, options, name) -> Any:
     """
 
     :param patches_rgb: patches with rgb(from 0 to 255) [b,3,64,64](can change but code should be changed respectevly)

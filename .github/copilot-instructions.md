@@ -1,62 +1,77 @@
 # Copilot instructions for DeepV (Deep Vectorization)
 
-Purpose: give an AI coding agent the minimal, actionable context needed to be productive in this repository.
+Short, actionable guidance to get an AI coding agent productive quickly in this repo.
 
-- **Big picture:** The pipeline has four main modules: cleaning, vectorization, refinement, and merging. Inputs flow: raw raster -> cleaning (denoise) -> vectorization (predict primitives per patch) -> refinement (differentiable optimization) -> merging (consolidate primitives). See [README.md](README.md) and [PLAN.md](PLAN.md) for longer descriptions.
+## Big picture
+- Pipeline modules: **cleaning → vectorization → refinement → merging**. Flow: raster image → cleaning (denoise/pad/patchify) → vectorization (predict primitives per patch) → refinement (differentiable optimization) → merging (consolidate primitives, export DXF/SVG).
+- Implemented in PyTorch; datasets & preprocessing live in `dataset/`; demos and experiments in `notebooks/`.
 
-- **Where to start (files):**
-  - **Run full pipeline:** [run_pipeline.py](run_pipeline.py)
-  - **Cleaning training / entrypoint:** [cleaning/scripts/main_cleaning.py](cleaning/scripts/main_cleaning.py)
-  - **Module code:** `cleaning/`, `vectorization/`, `refinement/`, `merging/` folders
-  - **Utilities & gotchas:** [util_files/file_utils.py](util_files/file_utils.py) (renamed from `os.py` to avoid shadowing stdlib `os`)
+## Where to start (quick links)
+- Full pipeline runner: [run_pipeline.py](run_pipeline.py)
+- Hydra variant: [run_pipeline_hydra.py](run_pipeline_hydra.py)
+- Cleaning entrypoint: [cleaning/scripts/main_cleaning.py](cleaning/scripts/main_cleaning.py)
+- Web demo: [run_web_ui_demo.py](run_web_ui_demo.py) and [web_ui/](web_ui/)
+- Notebooks: [notebooks/Rendering_example.ipynb](notebooks/Rendering_example.ipynb)
+- Utilities: [util_files/file_utils.py](util_files/file_utils.py) and [util_files/patchify.py](util_files/patchify.py)
 
-- **How to run (examples)** — most scripts use `argparse` and have hardcoded defaults that assume the repository is mounted under `/code`, datasets under `/data`, and logs under `/logs` (Docker defaults in README). Use these or override flags.
+## How to run (concrete examples)
+- Run pipeline (example):
 
-  - Run the vectorization/refinement/merge pipeline (example):
+```bash
+python run_pipeline.py \
+  --model_path /logs/models/vectorization/lines/model_lines.weights \
+  --json_path /code/vectorization/models/specs/<spec>.json \
+  --data_dir /data/abc_png_svg/ \
+  --primitive_type line \
+  --model_output_count 10 \
+  --overlap 0
+```
 
-  ```bash
-  python run_pipeline.py \
-    --model_path /logs/models/vectorization/lines/model_lines.weights \
-    --json_path /code/.../vectorization/models/specs/<spec>.json \
-    --data_dir /data/abc_png_svg/ \
-    --primitive_type line \
-    --model_output_count 10 \
-    --overlap 0
-  ```
+- Train cleaning UNet (example):
 
-  - Train cleaning UNet (example):
+```bash
+python cleaning/scripts/main_cleaning.py \
+  --model UNET --datadir /data/synth/ --valdatadir /data/val/ \
+  --n_epochs 10 --batch_size 8 --name exp1
+```
 
-  ```bash
-  python cleaning/scripts/main_cleaning.py \
-    --model UNET --datadir /data/synth/ --valdatadir /data/val/ \
-    --n_epochs 10 --batch_size 8 --name exp1
-  ```
+- Local Windows dev (powershell):
 
-- **Conventions & patterns (project-specific)**
-  - Most scripts rely on `argparse` defaults with absolute paths (e.g., `/data`, `/logs`, `/code`) — prefer overriding flags rather than changing defaults.
-  - Patching strategy: images are padded to multiples of 32 (see `cleaning/scripts/main_cleaning.py` and `run_pipeline.py`'s `read_data`/padding logic).
-  - Vectorization works on square patches (often 64px) extracted using `util_files/patchify.py` (`patchify` call in `run_pipeline.py`).
-  - Checkpoint & tensorboard locations: many defaults point to `/logs/...` and the code uses `tensorboardX` (SummaryWriter). Configure `--output_dir`/`--model_path` and TB dir explicitly for reproducibility.
-  - Some utility filenames previously shadowed stdlib modules (e.g., `util_files/os.py`). The file has been renamed to `util_files/file_utils.py` — prefer `from util_files import file_utils as fu` or `from util_files.file_utils import require_empty` when importing.
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
+.\scripts\run_tests_local.ps1
+```
 
-- **Developer workflows & environment**
-  - Recommended: use the provided Dockerfile (see `docker/Dockerfile`) or run inside Linux/WSL. The README includes Docker build/run examples and notes about mounted paths.
-  - On Windows, use WSL or Docker for compatibility (dataset download scripts and shell helpers assume Linux).
-  - There is no automated test suite; run small experiments and validate with the notebooks in `notebooks/` when iterating.
+## Project-specific conventions & gotchas
+- Many scripts use `argparse` with defaults assuming repo mounted at `/code`, datasets at `/data`, logs at `/logs`. Prefer overriding flags rather than editing defaults.
+- Patch & padding: patches are square (commonly 64px) and images are padded to multiples of 32 (see `cleaning/scripts/main_cleaning.py` and `run_pipeline.py` read/padding logic).
+- `util_files/os.py` previously shadowed stdlib `os`. Use [util_files/file_utils.py](util_files/file_utils.py) imports: `from util_files import file_utils as fu`.
+- Checkpoints & logging: defaults use `/logs/...` and `tensorboardX` (SummaryWriter). Always set `--output_dir` and TB dir for reproducibility.
 
-- **Repository workflow (personal project)**
-  - This is a personal project; active development is done directly on the `master` branch by default. Small edits, CI tweaks and tests are typically committed to `master` and pushed to `origin`.
-  - If you want to experiment separately, create short-lived branches named `draft/<topic>` and merge back into `master` when ready.
-  - This is a personal project; active development is done directly on the `master` branch by default. All development and checks are run locally — there is no CI configured for this repo.
-  - If you want to experiment separately, create short-lived branches named `draft/<topic>` and merge back into `master` when ready.
+## Integration points & dependencies
+- Native/C bindings: `cairo`, `pycairo` used for rendering. Ensure system `cairo` is installed for the Python bindings to work.
+- Custom ops: `chamferdist` may require compilation or binary wheel matching your PyTorch version.
+- Deep learning: PyTorch + torchvision; specific versions may be pinned in `requirements*.txt`.
 
-- **Common pitfalls to watch for**
-  - Hardcoded default paths may cause silent failures if files are not at expected locations.
-  - Some code expects GPU/CPU behavior via `--gpu` flags and sets CUDA env vars manually (`CUDA_VISIBLE_DEVICES`) — be explicit when testing multi-GPU.
-  - Long functions and mixed responsibilities exist in `refinement/` and `merging/` — prefer small, local refactors and add unit tests for helpers.
+## Tests, validation & debugging
+- Validate environment: `python scripts/validate_env.py`.
+- Run local tests (Windows helper): `.\scripts\run_tests_local.ps1` or `pytest -q` after installing `requirements-dev.txt`.
+- Not all tests require GPU; tests skip heavy ML parts when CUDA/PyTorch missing.
 
-- **Search shortcuts for the agent**
-  - Look for entrypoints with `if __name__ == '__main__'` to find scripts to run (e.g., `run_pipeline.py`, `cleaning/scripts/main_cleaning.py`).
-  - Inspect `util_files/`, `notebooks/`, and `dataset/` for examples of expected input formats and dataset layout.
+## Where code is fragile / good refactor targets
+- Long, mixed-responsibility functions exist in `refinement/` and `merging/` — prefer small, focused refactors.
+- Hardcoded paths and magic numbers across scripts (batch sizes, primitive counts) — make config-driven when changing behavior.
 
-If anything here looks incomplete or you want more examples (e.g., a canonical `docker run` for Windows/WSL, or exact lines to change when renaming `util_files/os.py`), tell me which area to expand and I'll iterate.
+## Search shortcuts for an agent
+- Find entrypoints: search for `if __name__ == '__main__'` (e.g., `run_pipeline.py`, `cleaning/scripts/main_cleaning.py`).
+- Inspect `util_files/`, `notebooks/`, and `dataset/` for I/O formats and examples.
+- Model specs are JSON under `vectorization/models/specs/` — useful when modifying model I/O.
+
+## Quick checklist for common tasks
+- Run a quick smoke inference: run `run_web_ui_demo.py` (small demo) to sanity-check model imports and rendering path.
+- Debug imports: prefer `from util_files import file_utils as fu` to avoid name clashes.
+- Reproduce an experiment: always supply `--data_dir`, `--model_path`, and `--output_dir` to pipeline scripts.
+
+If you want, I can expand this with a short example for Docker on Windows/WSL, add exact lines to change when renaming utilities, or include common pytest commands. Which area should I expand? 

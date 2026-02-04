@@ -3,6 +3,7 @@ import os
 import signal
 import sys
 from abc import ABC, abstractmethod
+from typing import List, Dict, Any, Union
 
 import numpy as np
 import torch
@@ -229,19 +230,19 @@ class RGSSSupersampling(SupersamplingStrategy):
 
 
 def render_lines(
-    x1,
-    y1,
-    x2,
-    y2,
-    width,
-    sample_coordinates,
-    samples=None,
-    linecaps="butt",
-    dtype=torch.float16,
-    requires_grad=False,
-    sparse=False,
-    division_epsilon=1e-12,
-):
+    x1: torch.Tensor,
+    y1: torch.Tensor,
+    x2: torch.Tensor,
+    y2: torch.Tensor,
+    width: torch.Tensor,
+    sample_coordinates: torch.Tensor,
+    samples: torch.Tensor = None,
+    linecaps: str = "butt",
+    dtype: torch.dtype = torch.float16,
+    requires_grad: bool = False,
+    sparse: bool = False,
+    division_epsilon: float = 1e-12,
+) -> Union[torch.Tensor, torch.sparse.FloatTensor]:
     """...
     Requires 34 bytes of GPU memory per patch per line per sample for half precision computations (default),
              45 for single precision computations, and 65 for double presision computations,
@@ -310,7 +311,7 @@ supersampling_strategy = RegularSupersampling(4)
 sample_coordinates = supersampling_strategy.supersample(raster_coordinates)
 
 
-def render_lines_pt(lines_batch, samples=None, uint=False):
+def render_lines_pt(lines_batch: torch.Tensor, samples: torch.Tensor = None, uint: bool = False) -> Union[torch.Tensor, np.ndarray]:
     rasters = render_lines(
         lines_batch[:, :, 0],
         lines_batch[:, :, 1],
@@ -329,7 +330,7 @@ def render_lines_pt(lines_batch, samples=None, uint=False):
         return rasters
 
 
-def render_lines_with_type(lines_batch, rendering_type="hard", supersampling=4, uint=False):
+def render_lines_with_type(lines_batch: torch.Tensor, rendering_type: str = "hard", supersampling: int = 4, uint: bool = False) -> Union[torch.Tensor, np.ndarray]:
     """Render lines using the specified rendering type."""
     if rendering_type == "bezier_splatting":
         return render_lines_bezier_splatting(lines_batch, supersampling=supersampling, uint=uint)
@@ -337,7 +338,7 @@ def render_lines_with_type(lines_batch, rendering_type="hard", supersampling=4, 
         return render_lines_pt(lines_batch, uint=uint)
 
 
-def render_primitives_with_type(primitives_batch, rendering_type="bezier_splatting", supersampling=4, uint=False):
+def render_primitives_with_type(primitives_batch: List[Dict[str, Any]], rendering_type: str = "bezier_splatting", supersampling: int = 4, uint: bool = False) -> Union[torch.Tensor, np.ndarray]:
     """
     Render multiple primitive types using the specified rendering type.
 
@@ -642,89 +643,107 @@ def line_to_vector_energy(lines_batch, vector_field, division_epsilon=1e-12, R_c
     return energies * collinearity_field_weight
 
 
-def mean_field_energy_lines(
-    lines_batch,
-    rasters_batch,
-    empty_charge=0,
-    close_range_weight=2 * (1 / 0.5),
-    elementary_halfwidth=1 / 2,
-    visibility_padding=2,
-    division_epsilon=1e-12,
-):
-    r"""...
-    Algorithm is (for each batch):
-    1. Render each line on binary supersample grid
-    2. Sum (OR) individual renderings -- this is total positive charge field
-    3. For each line calculate the sum from step 2 minus the rendering of this line from step 1
-       -- this is the excess positive charge field for this line
-    4. Subsample the renderings from step 3
-    5. Subtract the actual raster from the subsampled renderings from step 4
-       -- this is the excess charge field for each line
+class MeanFieldEnergyComputer:
+    """Computes mean field energy for line refinement using excess charge fields."""
 
-    Steps 6-8 are needed to avoid local minima.
+    def __init__(self, empty_charge=0, close_range_weight=2 * (1 / 0.5), elementary_halfwidth=1 / 2, visibility_padding=2, division_epsilon=1e-12):
+        self.empty_charge = empty_charge
+        self.close_range_weight = close_range_weight
+        self.elementary_halfwidth = elementary_halfwidth
+        self.visibility_padding = visibility_padding
+        self.division_epsilon = division_epsilon
 
-    6. For each line calculate coordinates of each excess charge in the coordinate system of this line,
-       where the y axis is aligned along the length, the x axis is aligned along the width,
-       and the origin is in the center of the line
-    7. For each line find the largest rectangle aligned along this line and filled with nonempty pixels only
-    7..Such rectangle can be non unique, so define it like this:
-    7.1. Select all empty pixels within `elementary_halfwidth` around the direction of the line, i.e |x| <= `elementary_halfwidth`
-    7.2. Find the  pixels with minimal positive and maximal negative y coordinate
-         -- these pixels correspond to the 'y' edges of the rectangle
-    7.3. Select all empty pixels within the 'y' edges of the rectangle
-    7.4. Find the pixels with minimal absolute x coordinate
-         -- these pixels correspond to the 'x' edges of the rectangle
-    8. Weight the excess charge within the rectangle additionally
+    def compute(self, lines_batch, rasters_batch):
+        """
+        Compute mean field energy for lines batch.
 
-    9. For each line calculate the energy of its interaction with the excess raster field
+        Algorithm is (for each batch):
+        1. Render each line on binary supersample grid
+        2. Sum (OR) individual renderings -- this is total positive charge field
+        3. For each line calculate the sum from step 2 minus the rendering of this line from step 1
+           -- this is the excess positive charge field for this line
+        4. Subsample the renderings from step 3
+        5. Subtract the actual raster from the subsampled renderings from step 4
+           -- this is the excess charge field for each line
 
-    Parameters
-    ----------
-    lines_batch : torch.Tensor
-        of shape [batch_size, lines_n, params_n]
+        Steps 6-8 are needed to avoid local minima.
 
-    rasters_batch : torch.Tensor
-        of shape [batch_size, rasters_n]
+        6. For each line calculate coordinates of each excess charge in the coordinate system of this line,
+           where the y axis is aligned along the length, the x axis is aligned along the width,
+           and the origin is in the center of the line
+        7. For each line find the largest rectangle aligned along this line and filled with nonempty pixels only
+        7..Such rectangle can be non unique, so define it like this:
+        7.1. Select all empty pixels within `elementary_halfwidth` around the direction of the line, i.e |x| <= `elementary_halfwidth`
+        7.2. Find the  pixels with minimal positive and maximal negative y coordinate
+             -- these pixels correspond to the 'y' edges of the rectangle
+        7.3. Select all empty pixels within the 'y' edges of the rectangle
+        7.4. Find the pixels with minimal absolute x coordinate
+             -- these pixels correspond to the 'x' edges of the rectangle
+        8. Weight the excess charge within the rectangle additionally
 
-    close_range_weight : number
-        Should be twice the inverse of the lowest shading value.
-    """
-    batch_size, lines_n = lines_batch.shape[:2]
-    x1 = lines_batch[..., 0]
-    y1 = lines_batch[..., 1]
-    x2 = lines_batch[..., 2]
-    y2 = lines_batch[..., 3]
-    half_width = lines_batch[..., 4] / 2
-    lx = x2 - x1
-    ly = y2 - y1
-    length = torch.sqrt(lx**2 + ly**2)
-    nonzero_length = torch.max(length, torch.full([1], division_epsilon, dtype=length.dtype, device=length.device))
-    lx = lx / nonzero_length
-    ly = ly / nonzero_length
-    del nonzero_length
+        9. For each line calculate the energy of its interaction with the excess raster field
 
-    with torch.no_grad():
-        # 1. Render each line on binary supersample grid
-        individual_rasterizations = render_lines(x1, y1, x2, y2, lines_batch[:, :, 4], sample_coordinates)
+        Parameters
+        ----------
+        lines_batch : torch.Tensor
+            of shape [batch_size, lines_n, params_n]
 
-        # 2. Sum (OR) individual renderings -- this is total positive charge field
-        patch_rasterizations = individual_rasterizations.sum(1, dtype=individual_rasterizations.dtype)
+        rasters_batch : torch.Tensor
+            of shape [batch_size, rasters_n]
 
-        # 3. For each line calculate the sum from step 2 minus the rendering of this line from step 1
-        #    -- this is the excess positive charge field for this line
-        others_rasterizations = individual_rasterizations ^ patch_rasterizations.unsqueeze(1)
-        del patch_rasterizations, individual_rasterizations
+        close_range_weight : number
+            Should be twice the inverse of the lowest shading value.
+        """
+        batch_size, lines_n = lines_batch.shape[:2]
+        x1 = lines_batch[..., 0]
+        y1 = lines_batch[..., 1]
+        x2 = lines_batch[..., 2]
+        y2 = lines_batch[..., 3]
+        half_width = lines_batch[..., 4] / 2
+        lx = x2 - x1
+        ly = y2 - y1
+        length = torch.sqrt(lx**2 + ly**2)
+        nonzero_length = torch.max(length, torch.full([1], self.division_epsilon, dtype=length.dtype, device=length.device))
+        lx = lx / nonzero_length
+        ly = ly / nonzero_length
+        del nonzero_length
 
-        # 4. Subsample the renderings from step 3
-        others_rasterizations = supersampling_strategy.subsample(others_rasterizations, dtype=dtype)
+        excess_raster = self._compute_excess_raster(lines_batch, rasters_batch, x1, y1, x2, y2)
+        excess_raster = self._weight_visible_excess_charge(excess_raster, rasters_batch, x1, x2, y1, y2, lx, ly)
 
-        # 5. Subtract the actual raster from the subsampled renderings from step 4
-        #    -- this is the excess charge field for each line
-        excess_raster = others_rasterizations
-        rasters_batch = rasters_batch.type(dtype).reshape(batch_size, -1).unsqueeze(1)
-        excess_raster -= rasters_batch
-        del others_rasterizations
+        # 9. For each line calculate the energy of its interaction with the excess raster field
+        mean_field_energy = line_to_point_energy(lines_batch, excess_raster).sum(-1).mean()
+        del excess_raster
+        return mean_field_energy
 
+    def _compute_excess_raster(self, lines_batch, rasters_batch, x1, y1, x2, y2):
+        """Compute excess raster field for each line."""
+        with torch.no_grad():
+            # 1. Render each line on binary supersample grid
+            individual_rasterizations = render_lines(x1, y1, x2, y2, lines_batch[:, :, 4], sample_coordinates)
+
+            # 2. Sum (OR) individual renderings -- this is total positive charge field
+            patch_rasterizations = individual_rasterizations.sum(1, dtype=individual_rasterizations.dtype)
+
+            # 3. For each line calculate the sum from step 2 minus the rendering of this line from step 1
+            #    -- this is the excess positive charge field for this line
+            others_rasterizations = individual_rasterizations ^ patch_rasterizations.unsqueeze(1)
+            del patch_rasterizations, individual_rasterizations
+
+            # 4. Subsample the renderings from step 3
+            others_rasterizations = supersampling_strategy.subsample(others_rasterizations, dtype=dtype)
+
+            # 5. Subtract the actual raster from the subsampled renderings from step 4
+            #    -- this is the excess charge field for each line
+            excess_raster = others_rasterizations
+            rasters_batch_reshaped = rasters_batch.type(dtype).reshape(rasters_batch.shape[0], -1).unsqueeze(1)
+            excess_raster -= rasters_batch_reshaped
+            del others_rasterizations
+
+        return excess_raster
+
+    def _weight_visible_excess_charge(self, excess_raster, rasters_batch, x1, x2, y1, y2, lx, ly):
+        """Weight excess charge within visible rectangles to avoid local minima."""
         # 6. For each line calculate coordinates of each excess charge in the coordinate system of this line,
         #    where the y axis is aligned along the length, the x axis is aligned along the width,
         #    and the origin is in the center of the line
@@ -758,9 +777,9 @@ def mean_field_energy_lines(
         # 7.1. Select all empty pixels within `elementary_halfwidth` around the direction of the line, i.e |x| <= `elementary_halfwidth`
         # 7.2. Find the  pixels with minimal positive and maximal negative y coordinate
         #      -- these pixels correspond to the 'y' edges of the rectangle
-        empty = rasters_batch <= empty_charge
+        empty = rasters_batch <= self.empty_charge
         del rasters_batch
-        candidates = canonical_raster_x_abs <= elementary_halfwidth
+        candidates = canonical_raster_x_abs <= self.elementary_halfwidth
         candidates &= empty
         points_to_the_right = canonical_raster_y >= 0
         candidates_one_side = points_to_the_right & candidates
@@ -792,20 +811,58 @@ def mean_field_energy_lines(
         #    This is needed to avoid local minima of energy that are not optimal for the size energy
         visible_excess_charge = ~empty
         del empty
-        visible_excess_charge &= canonical_raster_y <= (max_y.unsqueeze(-1) + visibility_padding)
+        visible_excess_charge &= canonical_raster_y <= (max_y.unsqueeze(-1) + self.visibility_padding)
         del max_y
-        visible_excess_charge &= canonical_raster_y >= (min_y.unsqueeze(-1) - visibility_padding)
+        visible_excess_charge &= canonical_raster_y >= (min_y.unsqueeze(-1) - self.visibility_padding)
         del canonical_raster_y, min_y
-        visible_excess_charge &= canonical_raster_x_abs <= (max_x.unsqueeze(-1) + visibility_padding)
+        visible_excess_charge &= canonical_raster_x_abs <= (max_x.unsqueeze(-1) + self.visibility_padding)
         del canonical_raster_x_abs, max_x
         visible_excess_charge &= excess_raster < 0
-        excess_raster = excess_raster.where(~visible_excess_charge, excess_raster * close_range_weight)
+        excess_raster = excess_raster.where(~visible_excess_charge, excess_raster * self.close_range_weight)
         del visible_excess_charge
 
-    # 9. For each line calculate the energy of its interaction with the excess raster field
-    mean_field_energy = line_to_point_energy(lines_batch, excess_raster).sum(-1).mean()
-    del excess_raster
-    return mean_field_energy
+        return excess_raster
+
+
+def mean_field_energy_lines(
+    lines_batch,
+    rasters_batch,
+    empty_charge=0,
+    close_range_weight=2 * (1 / 0.5),
+    elementary_halfwidth=1 / 2,
+    visibility_padding=2,
+    division_epsilon=1e-12,
+):
+    """
+    Compute mean field energy for lines batch using MeanFieldEnergyComputer.
+
+    Parameters
+    ----------
+    lines_batch : torch.Tensor
+        of shape [batch_size, lines_n, params_n]
+
+    rasters_batch : torch.Tensor
+        of shape [batch_size, rasters_n]
+
+    empty_charge : float
+        Threshold for empty charge
+    close_range_weight : number
+        Should be twice the inverse of the lowest shading value.
+    elementary_halfwidth : float
+        Half width for elementary rectangle calculation
+    visibility_padding : int
+        Padding for visibility calculations
+    division_epsilon : float
+        Small value to avoid division by zero
+    """
+    computer = MeanFieldEnergyComputer(
+        empty_charge=empty_charge,
+        close_range_weight=close_range_weight,
+        elementary_halfwidth=elementary_halfwidth,
+        visibility_padding=visibility_padding,
+        division_epsilon=division_epsilon,
+    )
+    return computer.compute(lines_batch, rasters_batch)
 
 
 def mean_vector_field_energy_lines(lines_batch, supersampling_strategy=RegularSupersampling(4), division_epsilon=1e-12):

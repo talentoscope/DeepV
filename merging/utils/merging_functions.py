@@ -24,6 +24,14 @@ from util_files.rendering.cairo import render, render_with_skeleton
 
 
 def ordered(line):
+    """Reorder line coordinates to ensure min_x, min_y, max_x, max_y order for spatial indexing.
+    
+    Args:
+        line: Array of [x1, y1, x2, y2, width, opacity]
+        
+    Returns:
+        Array of [min_x, min_y, max_x, max_y] for bounding box
+    """
     min_x = min(line[0], line[2])
     min_y = min(line[1], line[3])
     max_x = max(line[0], line[2])
@@ -33,6 +41,15 @@ def ordered(line):
 
 
 def clip_to_box(y_pred, box_size=(64, 64)):
+    """Clip line coordinates to fit within the specified box using Liang-Barsky algorithm.
+    
+    Args:
+        y_pred: Array of [x1, y1, x2, y2, width, opacity]
+        box_size: Tuple of (width, height) for the box
+        
+    Returns:
+        Clipped line array or NaN array if clipping fails
+    """
     width, height = box_size
     bbox = (0, 0, width, height)
     point1, point2 = y_pred[:2], y_pred[2:4]
@@ -94,6 +111,15 @@ def tensor_vector_graph_numpy(y_pred_render, patches_offsets, options):
 
 
 def merge_close_lines(lines, threshold=0.5):
+    """Merge collinear lines that are close together using RANSAC regression.
+    
+    Args:
+        lines: Array of shape (n_lines, 6) with [x1, y1, x2, y2, width, opacity]
+        threshold: Slope threshold to distinguish vertical lines
+        
+    Returns:
+        Merged line array of [x1, y1, x2, y2]
+    """
     #     min_x = min(lines[:,0].min(), lines[:,2].min())
     #     max_x = max(lines[:,0].max(), lines[:,2].max())
     #     min_y = min(lines[:,1].min(), lines[:,3].min())
@@ -143,6 +169,15 @@ def merge_close_lines(lines, threshold=0.5):
 
 
 def point_to_line_distance(point, line):
+    """Calculate the perpendicular distance from a point to an infinite line.
+    
+    Args:
+        point: Tuple (px, py)
+        line: Tuple (x1, y1, x2, y2)
+        
+    Returns:
+        Distance from point to line
+    """
     px, py = point
     x1, y1, x2, y2 = line
     dx = x2 - x1
@@ -153,6 +188,15 @@ def point_to_line_distance(point, line):
 
 
 def point_segment_distance(point, line):
+    """Calculate the minimum distance from a point to a line segment.
+    
+    Args:
+        point: Tuple (px, py)
+        line: Tuple (x1, y1, x2, y2)
+        
+    Returns:
+        Minimum distance to the segment
+    """
     px, py = point
     x1, y1, x2, y2 = line
     dx = x2 - x1
@@ -181,6 +225,14 @@ def point_segment_distance(point, line):
 
 
 def dist(line0, line1):
+    """Calculate the minimum distance between two lines, or 9999 if too far apart.
+    
+    Args:
+        line0, line1: Arrays of [x1, y1, x2, y2, width, opacity]
+        
+    Returns:
+        Minimum distance between endpoints and segments, or 9999 if lines are too far apart
+    """
     if (
         point_to_line_distance(line0[:2], line1[:4]) >= 2
         or point_to_line_distance(line0[2:4], line1[:4]) >= 2
@@ -202,6 +254,15 @@ def dist(line0, line1):
 
 
 def dfs(graph, start):
+    """Perform depth-first search on a graph.
+    
+    Args:
+        graph: Dictionary representing adjacency list
+        start: Starting node
+        
+    Returns:
+        Set of visited nodes
+    """
     visited, stack = set(), [start]
     while stack:
         vertex = stack.pop()
@@ -211,11 +272,27 @@ def dfs(graph, start):
     return visited
 
 
-def line_legth(line):
+def line_length(line):
+    """Calculate the length of a line segment.
+    
+    Args:
+        line: Array of [x1, y1, x2, y2, ...]
+        
+    Returns:
+        Euclidean distance between endpoints
+    """
     return np.sqrt((line[0] - line[2]) ** 2 + (line[1] - line[3]) ** 2)
 
 
 def intersect(line0, line1):
+    """Find intersection points of two line segments.
+    
+    Args:
+        line0, line1: Arrays of [x1, y1, x2, y2, ...]
+        
+    Returns:
+        List of intersection points as (t1, t2) parameters, or empty list
+    """
     # Solve the system [p1-p0, q1-q0]*[t1, t2]^T = q0 - p0
     # where line0 = (p0, p1) and line1 = (q0, q1)
 
@@ -236,6 +313,14 @@ def intersect(line0, line1):
 
 
 def angle_radians(pt1, pt2):
+    """Calculate the angle in radians between two vectors.
+    
+    Args:
+        pt1, pt2: Tuples (x, y) representing vectors
+        
+    Returns:
+        Angle in radians
+    """
     x1, y1 = pt1
     x2, y2 = pt2
     inner_product = x1 * x2 + y1 * y2
@@ -245,6 +330,14 @@ def angle_radians(pt1, pt2):
 
 
 def normalize(x):
+    """Normalize a vector to unit length.
+    
+    Args:
+        x: Numpy array
+        
+    Returns:
+        Normalized vector
+    """
     return x / np.linalg.norm(x)
 
 

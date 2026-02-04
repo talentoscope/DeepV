@@ -1,0 +1,12 @@
+# Merging configuration
+# Magic numbers extracted from merging code
+
+# Connection parameters (already in pipeline config, but here for completeness)
+max_angle_to_connect: 10
+max_distance_to_connect: 3
+
+# Hardcoded values in merging_for_lines.py
+window_width: 200  # in merge_close function
+lines_matching_frac: 0.07  # fraction in lines_matching
+
+# TODO: Extract other tolerances and parameters

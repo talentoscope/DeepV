@@ -1,0 +1,18 @@
+# Refinement configuration
+# Magic numbers extracted from refinement code
+
+# Rendering parameters
+render_res: 64  # h, w
+padding: 3
+supersampling: 4
+pixel_center_coordinates_are_integer: false
+division_epsilon: 1e-12
+
+# Optimization parameters
+learning_rate_lines: 0.1  # lr=1e-1 for lines
+learning_rate_curves: 0.05  # lr=0.05 for curves
+max_reinit_iter: 100
+optimization_iters_n: 100
+
+# Energy weights (if any, to be added)
+# TODO: Extract energy computation weights

@@ -1,49 +1,86 @@
-# DeepV TODO Checklist
+# DeepV TODO Checklist (Updated February 2026)
 
-This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use it as a living checklist for local development. Items marked [x] are complete; [ ] are pending.
+This file is a comprehensive, actionable checklist derived from `PLAN.md`. Use it as a living checklist for local development. Items marked [x] are complete; [ ] are pending. Prioritized based on current state (Phase 3 completed, Phase 4 active).
 
-## Phase 1 — Foundation (high priority)
-- [x] Update core dependencies and create a pinned `requirements.txt` / `constraints.txt` for releases. (See `requirements-dev.txt` for dev pins.)
-- [x] Add `requirements-dev.txt` with pinned dev packages for fast local testing.
-- [x] Add Windows test runner `scripts/run_tests_local.ps1` to create a venv, install dev deps, run validator, and run pytest.
-- [x] Add `DEVELOPER.md` with quick venv/run instructions.
-- [x] Rename conflicting util: `util_files/os.py` → `util_files/file_utils.py` and update imports.
-- [x] Add a small suite of unit tests for `merging` helpers and `util_files` utilities.
-- [x] Add a lightweight refinement smoke test that avoids importing heavy ML libs.
-- [x] Run the full local pytest suite and iterate on dependency fixes until green.
-
-## Phase 1 — Additional action items
-- [x] Refactor `cleaning/scripts/main_cleaning.py` to use consistent argparse/config pattern; add unit tests for data loaders and synthetic data generator.
-- [x] Add unit tests for vectorization components (model loading, small inference).
-- [x] Add targeted unit tests for refinement helper functions (canonicalization, constraints).
-- [x] Expand merging tests with edge cases and performance benchmarks.
-- [x] Add linting, formatting, and pre-commit hooks (`black`, `flake8`, optional `mypy`).
-- [x] Add Sphinx docs and an API reference; migrate useful notebook content into docs/examples.
-- [x] Add configuration management (Hydra or centralized config object) for reproducible experiments.
-
-## Phase 2 — Optimization
-- [x] Profile refinement and rendering hotspots (use `torch.profiler` and small benchmarks).
-- [x] Implement faster differentiable rendering (e.g., Bézier Splatting) prototypes to accelerate refinement.
-- [x] Optimize merging algorithms with spatial indices (R-tree) to reduce O(n^2) behavior.
-
-## Phase 3 — Enhancements
+## Phase 3 — Enhancements (COMPLETED ✓)
 - [x] Add support for arcs, splines, and variable primitive counts per patch.
-- [ ] Upgrade vectorization with transformer/diffusion models for generative and multimodal vectorization.
-- [x] Add CAD export and sequence-to-CAD conversion for parametric downstream usage.
-- [x] Build a simple web UI (Gradio) to visualize and test results interactively.
-- [x] Improve accuracy with better metrics/models (added curve-based Hausdorff distance metric).
-- [x] Add scalability features (larger images, distributed training).
+- [x] Upgrade vectorization with autoregressive transformer decoder (up to 20 primitives/patch).
+- [x] Add CAD export (DXF/SVG) and parametric CAD conversion.
+- [x] Build Gradio-based web UI with Bézier splatting rendering.
+- [x] Improve metrics (added curve-based Hausdorff distance).
+- [x] Add distributed training support (torch.distributed).
+- [x] Fix svgpathtools Python 3.10+ compatibility.
 
-## Phase 4 — Maintenance & Community
-- [x] Add automated dependency security scans (`safety`) and periodic update cadence.
-- [x] Add an issues/labels template and contribution guide for external contributors.
-- [x] Optionally add CI with a separation of lightweight vs heavy tests (local-first policy recommended).
+## Phase 4 — Production-Ready & Robustness (ACTIVE, High Priority)
+### Documentation & Type Safety (HIGH PRIORITY)
+- [x] Add comprehensive docstrings to all functions (focus: refinement/merging modules, e.g., lines_refinement_functions.py).
+- [ ] Add type hints to function signatures (target 80%+ coverage across codebase).
+- [ ] Improve error handling with specific exception types (refinement/merging operations).
+- [ ] Add structured logging to critical paths (training, inference, refinement).
 
-## Quick wins (done)
-- [x] Tests: small unit tests for merging and util_files added.
-- [x] Dev helper: `requirements-dev.txt` and `scripts/run_tests_local.ps1` added.
-- [x] `DEVELOPER.md` added with concise local workflow.
-- [x] Dependencies: Updated `requirements.txt` with modern pinned versions (torch 2.5.1, etc.).
-- [x] INSTALL.md: Created with installation guide and troubleshooting.
-- [x] Linting: Added black, isort, flake8 configs and scripts; applied formatting to codebase.
-- [x] Tests: All 14 tests pass, including smoke tests for pipeline import.
+### Code Quality & Refactoring (HIGH PRIORITY)
+- [x] Refactor long functions in refinement (400+ lines) into smaller units with clear responsibilities.
+- [ ] Extract magic numbers and hardcoded values into configurable parameters (Hydra configs).
+- [ ] Add configuration files for tolerance-based merging and refinement hyperparameters.
+- [ ] Consolidate separate line/curve refinement and merging pipelines into unified interfaces.
+
+### Testing & Validation
+- [ ] Expand unit test coverage to 70%+ (focus: refinement pipeline, merging logic).
+- [ ] Add integration tests for full pipeline (cleaning → vectorization → refinement → merging).
+- [ ] Add regression tests comparing outputs against baseline results.
+- [ ] Add performance benchmarks with expected time/memory targets.
+
+### Performance & Optimization
+- [ ] Profile and optimize refinement bottlenecks (target: <2s per 64x64 patch).
+- [ ] Add mixed-precision training support for memory-efficient large model training.
+- [ ] Implement checkpoint resumption to enable long training runs without interruption.
+- [ ] Add early stopping validation on training script.
+
+### Dataset & Evaluation
+- [ ] Add benchmarking pipeline for ArchCAD, CAD-VGDrawing datasets.
+- [ ] Implement comprehensive evaluation suite (compare F1, IoU, Hausdorff vs SOTA).
+- [ ] Add dataset-specific evaluation reports and visualization.
+- [ ] Support for synthetic dataset generation with variable complexity.
+
+## Phase 5 — Advanced & Next-Gen (Ongoing, 3–9 months)
+- [ ] Explore diffusion-transformer models for generative vectorization (text+image conditioning).
+- [ ] Add panoptic symbol spotting + vector merging.
+- [ ] Implement multimodal inputs (text prompts, style references).
+- [ ] Explore VLM distillation (OmniSVG-inspired) for complex SVGs.
+- [ ] Community: HF model hub upload, public demo Spaces.
+- [ ] Regular security/dependency maintenance.
+
+## Recommended Immediate Next Steps (Priority Order)
+### 1–2 weeks Quick Wins
+- [x] Extract all refinement/merging magic numbers to Hydra configs.
+- [x] Add docstrings to 10–15 most complex functions.
+- [x] Extend type hints in refinement pipeline.
+
+### 2–6 weeks Medium Term
+- [ ] Refactor refinement long functions → classes/modules.
+- [ ] Build basic end-to-end integration test suite.
+- [ ] Add structured logging + exception hierarchy.
+
+### 2–4 months Long Term
+- [ ] Reach high type-hint coverage + strict mypy.
+- [ ] Full performance profiling + targeted optimizations.
+- [ ] Integrate ArchCAD-400K + symbol spotting evaluation.
+- [ ] Explore diffusion-transformer prototype for generative mode.
+
+## Maintenance & Community (Ongoing)
+- [x] Add automated dependency security scans and periodic updates.
+- [x] Add issues/labels template and contribution guide.
+- [x] Local-first testing policy (no CI, run tests locally).
+
+## Completed Foundation Items (Phases 1-2)
+- [x] Update core dependencies and create pinned requirements.
+- [x] Add requirements-dev.txt and Windows test runner.
+- [x] Add DEVELOPER.md with venv/run instructions.
+- [x] Rename util_files/os.py → file_utils.py and update imports.
+- [x] Add unit tests for merging, util_files, refinement smoke tests.
+- [x] Refactor main_cleaning.py with consistent argparse.
+- [x] Add linting/formatting (black, flake8, pre-commit).
+- [x] Add Sphinx docs and API reference.
+- [x] Add configuration management (Hydra).
+- [x] Profile and optimize rendering (Bézier Splatting implemented).
+- [x] Optimize merging with spatial indices.
