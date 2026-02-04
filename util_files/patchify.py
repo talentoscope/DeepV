@@ -37,8 +37,8 @@ def unpatchify(patches: np.ndarray, imsize: Tuple[int, int]):
 
     for i, j in product(range(n_h), range(n_w)):
         patch = patches[i, j]
-        image[(i * s_h):(i * s_h) + p_h, (j * s_w):(j * s_w) + p_w] += patch
-        divisor[(i * s_h):(i * s_h) + p_h, (j * s_w):(j * s_w) + p_w] += 1
+        image[(i * s_h) : (i * s_h) + p_h, (j * s_w) : (j * s_w) + p_w] += patch
+        divisor[(i * s_h) : (i * s_h) + p_h, (j * s_w) : (j * s_w) + p_w] += 1
 
     return image / divisor
 
@@ -59,20 +59,16 @@ def split_to_patches(rgb, patch_size, overlap=0):
     :rtype Tuple[numpy.ndarray, numpy.ndarray]
     """
     rgb = rgb.transpose(1, 2, 0)
-    rgb_t = np.ones((rgb.shape[0] + 33, rgb.shape[1] + 33, rgb.shape[2])) * 255.
-    rgb_t[:rgb.shape[0], :rgb.shape[1], :] = rgb
+    rgb_t = np.ones((rgb.shape[0] + 33, rgb.shape[1] + 33, rgb.shape[2])) * 255.0
+    rgb_t[: rgb.shape[0], : rgb.shape[1], :] = rgb
     rgb = rgb_t
 
     height, width, channels = rgb.shape
 
     assert patch_size > 0 and 0 <= overlap < patch_size
-    patches = patchify(rgb,
-                       patch_size=(patch_size, patch_size, channels),
-                       step=patch_size - overlap)
+    patches = patchify(rgb, patch_size=(patch_size, patch_size, channels), step=patch_size - overlap)
     patches = patches.reshape((-1, patch_size, patch_size, channels))
     height_offsets = np.arange(0, height - patch_size, step=patch_size - overlap)
     width_offsets = np.arange(0, width - patch_size, step=patch_size - overlap)
-    patches_offsets = np.array(list(
-        product(height_offsets, width_offsets)
-    ))
+    patches_offsets = np.array(list(product(height_offsets, width_offsets)))
     return patches, patches_offsets, rgb

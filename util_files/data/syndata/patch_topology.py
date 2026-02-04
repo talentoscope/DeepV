@@ -8,10 +8,18 @@ from util_files.data.graphics_primitives import PT_LINE, Line
 from util_files.geometric import direction_from_angle
 
 from .snapping import snap_beam, snap_outer
-from .utils import renormalize, choose_with_proba
-from .types import ET_A, ET_B, ET_C, ET_NONE
-from .types import ST_NONE, ST_BEAM, ST_OUTER
-from .types import ODT_MAXDOT, ODT_RANDOM
+from .types import (
+    ET_A,
+    ET_B,
+    ET_C,
+    ET_NONE,
+    ODT_MAXDOT,
+    ODT_RANDOM,
+    ST_BEAM,
+    ST_NONE,
+    ST_OUTER,
+)
+from .utils import choose_with_proba, renormalize
 
 
 class PatchTopology:
@@ -25,39 +33,51 @@ class PatchTopology:
         self.dataset = dataset
 
     @classmethod
-    def from_dataset(cls, dataset): return cls(dataset)
+    def from_dataset(cls, dataset):
+        return cls(dataset)
 
-    def _sample_juncpoints(self): raise NotImplemented
+    def _sample_juncpoints(self):
+        raise NotImplemented
 
-    def _sample_directions(self): raise NotImplemented
+    def _sample_directions(self):
+        raise NotImplemented
 
     def _sample_direction_props(self):
         # TODO @artonson: same line width for all primitives?
-        return [{
-            'primitive_type': PT_LINE,
-            'num_primitives': choose_with_proba(self.dataset.strokes_probas),
-            'gap': uniform(self.dataset.min_primitives_gap, self.dataset.max_primitives_gap),
-            'stroke_width': uniform(self.dataset.min_stroke_width, self.dataset.max_stroke_width),
-            'length': uniform(self.dataset.min_stroke_length, self.dataset.max_stroke_length),
-            'ortho_dir_type': ODT_MAXDOT,
-        } for _ in range(self.NUM_DIRECTIONS)]
+        return [
+            {
+                "primitive_type": PT_LINE,
+                "num_primitives": choose_with_proba(self.dataset.strokes_probas),
+                "gap": uniform(self.dataset.min_primitives_gap, self.dataset.max_primitives_gap),
+                "stroke_width": uniform(self.dataset.min_stroke_width, self.dataset.max_stroke_width),
+                "length": uniform(self.dataset.min_stroke_length, self.dataset.max_stroke_length),
+                "ortho_dir_type": ODT_MAXDOT,
+            }
+            for _ in range(self.NUM_DIRECTIONS)
+        ]
 
-    def _generate_direction(self, primitive_type=PT_LINE,
-                            endpoint_a=None, endpoint_b=None,
-                            direction=None,
-                            num_primitives=1,
-                            gap=0, stroke_width=1, length=1,
-                            ortho_dir_type=ODT_RANDOM, snapping_type=ST_NONE,
-                            joint_directions_props=None):
+    def _generate_direction(
+        self,
+        primitive_type=PT_LINE,
+        endpoint_a=None,
+        endpoint_b=None,
+        direction=None,
+        num_primitives=1,
+        gap=0,
+        stroke_width=1,
+        length=1,
+        ortho_dir_type=ODT_RANDOM,
+        snapping_type=ST_NONE,
+        joint_directions_props=None,
+    ):
 
-        closest_direction_idx = np.argmax([np.dot(props['direction'], direction)
-                                           for props in joint_directions_props])
+        closest_direction_idx = np.argmax([np.dot(props["direction"], direction) for props in joint_directions_props])
         closest_direction_props = joint_directions_props[closest_direction_idx]
-        direction_cl = closest_direction_props['direction']
+        direction_cl = closest_direction_props["direction"]
 
         ortho_dir_unsigned = np.array([-direction[1], direction[0]])
         if ODT_RANDOM == ortho_dir_type:
-            ortho_sign = +1 if uniform() > .5 else -1
+            ortho_sign = +1 if uniform() > 0.5 else -1
         elif ODT_MAXDOT == ortho_dir_type:
             ortho_sign = +1 if np.dot(direction_cl, ortho_dir_unsigned) > 0 else -1
         else:
@@ -82,8 +102,7 @@ class PatchTopology:
         directions_props = self._sample_direction_props()
         assert len(directions_props) == self.NUM_DIRECTIONS
 
-        primitive_props = self._compute_primitive_props(
-            junction_points, directions, directions_props)
+        primitive_props = self._compute_primitive_props(junction_points, directions, directions_props)
         assert len(primitive_props) == self.NUM_DIRECTIONS
 
         directions = [self._generate_direction(**props) for props in primitive_props]
@@ -111,10 +130,7 @@ class OneJunctionTopology(PatchTopology):
     def _sample_juncpoints(self):
         patch_width, patch_height = self.dataset.patch_size
         border = self.dataset.border
-        return np.array([[
-            uniform(border, patch_height - border),
-            uniform(border, patch_width - border)
-        ]])
+        return np.array([[uniform(border, patch_height - border), uniform(border, patch_width - border)]])
 
     def _sample_directions(self):
         # TODO junction_directions_probas must be offsets, not values
@@ -122,8 +138,7 @@ class OneJunctionTopology(PatchTopology):
         angles = []
         prohibited_angles = set()
         for angle_id in range(self.NUM_DIRECTIONS):
-            direction_probas = renormalize(
-                self.dataset.directions_probas, without=prohibited_angles)
+            direction_probas = renormalize(self.dataset.directions_probas, without=prohibited_angles)
             angle = choose_with_proba(direction_probas)
             prohibited_angles.update({angle, angle + np.pi, angle - np.pi})
             angles.append(angle)
@@ -136,27 +151,33 @@ class OneJunctionTopology(PatchTopology):
         for junction_idx in range(self.NUM_JUNCTIONS):
             endpoint_types = self.ENDPOINT_TYPES[junction_idx]
             snapping_types = self.SNAPPING_TYPES[junction_idx]
-            for direction_idx, (primitive_props, direction_props, direction, endpoint_type, snapping_type) in \
-                    enumerate(zip(primitives_props, directions_props, directions, endpoint_types, snapping_types)):
-                joint_directions_props = [props for props_idx, props in enumerate(primitives_props)
-                                          if props_idx != direction_idx and ET_NONE != endpoint_types[props_idx]]
-                primitive_props.update({
-                    'direction': direction,
-                    'joint_directions_props': joint_directions_props,
-                    'snapping_type': snapping_type,
-                })
+            for direction_idx, (primitive_props, direction_props, direction, endpoint_type, snapping_type) in enumerate(
+                zip(primitives_props, directions_props, directions, endpoint_types, snapping_types)
+            ):
+                joint_directions_props = [
+                    props
+                    for props_idx, props in enumerate(primitives_props)
+                    if props_idx != direction_idx and ET_NONE != endpoint_types[props_idx]
+                ]
+                primitive_props.update(
+                    {
+                        "direction": direction,
+                        "joint_directions_props": joint_directions_props,
+                        "snapping_type": snapping_type,
+                    }
+                )
 
-                if ET_A == endpoint_type:    # endpoint is ET_A, i.e. first endpoint
+                if ET_A == endpoint_type:  # endpoint is ET_A, i.e. first endpoint
                     primitive_endpoint = junc_point_coords
-                    primitive_props.update({'endpoint_a': primitive_endpoint})
+                    primitive_props.update({"endpoint_a": primitive_endpoint})
 
                 elif ET_B == endpoint_type:  # endpoint is ET_B, i.e. second endpoint
                     primitive_endpoint = junc_point_coords
-                    primitive_props.update({'endpoint_b': primitive_endpoint})
+                    primitive_props.update({"endpoint_b": primitive_endpoint})
 
                 elif ET_C == endpoint_type:  # endpoint is ET_C, i.e. center point
-                    primitive_endpoint = junc_point_coords - .5 * direction_props['length'] * direction
-                    primitive_props.update({'endpoint_a': primitive_endpoint})
+                    primitive_endpoint = junc_point_coords - 0.5 * direction_props["length"] * direction
+                    primitive_props.update({"endpoint_a": primitive_endpoint})
 
                 elif ET_NONE != endpoint_type:
                     raise ValueError('not supported value for endpoint type: "{}"'.format(endpoint_type))
@@ -280,8 +301,12 @@ class TOuterTopology(TTopology):
             snapped_second = second_lines
         else:
             snapped_first_center = snap_beam(first_lines[1:-1], second_lines, et_first)
-            snapped_first_1, snapped_second_1 = snap_outer(first_lines[:1], second_lines[-1:], endpoint_first=ET_A, endpoint_second=ET_B)
-            snapped_first_2, snapped_second_2 = snap_outer(first_lines[-1:], second_lines[-1:], endpoint_first=ET_A, endpoint_second=ET_A)
+            snapped_first_1, snapped_second_1 = snap_outer(
+                first_lines[:1], second_lines[-1:], endpoint_first=ET_A, endpoint_second=ET_B
+            )
+            snapped_first_2, snapped_second_2 = snap_outer(
+                first_lines[-1:], second_lines[-1:], endpoint_first=ET_A, endpoint_second=ET_A
+            )
             snapped_first = snapped_first_center + snapped_first_1 + snapped_first_2
             snapped_second = second_lines[:-1] + snapped_second_1 + snapped_second_2
         return snapped_first + snapped_second
@@ -329,13 +354,23 @@ class XOuterTopology(XTopology):
             snapped_first_center = first_lines[1:-1]
             snapped_second_center = second_lines[1:-1]
 
-            snapped_first_1, snapped_second_1 = snap_outer(first_lines[:1],  second_lines[:1],  endpoint_first=ET_B, endpoint_second=ET_B)
-            snapped_first_2, snapped_second_2 = snap_outer(first_lines[:1],  second_lines[-1:], endpoint_first=ET_A, endpoint_second=ET_B)
-            snapped_first_3, snapped_second_3 = snap_outer(first_lines[-1:], second_lines[:1],  endpoint_first=ET_B, endpoint_second=ET_A)
-            snapped_first_4, snapped_second_4 = snap_outer(first_lines[-1:], second_lines[-1:], endpoint_first=ET_A, endpoint_second=ET_A)
+            snapped_first_1, snapped_second_1 = snap_outer(
+                first_lines[:1], second_lines[:1], endpoint_first=ET_B, endpoint_second=ET_B
+            )
+            snapped_first_2, snapped_second_2 = snap_outer(
+                first_lines[:1], second_lines[-1:], endpoint_first=ET_A, endpoint_second=ET_B
+            )
+            snapped_first_3, snapped_second_3 = snap_outer(
+                first_lines[-1:], second_lines[:1], endpoint_first=ET_B, endpoint_second=ET_A
+            )
+            snapped_first_4, snapped_second_4 = snap_outer(
+                first_lines[-1:], second_lines[-1:], endpoint_first=ET_A, endpoint_second=ET_A
+            )
 
             snapped_first = snapped_first_center + snapped_first_1 + snapped_first_2 + snapped_first_3 + snapped_first_4
-            snapped_second = snapped_second_center + snapped_second_1 + snapped_second_2 + snapped_second_3 + snapped_second_4
+            snapped_second = (
+                snapped_second_center + snapped_second_1 + snapped_second_2 + snapped_second_3 + snapped_second_4
+            )
 
         return snapped_first + snapped_second
 
@@ -362,8 +397,6 @@ class Star3Topology(OneJunctionTopology):
     NUM_DIRECTIONS = 3
     ENDPOINT_TYPES = [[ET_C, ET_C, ET_C]]
     SNAPPING_TYPES = [[ST_NONE, ST_NONE, ST_NONE]]
-
-
 
 
 # class TwoJunctionTopology(PatchTopology):
@@ -406,32 +439,37 @@ class Star3Topology(OneJunctionTopology):
 #     pass
 
 
-
-
 TOPOLOGY_BY_NAME = {
-    'l': LTopology,
-    'l-beam': LBeamTopology,
-    'l-beam2': LBeam2Topology,
-    'l-outer': LOuterTopology,
-    't': TTopology,
-    't-beam': TBeamTopology,
-    't-outer': TOuterTopology,
-    'x': XTopology,
-    'x-beam': XBeamTopology,
-    'x-outer': XOuterTopology,
-    'y': YTopology,
-    'k': KTopology,
-    'x-dash': XDashTopology,
-    'star3': Star3Topology,
+    "l": LTopology,
+    "l-beam": LBeamTopology,
+    "l-beam2": LBeam2Topology,
+    "l-outer": LOuterTopology,
+    "t": TTopology,
+    "t-beam": TBeamTopology,
+    "t-outer": TOuterTopology,
+    "x": XTopology,
+    "x-beam": XBeamTopology,
+    "x-outer": XOuterTopology,
+    "y": YTopology,
+    "k": KTopology,
+    "x-dash": XDashTopology,
+    "star3": Star3Topology,
 }
 
 __all__ = [
-    'LTopology', 'LBeamTopology', 'LBeam2Topology', 'LOuterTopology',
-    'TTopology', 'TBeamTopology', 'TOuterTopology',
-    'XTopology', 'XBeamTopology', 'XOuterTopology',
-    'YTopology',
-    'KTopology',
-    'XDashTopology',
-    'Star3Topology',
-    'TOPOLOGY_BY_NAME'
+    "LTopology",
+    "LBeamTopology",
+    "LBeam2Topology",
+    "LOuterTopology",
+    "TTopology",
+    "TBeamTopology",
+    "TOuterTopology",
+    "XTopology",
+    "XBeamTopology",
+    "XOuterTopology",
+    "YTopology",
+    "KTopology",
+    "XDashTopology",
+    "Star3Topology",
+    "TOPOLOGY_BY_NAME",
 ]

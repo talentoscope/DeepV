@@ -14,13 +14,13 @@ def bezier_steps(bezier, same_line_threshold):
         p1 = (q0 + q1 * 2) / 3
         p2 = (q2 + q1 * 2) / 3
         p3 = q2
-    sqsteps = 18 * max(sqlen(p0 - p1), sqlen(p2 - p3), sqlen(p0 - p2) * .25, sqlen(p1 - p3) * .25)
+    sqsteps = 18 * max(sqlen(p0 - p1), sqlen(p2 - p3), sqlen(p0 - p2) * 0.25, sqlen(p1 - p3) * 0.25)
     return int(np.ceil(np.sqrt(sqsteps)))
 
 
 def find_longest_flat(poly_x, poly_y, ts, threshold):
-    '''Returns `line, N` such that each of the first N points are no further than threshold from the line
-       and `line = points[0], points[N-1]`'''
+    """Returns `line, N` such that each of the first N points are no further than threshold from the line
+    and `line = points[0], points[N-1]`"""
     assert len(ts) > 1
 
     t0 = ts[0]
@@ -57,7 +57,7 @@ def polycurve_is_in_line(poly_x, poly_y, line, max_deviation, tmin=0, tmax=1):
     if np.any(np.abs(poly_dist(roots)) > max_deviation):
         return False
 
-    max_deviation_sq = max_deviation ** 2
+    max_deviation_sq = max_deviation**2
 
     # check the left end of the line
     poly_sqdist_l0 = (poly_x - l0x) ** 2 + (poly_y - l0y) ** 2
@@ -80,7 +80,7 @@ def polycurve_is_in_line(poly_x, poly_y, line, max_deviation, tmin=0, tmax=1):
 
 def polycurve_is_in_point(poly_x, poly_y, point, max_deviation, tmin=0, tmax=1):
     poly_sqdist = (poly_x - point[0]) ** 2 + (poly_y - point[1]) ** 2
-    max_deviation_sq = max_deviation ** 2
+    max_deviation_sq = max_deviation**2
     if (poly_sqdist(tmin) > max_deviation_sq) or (poly_sqdist(tmax) > max_deviation_sq):
         return False
 

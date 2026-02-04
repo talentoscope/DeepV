@@ -6,7 +6,7 @@ from .unet_parts import *
 
 
 class UNet(nn.Module):
-    def __init__(self, n_channels, n_classes, bilinear=True,final_tanh=False):
+    def __init__(self, n_channels, n_classes, bilinear=True, final_tanh=False):
         super(UNet, self).__init__()
         self.n_channels = n_channels
         self.n_classes = n_classes
@@ -37,5 +37,5 @@ class UNet(nn.Module):
         x = self.up4(x, x1)
         logits = self.outc(x)
         if self.final_tanh:
-            logits = (F.tanh(logits)+1)/2.
+            logits = (F.tanh(logits) + 1) / 2.0
         return logits

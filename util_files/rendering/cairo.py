@@ -3,12 +3,21 @@ from sys import byteorder
 import cairocffi as cairo
 import numpy as np
 
-from util_files.data.graphics_primitives import PT_LINE, PT_ARC, PT_CBEZIER, PT_QBEZIER, PT_QBEZIER_B, PT_POINT
 from util_files.data.graphics.primitives import CBezier, Line, QBezier
+from util_files.data.graphics_primitives import (
+    PT_ARC,
+    PT_CBEZIER,
+    PT_LINE,
+    PT_POINT,
+    PT_QBEZIER,
+    PT_QBEZIER_B,
+)
+
 from .skeleton import make_skeleton_vahe
 from .utils import qbezier_to_cbezier
 
-def render(data, dimensions, data_representation='paths', linecaps='square', linejoin='miter'):
+
+def render(data, dimensions, data_representation="paths", linecaps="square", linejoin="miter"):
     # prepare data buffer
     width, height = dimensions
     buffer_width = cairo.ImageSurface.format_stride_for_width(cairo.FORMAT_A8, width)
@@ -27,8 +36,8 @@ def render(data, dimensions, data_representation='paths', linecaps='square', lin
         ctx.set_line_cap(linecaps)
 
         # ignore r,g,b -- draw in alpha
-        set_color_to_bg = lambda: ctx.set_source_rgba(0, 0, 0, 1) # white
-        set_color_to_fg = lambda: ctx.set_source_rgba(0, 0, 0, 0) # black
+        set_color_to_bg = lambda: ctx.set_source_rgba(0, 0, 0, 1)  # white
+        set_color_to_fg = lambda: ctx.set_source_rgba(0, 0, 0, 0)  # black
 
         # fill bg
         set_color_to_bg()
@@ -44,8 +53,21 @@ def render(data, dimensions, data_representation='paths', linecaps='square', lin
     return image
 
 
-def render_with_skeleton(data, dimensions, data_representation='vahe', line_width=1, node_size=4, control_line_width=.5, control_node_size=2, line_color=(1,1,0), node_color=(1,0,0), controls_color=(0,0,1), linecaps='square', linejoin='miter'):
-    if data_representation != 'vahe':
+def render_with_skeleton(
+    data,
+    dimensions,
+    data_representation="vahe",
+    line_width=1,
+    node_size=4,
+    control_line_width=0.5,
+    control_node_size=2,
+    line_color=(1, 1, 0),
+    node_color=(1, 0, 0),
+    controls_color=(0, 0, 1),
+    linecaps="square",
+    linejoin="miter",
+):
+    if data_representation != "vahe":
         raise NotImplementedError
     # prepare data buffer
     width, height = dimensions
@@ -59,21 +81,21 @@ def render_with_skeleton(data, dimensions, data_representation='vahe', line_widt
     # draw
     surface = cairo.ImageSurface(cairo.FORMAT_RGB24, *dimensions, data=memoryview(image), stride=buffer_width)
 
-    if byteorder == 'little':
-        rgb_slice = slice(0,3)
+    if byteorder == "little":
+        rgb_slice = slice(0, 3)
         line_color = reversed(line_color)
         node_color = reversed(node_color)
         controls_color = reversed(controls_color)
     else:
-        rgb_slice = slice(1,4)
+        rgb_slice = slice(1, 4)
     with cairo.Context(surface) as ctx:
         ctx.set_operator(cairo.OPERATOR_SOURCE)
         ctx.set_line_join(linejoin)
         ctx.set_line_cap(linecaps)
 
         # ignore r,g,b -- draw in alpha
-        set_color_to_bg = lambda: ctx.set_source_rgb(1, 1, 1) # white
-        set_color_to_fg = lambda: ctx.set_source_rgb(0, 0, 0) # black
+        set_color_to_bg = lambda: ctx.set_source_rgb(1, 1, 1)  # white
+        set_color_to_fg = lambda: ctx.set_source_rgb(0, 0, 0)  # black
 
         # fill bg
         set_color_to_bg()
@@ -84,7 +106,13 @@ def render_with_skeleton(data, dimensions, data_representation='vahe', line_widt
         _render_data[data_representation](data, ctx)
 
         # draw skeleton
-        edges, nodes, controls = _make_skeleton[data_representation](data, line_width=line_width, node_size=node_size, control_line_width=control_line_width, control_node_size=control_node_size)
+        edges, nodes, controls = _make_skeleton[data_representation](
+            data,
+            line_width=line_width,
+            node_size=node_size,
+            control_line_width=control_line_width,
+            control_node_size=control_node_size,
+        )
 
         ctx.set_source_rgb(*line_color)
         _render_data[data_representation](edges, ctx)
@@ -154,14 +182,19 @@ def draw_qbezier_vahe(ctx, bezier):
 
 
 def draw_point_vahe(ctx, point):
-    ctx.arc(*point[:2], point[2]/2, 0, np.pi * 2)
+    ctx.arc(*point[:2], point[2] / 2, 0, np.pi * 2)
     ctx.fill()
 
 
 _draw_prim = {Line: draw_line, CBezier: draw_bezier, QBezier: draw_qbezier}
-_draw_repr = {PT_LINE: draw_line_vahe, PT_CBEZIER: draw_bezier_vahe, PT_QBEZIER: draw_qbezier_vahe,
-              PT_QBEZIER_B: draw_qbezier_vahe, PT_POINT: draw_point_vahe}
-_render_data = {'paths': render_paths, 'vahe': render_vahe}
-_make_skeleton = {'vahe': make_skeleton_vahe}
-_linecaps = {'square': cairo.LINE_CAP_SQUARE, 'butt': cairo.LINE_CAP_BUTT, 'round': cairo.LINE_CAP_ROUND}
-_linejoin = {'miter': cairo.LINE_JOIN_MITER}
+_draw_repr = {
+    PT_LINE: draw_line_vahe,
+    PT_CBEZIER: draw_bezier_vahe,
+    PT_QBEZIER: draw_qbezier_vahe,
+    PT_QBEZIER_B: draw_qbezier_vahe,
+    PT_POINT: draw_point_vahe,
+}
+_render_data = {"paths": render_paths, "vahe": render_vahe}
+_make_skeleton = {"vahe": make_skeleton_vahe}
+_linecaps = {"square": cairo.LINE_CAP_SQUARE, "butt": cairo.LINE_CAP_BUTT, "round": cairo.LINE_CAP_ROUND}
+_linejoin = {"miter": cairo.LINE_JOIN_MITER}

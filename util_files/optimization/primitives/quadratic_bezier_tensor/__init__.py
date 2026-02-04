@@ -2,14 +2,27 @@ import numpy as np
 import torch
 from torch import nn
 
-from util_files.rendering.cairo import render_with_skeleton, PT_QBEZIER_B
-
-from ..primitive_tensor import PrimitiveTensor
-from ...parameters import coordinates_constrain_padding, division_epsilon, dwarfness_ratio, elementary_halfwidth,\
-    empty_pixel_tolerance, min_linear_size, neighbourhood_padding, qbezier_max_dt_end,\
-    qbezier_min_fold_halfangle_radians, qbezier_y_neighbourhood_padding, refinement_linecaps, refinement_linejoin,\
-    reinit_initial_length, reinit_initial_width, visibility_width_threshold
+from util_files.rendering.cairo import PT_QBEZIER_B, render_with_skeleton
 from util_files.simplification.join_qb import join_quad_beziers
+
+from ...parameters import (
+    coordinates_constrain_padding,
+    division_epsilon,
+    dwarfness_ratio,
+    elementary_halfwidth,
+    empty_pixel_tolerance,
+    min_linear_size,
+    neighbourhood_padding,
+    qbezier_max_dt_end,
+    qbezier_min_fold_halfangle_radians,
+    qbezier_y_neighbourhood_padding,
+    refinement_linecaps,
+    refinement_linejoin,
+    reinit_initial_length,
+    reinit_initial_width,
+    visibility_width_threshold,
+)
+from ..primitive_tensor import PrimitiveTensor
 
 
 class QuadraticBezierTensor(PrimitiveTensor):
@@ -40,8 +53,12 @@ class QuadraticBezierTensor(PrimitiveTensor):
         p2 = torch.as_tensor(p2, dtype=dtype)
         p3 = torch.as_tensor(p3, dtype=dtype)
         width = torch.as_tensor(width, dtype=dtype)
-        assert ((p1.shape == p2.shape) and (p1.shape == p3.shape) and
-                (width.shape[0] == p1.shape[0]) and (width.shape[2] == p1.shape[2]))
+        assert (
+            (p1.shape == p2.shape)
+            and (p1.shape == p3.shape)
+            and (width.shape[0] == p1.shape[0])
+            and (width.shape[2] == p1.shape[2])
+        )
 
         patches_n, spatial_dims_n, primitives_n = p1.shape
         self.patches_n = patches_n
@@ -64,7 +81,7 @@ class QuadraticBezierTensor(PrimitiveTensor):
 
         # optimized parameters
         _ = self._width = width.to(device).requires_grad_()
-        #TODO for Torch 1.4+ new_empty not work with requires_grad
+        # TODO for Torch 1.4+ new_empty not work with requires_grad
         # self._p2_to_p1_len = _.new_empty([patches_n, 1, primitives_n], requires_grad=True)
         # self._p2_to_p1_len.requires_grad(True)
         # empty with type, size and device
@@ -78,12 +95,14 @@ class QuadraticBezierTensor(PrimitiveTensor):
         self._b.requires_grad_()
         self._theta1.requires_grad_()
         self._theta2.requires_grad_()
-        self.canonical_parameters = [{'parameter': self._width, 'lr_factor': 1e-1},
-                                     {'parameter': self._p2_to_p1_len, 'lr_factor': 1e-1},
-                                     {'parameter': self._p2_to_p3_len, 'lr_factor': 1e-1},
-                                     {'parameter': self._b, 'lr_factor': 1},
-                                     {'parameter': self._theta1, 'lr_factor': 1e-1},
-                                     {'parameter': self._theta2, 'lr_factor': 1e-1}]
+        self.canonical_parameters = [
+            {"parameter": self._width, "lr_factor": 1e-1},
+            {"parameter": self._p2_to_p1_len, "lr_factor": 1e-1},
+            {"parameter": self._p2_to_p3_len, "lr_factor": 1e-1},
+            {"parameter": self._b, "lr_factor": 1},
+            {"parameter": self._theta1, "lr_factor": 1e-1},
+            {"parameter": self._theta2, "lr_factor": 1e-1},
+        ]
 
         # auxiliary parameters
         self.p2_to_p1 = _.new_empty([patches_n, spatial_dims_n, primitives_n], requires_grad=False)
@@ -99,6 +118,7 @@ class QuadraticBezierTensor(PrimitiveTensor):
 
     # from .canonicals_with_probes import calculate_canonical_coordinates_with_probes, probe, probe_ts
     from .canonicals_with_cardano import calculate_canonical_coordinates_with_cardano
+
     # from .energy_with_quadratures import unit_energy_gauss5 as unit_energy
     from .energy_with_polyline import unit_energy
 
@@ -143,8 +163,9 @@ class QuadraticBezierTensor(PrimitiveTensor):
     def p2(self):
         if self._p2 is None:
             if self.size_fixed:
-                self._p2 = ((self.b - self.p3 * self.tb.pow(2) - self.p1 * (1 - self.tb).pow(2)) /
-                            (self.tb * (1 - self.tb) * 2))
+                self._p2 = (self.b - self.p3 * self.tb.pow(2) - self.p1 * (1 - self.tb).pow(2)) / (
+                    self.tb * (1 - self.tb) * 2
+                )
             if self.pos_fixed:
                 return self.p2_aux
         return self._p2
@@ -199,7 +220,9 @@ class QuadraticBezierTensor(PrimitiveTensor):
         t_of_closest : torch.Tensor
             of shape [patches_n, primitives_n, pixels_n]
         """
-        distance_to_curve, t_of_closest = self.calculate_canonical_coordinates_with_cardano(pixel_coords, tol=tol, division_epsilon=division_epsilon)
+        distance_to_curve, t_of_closest = self.calculate_canonical_coordinates_with_cardano(
+            pixel_coords, tol=tol, division_epsilon=division_epsilon
+        )
         if from_midpoint:
             patches_n, primitives_n = t_of_closest.shape[:2]
             t_of_closest = t_of_closest - self.tb.reshape(patches_n, primitives_n, 1)
@@ -219,19 +242,23 @@ class QuadraticBezierTensor(PrimitiveTensor):
         t_bisector = t1 + dt / 2
         del t1
 
-        bisector_to_t1 = - dt / 2  # torch.remainder(t1 - t_bisector + np.pi, np.pi * 2) - np.pi
+        bisector_to_t1 = -dt / 2  # torch.remainder(t1 - t_bisector + np.pi, np.pi * 2) - np.pi
         del dt
-        bisector_to_t1 = torch.where(bisector_to_t1 >= 0,
-                                     bisector_to_t1.clamp(min=qbezier_min_fold_halfangle_radians),
-                                     bisector_to_t1.clamp(max=qbezier_min_fold_halfangle_radians))
+        bisector_to_t1 = torch.where(
+            bisector_to_t1 >= 0,
+            bisector_to_t1.clamp(min=qbezier_min_fold_halfangle_radians),
+            bisector_to_t1.clamp(max=qbezier_min_fold_halfangle_radians),
+        )
         torch.add(t_bisector, bisector_to_t1, out=self._theta1.data)
         del bisector_to_t1
 
         bisector_to_t2 = torch.remainder(t2 - t_bisector + np.pi, np.pi * 2) - np.pi
         del t2
-        bisector_to_t2 = torch.where(bisector_to_t2 >= 0,
-                                     bisector_to_t2.clamp(min=qbezier_min_fold_halfangle_radians),
-                                     bisector_to_t2.clamp(max=qbezier_min_fold_halfangle_radians))
+        bisector_to_t2 = torch.where(
+            bisector_to_t2 >= 0,
+            bisector_to_t2.clamp(min=qbezier_min_fold_halfangle_radians),
+            bisector_to_t2.clamp(max=qbezier_min_fold_halfangle_radians),
+        )
         torch.add(t_bisector, bisector_to_t2, out=self._theta2.data)
         del bisector_to_t2, t_bisector
 
@@ -254,22 +281,28 @@ class QuadraticBezierTensor(PrimitiveTensor):
             w = self._width
             l1 = self._p2_to_p1_len
             l2 = self._p2_to_p3_len
-            if isinstance(optimizer, torch.optim.Adam) and 'exp_avg' in optimizer.state[w]:
-                w_avg = optimizer.state[w]['exp_avg'].data
-                w_sq = optimizer.state[w]['exp_avg_sq'].data
-                l1_avg = optimizer.state[l1]['exp_avg'].data
-                l1_sq = optimizer.state[l1]['exp_avg_sq'].data
-                l2_avg = optimizer.state[l2]['exp_avg'].data
-                l2_sq = optimizer.state[l2]['exp_avg_sq'].data
+            if isinstance(optimizer, torch.optim.Adam) and "exp_avg" in optimizer.state[w]:
+                w_avg = optimizer.state[w]["exp_avg"].data
+                w_sq = optimizer.state[w]["exp_avg_sq"].data
+                l1_avg = optimizer.state[l1]["exp_avg"].data
+                l1_sq = optimizer.state[l1]["exp_avg_sq"].data
+                l2_avg = optimizer.state[l2]["exp_avg"].data
+                l2_sq = optimizer.state[l2]["exp_avg_sq"].data
 
                 w_avg_halved = w_avg[dwarf_lines] / 2
-                w_avg[dwarf_lines], l1_avg[dwarf_lines], l2_avg[dwarf_lines] = \
-                    l1_avg[dwarf_lines] + l2_avg[dwarf_lines], w_avg_halved, w_avg_halved
+                w_avg[dwarf_lines], l1_avg[dwarf_lines], l2_avg[dwarf_lines] = (
+                    l1_avg[dwarf_lines] + l2_avg[dwarf_lines],
+                    w_avg_halved,
+                    w_avg_halved,
+                )
                 del w_avg_halved
 
                 w_sq_halved = w_sq[dwarf_lines] / 2
-                w_sq[dwarf_lines], l1_sq[dwarf_lines], l2_sq[dwarf_lines] = \
-                    l1_sq[dwarf_lines] + l2_sq[dwarf_lines], w_sq_halved, w_sq_halved
+                w_sq[dwarf_lines], l1_sq[dwarf_lines], l2_sq[dwarf_lines] = (
+                    l1_sq[dwarf_lines] + l2_sq[dwarf_lines],
+                    w_sq_halved,
+                    w_sq_halved,
+                )
                 del w_sq_halved
 
         # 4. Keep thetas in [0, 2pi)
@@ -279,10 +312,8 @@ class QuadraticBezierTensor(PrimitiveTensor):
         # 5. Limit positions of the curves in the canvas
         #    Nonzero padding is used to prevent nonstability for the curves trying to fit super-narrow raster
         #    (i.e, with small shading value) at the very edge of the canvas
-        self._b.data[:, 0].clamp_(min=-coordinates_constrain_padding,
-                                  max=patch_width + coordinates_constrain_padding)
-        self._b.data[:, 1].clamp_(min=-coordinates_constrain_padding,
-                                  max=patch_height + coordinates_constrain_padding)
+        self._b.data[:, 0].clamp_(min=-coordinates_constrain_padding, max=patch_width + coordinates_constrain_padding)
+        self._b.data[:, 1].clamp_(min=-coordinates_constrain_padding, max=patch_height + coordinates_constrain_padding)
 
         # 6. Limit the lengths w.r.t the edges of the canvas
         # FIXME: some bug here
@@ -323,9 +354,15 @@ class QuadraticBezierTensor(PrimitiveTensor):
         t = t.reshape(-1, 1, 1, 1)
         return ((self.p2 - self.p1) * (1 - t) + (self.p3 - self.p2) * t) * 2
 
-    def get_neighbourhood_weighting(self, pixel_coords, pixel_values, empty_pixel_tol=empty_pixel_tolerance,
-                                    elementary_halfwidth=elementary_halfwidth, x_padding=neighbourhood_padding,
-                                    y_padding=qbezier_y_neighbourhood_padding):
+    def get_neighbourhood_weighting(
+        self,
+        pixel_coords,
+        pixel_values,
+        empty_pixel_tol=empty_pixel_tolerance,
+        elementary_halfwidth=elementary_halfwidth,
+        x_padding=neighbourhood_padding,
+        y_padding=qbezier_y_neighbourhood_padding,
+    ):
         r"""
 
         Parameters
@@ -341,8 +378,13 @@ class QuadraticBezierTensor(PrimitiveTensor):
             Tensor of shape [patches_n, primitives_n, pixels_n] with True for pixels in neighbourhood of the primitive
         """
         return super().get_neighbourhood_weighting(
-            pixel_coords, pixel_values, empty_pixel_tol=empty_pixel_tol, elementary_halfwidth=elementary_halfwidth,
-            x_padding=x_padding, y_padding=y_padding)
+            pixel_coords,
+            pixel_values,
+            empty_pixel_tol=empty_pixel_tol,
+            elementary_halfwidth=elementary_halfwidth,
+            x_padding=x_padding,
+            y_padding=y_padding,
+        )
 
     def get_points(self, t):
         r"""
@@ -425,8 +467,8 @@ class QuadraticBezierTensor(PrimitiveTensor):
 
         for i, patch in enumerate(patches):
             common_width_in_patch = np.percentile(patch[:, -1], 90)
-            join_tol = .5 * common_width_in_patch
-            fit_tol = .5 * common_width_in_patch
+            join_tol = 0.5 * common_width_in_patch
+            fit_tol = 0.5 * common_width_in_patch
             w_tol = np.inf
 
             _ = join_quad_beziers(patch, join_tol=join_tol, fit_tol=fit_tol, w_tol=w_tol)
@@ -442,18 +484,17 @@ class QuadraticBezierTensor(PrimitiveTensor):
         self.set_parameters(p1, p2, p3)
 
         optimizer = self.optimizer
-        if isinstance(optimizer, torch.optim.Adam) and 'exp_avg' in optimizer.state[self._width]:
+        if isinstance(optimizer, torch.optim.Adam) and "exp_avg" in optimizer.state[self._width]:
             for p in self.canonical_parameters:
-                p = p['parameter']
-                if (p in optimizer.state) and ('exp_avg' in optimizer.state[p]):
-                    optimizer.state[p]['exp_avg'].zero_()
-                    optimizer.state[p]['exp_avg_sq'].zero_()
+                p = p["parameter"]
+                if (p in optimizer.state) and ("exp_avg" in optimizer.state[p]):
+                    optimizer.state[p]["exp_avg"].zero_()
+                    optimizer.state[p]["exp_avg_sq"].zero_()
                 if p.grad is not None:
                     p.grad.detach_()
                     p.grad.zero_()
             # optimizer.state[self._theta1]['exp_avg_sq'].data.fill_(1)
             # optimizer.state[self._theta2]['exp_avg_sq'].data.fill_(1)
-
 
     def reinit_primitives(self, primitives_to_reinit, coords_to_reinit_at, initial_width, initial_length):
         r"""
@@ -498,10 +539,10 @@ class QuadraticBezierTensor(PrimitiveTensor):
         optimizer = self.optimizer
         if isinstance(optimizer, torch.optim.Adam):
             for p in self.canonical_parameters:
-                p = p['parameter']
-                if 'exp_avg' in optimizer.state[p]:
-                    optimizer.state[p]['exp_avg'].data.masked_fill_(primitives_to_reinit, 0)
-                    optimizer.state[p]['exp_avg_sq'].data.masked_fill_(primitives_to_reinit, 0)
+                p = p["parameter"]
+                if "exp_avg" in optimizer.state[p]:
+                    optimizer.state[p]["exp_avg"].data.masked_fill_(primitives_to_reinit, 0)
+                    optimizer.state[p]["exp_avg_sq"].data.masked_fill_(primitives_to_reinit, 0)
 
     def render_single_primitive_with_cairo(self, ctx, patch_i, primitive_i, min_width=0):
         width = self.width[patch_i, 0, primitive_i].detach().cpu().numpy()
@@ -524,10 +565,20 @@ class QuadraticBezierTensor(PrimitiveTensor):
         ctx.set_line_width(width)
         ctx.stroke()
 
-    def render_skeleton_total(self, width, height, visibility_width_threshold=visibility_width_threshold, scaling=4,
-                              line_color=(31 / 255, 119 / 255, 180 / 255), line_width=2, control_line_width=1,
-                              node_color=(255 / 255, 127 / 255, 14 / 255), node_size=4, control_node_size=2,
-                              controls_color=(214 / 255, 39 / 255, 40 / 255)):
+    def render_skeleton_total(
+        self,
+        width,
+        height,
+        visibility_width_threshold=visibility_width_threshold,
+        scaling=4,
+        line_color=(31 / 255, 119 / 255, 180 / 255),
+        line_width=2,
+        control_line_width=1,
+        node_color=(255 / 255, 127 / 255, 14 / 255),
+        node_size=4,
+        control_node_size=2,
+        controls_color=(214 / 255, 39 / 255, 40 / 255),
+    ):
         r"""
 
         Parameters
@@ -546,17 +597,37 @@ class QuadraticBezierTensor(PrimitiveTensor):
         visible = widths[:, 0] >= visibility_width_threshold
         widths = widths * 0
 
-        pars = (np.concatenate([self.p1.detach().cpu().numpy(), self.p2.detach().cpu().numpy(),
-                               self.p3.detach().cpu().numpy(), widths, self._b.detach().cpu().numpy()], 1)
-                  .swapaxes(1, 2))
+        pars = np.concatenate(
+            [
+                self.p1.detach().cpu().numpy(),
+                self.p2.detach().cpu().numpy(),
+                self.p3.detach().cpu().numpy(),
+                widths,
+                self._b.detach().cpu().numpy(),
+            ],
+            1,
+        ).swapaxes(1, 2)
         pars *= scaling
 
-        return np.stack([render_with_skeleton(
-            {PT_QBEZIER_B: patch[visibility]}, [width * scaling, height * scaling], data_representation='vahe',
-            linecaps=refinement_linecaps, linejoin=refinement_linejoin, line_color=line_color, line_width=line_width,
-            node_color=node_color, node_size=node_size,
-            control_line_width=control_line_width, control_node_size=control_node_size, controls_color=controls_color)
-            for patch, visibility in zip(pars, visible)])
+        return np.stack(
+            [
+                render_with_skeleton(
+                    {PT_QBEZIER_B: patch[visibility]},
+                    [width * scaling, height * scaling],
+                    data_representation="vahe",
+                    linecaps=refinement_linecaps,
+                    linejoin=refinement_linejoin,
+                    line_color=line_color,
+                    line_width=line_width,
+                    node_color=node_color,
+                    node_size=node_size,
+                    control_line_width=control_line_width,
+                    control_node_size=control_node_size,
+                    controls_color=controls_color,
+                )
+                for patch, visibility in zip(pars, visible)
+            ]
+        )
 
     def set_parameters(self, p1, p2, p3):
         p1 = p1.data.type(self.dtype).to(self.device)
@@ -565,12 +636,12 @@ class QuadraticBezierTensor(PrimitiveTensor):
 
         self.p2_to_p1 = p1 - p2
         torch.norm(self.p2_to_p1, dim=1, keepdim=True, out=self._p2_to_p1_len.data)
-        self.p2_to_p1 /= (self._p2_to_p1_len.data + division_epsilon)
+        self.p2_to_p1 /= self._p2_to_p1_len.data + division_epsilon
         self.old_p2_to_p1_len.copy_(self._p2_to_p1_len.data)
 
         self.p2_to_p3 = p3 - p2
         torch.norm(self.p2_to_p3, dim=1, keepdim=True, out=self._p2_to_p3_len.data)
-        self.p2_to_p3 /= (self._p2_to_p3_len.data + division_epsilon)
+        self.p2_to_p3 /= self._p2_to_p3_len.data + division_epsilon
         self.old_p2_to_p3_len.copy_(self._p2_to_p3_len.data)
 
         _ = torch.sqrt(self._p2_to_p1_len.data)
@@ -623,7 +694,7 @@ class QuadraticBezierTensor(PrimitiveTensor):
         del t2, b_to_p3
 
         tb = self.tb
-        p2 = ((b - p3 * tb.pow(2) - p1 * (1 - tb).pow(2)) / (tb * (1 - tb) * 2))
+        p2 = (b - p3 * tb.pow(2) - p1 * (1 - tb).pow(2)) / (tb * (1 - tb) * 2)
         del b, tb
 
         # 2. Simulate update of size parameters, i.e lengths.

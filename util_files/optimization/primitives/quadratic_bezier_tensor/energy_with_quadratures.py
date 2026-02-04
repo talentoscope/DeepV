@@ -3,8 +3,7 @@ import torch
 from ...parameters import division_epsilon
 
 
-def unit_energy_with_quadrature(self, pixel_coords, stencil_t, stencil_s,
-                                weights, division_epsilon=division_epsilon):
+def unit_energy_with_quadrature(self, pixel_coords, stencil_t, stencil_s, weights, division_epsilon=division_epsilon):
     r"""
 
     Parameters
@@ -79,6 +78,7 @@ def unit_energy_with_quadrature(self, pixel_coords, stencil_t, stencil_s,
 
     # draw for debugging
     import numpy as np
+
     _ = energies
     _ = _[:, 0].detach().cpu()
 
@@ -108,17 +108,17 @@ def unit_energy_gauss5(self, pixel_coords, division_epsilon=division_epsilon):
     """
     _ = torch.tensor([], dtype=self.dtype, device=self.device)
 
-    _1 = 2 * (10. / 7) ** .5
-    _2 = ((5 - _1) ** .5) / 3
-    _3 = ((5 + _1) ** .5) / 3
+    _1 = 2 * (10.0 / 7) ** 0.5
+    _2 = ((5 - _1) ** 0.5) / 3
+    _3 = ((5 + _1) ** 0.5) / 3
     stencil_t = _.new_tensor([0, -_2, _2, -_3, _3])
     stencil_t = (stencil_t + 1) / 2
 
     stencil_s = _.new_tensor([-1 / 2, 0, 1 / 2])  # simpson w.r.t s
-    jacobi_det = 1/4
+    jacobi_det = 1 / 4
     weights_s = _.new_tensor([1, 4, 1]).reshape(len(stencil_s), 1) / 3
 
-    _1 = 13 * 70 ** .5
+    _1 = 13 * 70**0.5
     _2 = 322 + _1
     _3 = 322 - _1
     weights_t = _.new_tensor([512, _2, _2, _3, _3]).reshape(1, len(stencil_t)) / 900
@@ -126,8 +126,9 @@ def unit_energy_gauss5(self, pixel_coords, division_epsilon=division_epsilon):
     weights = weights_s * weights_t * jacobi_det
     del _
 
-    return unit_energy_with_quadrature(self, pixel_coords, stencil_t, stencil_s,
-                                       weights, division_epsilon=division_epsilon)
+    return unit_energy_with_quadrature(
+        self, pixel_coords, stencil_t, stencil_s, weights, division_epsilon=division_epsilon
+    )
 
 
 def unit_energy_simpson(self, pixel_coords, division_epsilon=division_epsilon):
@@ -146,11 +147,12 @@ def unit_energy_simpson(self, pixel_coords, division_epsilon=division_epsilon):
         of shape [patches_n, primitives_n, pixels_n]
     """
     _ = torch.tensor([], dtype=self.dtype, device=self.device)
-    stencil_t = _.new_tensor([0, .5, 1])
+    stencil_t = _.new_tensor([0, 0.5, 1])
     stencil_s = _.new_tensor([-1 / 2, 0, 1 / 2])
-    jacobi_det = 1/4
+    jacobi_det = 1 / 4
     weights = _.new_tensor([1, 4, 1]).reshape(3, 1) * _.new_tensor([1, 4, 1]).reshape(1, 3) / 9 * jacobi_det
     del _
 
-    return unit_energy_with_quadrature(self, pixel_coords, stencil_t, stencil_s,
-                                       weights, division_epsilon=division_epsilon)
+    return unit_energy_with_quadrature(
+        self, pixel_coords, stencil_t, stencil_s, weights, division_epsilon=division_epsilon
+    )

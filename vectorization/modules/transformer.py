@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 
-from ._transformer_modules import TransformerLayer, get_sinusoid_encoding_table
 from vectorization.modules.base import ParameterizedModule
+
+from ._transformer_modules import TransformerLayer, get_sinusoid_encoding_table
 
 
 class _InternalSequentialTransformerDecoder(nn.Module):
@@ -14,10 +15,9 @@ class _InternalSequentialTransformerDecoder(nn.Module):
         :param num_layers: number of TransformerLayers stacked together
         """
         super(_InternalSequentialTransformerDecoder, self).__init__()
-        self.transformer = nn.Sequential(*(
-            TransformerLayer(feature_dim, d_inner=ffn_dim, n_head=n_head)
-            for _ in range(num_layers)
-        ))
+        self.transformer = nn.Sequential(
+            *(TransformerLayer(feature_dim, d_inner=ffn_dim, n_head=n_head) for _ in range(num_layers))
+        )
         self.feature_dim = feature_dim
 
     def forward(self, conv_features, hidden_encoding):
@@ -57,7 +57,7 @@ class TransformerDecoder(TransformerBase):
         :param max_lines: how many lines per image to predict
         """
         sine_enc = get_sinusoid_encoding_table(max_lines, self.feature_dim, scale=1)[None]
-        h_dec = torch.cat([sine_enc] * conv_features.shape[0], dim=0)   # [b, max_lines, feature_dim]
+        h_dec = torch.cat([sine_enc] * conv_features.shape[0], dim=0)  # [b, max_lines, feature_dim]
         h_dec = h_dec.to(conv_features.device)
         decoding = self.decoder(conv_features, h_dec)
         return decoding
@@ -65,6 +65,7 @@ class TransformerDecoder(TransformerBase):
 
 class TransformerDiscriminator(TransformerBase):
     LINE_DIM = 6
+
     def __init__(self, **kwargs):
         super(TransformerDiscriminator, self).__init__(**kwargs)
         self.fc = nn.Linear(self.LINE_DIM, self.feature_dim)
@@ -80,6 +81,6 @@ class TransformerDiscriminator(TransformerBase):
 
 
 transformer_module_by_kind = {
-    'transformer_decoder': TransformerDecoder,
-    'transformer_discriminator': TransformerDiscriminator,
+    "transformer_decoder": TransformerDecoder,
+    "transformer_discriminator": TransformerDiscriminator,
 }

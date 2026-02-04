@@ -2,31 +2,33 @@ from collections import OrderedDict, defaultdict
 from enum import Enum, auto
 
 import numpy as np
-from numpy.random import uniform, normal
-# from PIL import Image
-from util_files.rendering.cairo import render
+from numpy.random import normal, uniform
+
+from util_files.data.graphics_primitives import Arc, BezierCurve, Line, PrimitiveType
 from util_files.data.line_drawings_dataset import LineDrawingsDataset
-from util_files.data.graphics_primitives import Line, PrimitiveType, BezierCurve, Arc
+
 # from vectran.data.transforms.degradation_models import DegradationGenerator, all_degradations
 # from vectran.util.color_utils import rgb_to_gray, img_8bit_to_float, gray_float_to_8bit
 from util_files.data.transforms.degradation_models import DegradationGenerator
 from util_files.geometric import rotation_matrix_2d
+
+# from PIL import Image
+from util_files.rendering.cairo import render
 
 from .patch_topology import TOPOLOGY_BY_NAME
 from .utils import choose_with_proba
 
 
 class JunctionType(Enum):
-    NO_JUNCTION = auto()    # parallel lines; lines not intersecting within image;
-                            # lines too short to intersect e.g. -|
-    L_JUNCTION = auto()     # lines intersecting at edges e.g. L, Г
-    T_JUNCTION = auto()     # one line intersecting at non-edge, second at edge e.g. T
-    X_JUNCTION = auto()     # two lines intersecting at non-edges, e.g. X, +
+    NO_JUNCTION = auto()  # parallel lines; lines not intersecting within image;
+    # lines too short to intersect e.g. -|
+    L_JUNCTION = auto()  # lines intersecting at edges e.g. L, Г
+    T_JUNCTION = auto()  # one line intersecting at non-edge, second at edge e.g. T
+    X_JUNCTION = auto()  # two lines intersecting at non-edges, e.g. X, +
 
 
 class SyntheticDataset(LineDrawingsDataset):
-    def __init__(self, *, patch_size, border=4, line_count=1, arc_count=1, bezier_count=0, size=10000,
-                 **kwargs):
+    def __init__(self, *, patch_size, border=4, line_count=1, arc_count=1, bezier_count=0, size=10000, **kwargs):
         super().__init__(patch_size=patch_size, **kwargs)
         self.size = size
         self.border = border
@@ -66,7 +68,7 @@ class SyntheticDataset(LineDrawingsDataset):
                 x.append(np.random.randint(self.border, self.patch_size[0] - self.border - 2))
                 y.append(np.random.randint(self.border, self.patch_size[1] - self.border - 2))
         width = np.random.randint(1, 4)
-        return x[0], y[0], min(x[1], x[0], y[0]), 0., 2 * np.pi, width
+        return x[0], y[0], min(x[1], x[0], y[0]), 0.0, 2 * np.pi, width
 
     def _get_vector_item(self, idx):
         vector = defaultdict(list)
@@ -85,14 +87,35 @@ class SyntheticDataset(LineDrawingsDataset):
         return self.size
 
 
-
 class SyntheticStructuredDataset(LineDrawingsDataset):
-    def __init__(self, *, patch_size=(64, 64), size=10000, border=8, min_directions=1, max_directions=4,
-                 directions_probas=None, offset_directions_probas=None, directions_min_angle=0, directions_max_angle=np.pi,
-                 directions_angle_step=np.pi / 4, junction_directions_probas=None, min_primitives=1, max_primitives=4,
-                 total_primitives=float('+inf'), min_primitives_gap=1, max_primitives_gap=10, min_stroke_width=1,
-                 max_stroke_width=10, min_stroke_length=10, max_stroke_length=100, primitives_endpoint_noise_sigma=5.,
-                 primitives_direction_noise_sigma=np.pi / 180., strokes_probas=None, **kwargs):
+    def __init__(
+        self,
+        *,
+        patch_size=(64, 64),
+        size=10000,
+        border=8,
+        min_directions=1,
+        max_directions=4,
+        directions_probas=None,
+        offset_directions_probas=None,
+        directions_min_angle=0,
+        directions_max_angle=np.pi,
+        directions_angle_step=np.pi / 4,
+        junction_directions_probas=None,
+        min_primitives=1,
+        max_primitives=4,
+        total_primitives=float("+inf"),
+        min_primitives_gap=1,
+        max_primitives_gap=10,
+        min_stroke_width=1,
+        max_stroke_width=10,
+        min_stroke_length=10,
+        max_stroke_length=100,
+        primitives_endpoint_noise_sigma=5.0,
+        primitives_direction_noise_sigma=np.pi / 180.0,
+        strokes_probas=None,
+        **kwargs,
+    ):
         super().__init__(patch_size=patch_size, min_primitives=min_primitives, max_primitives=max_primitives, **kwargs)
         self.border = border
         self.size = size
@@ -115,11 +138,8 @@ class SyntheticStructuredDataset(LineDrawingsDataset):
             self.directions_max_angle = directions_max_angle
             self.directions_angle_step = directions_angle_step
             num_angles = (self.directions_max_angle - self.directions_min_angle) / self.directions_angle_step
-            possible_angles = np.linspace(self.directions_min_angle,
-                                          self.directions_max_angle,
-                                          num_angles)
-            self.directions_probas = OrderedDict({angle: 1. / num_angles
-                                                  for angle in possible_angles})
+            possible_angles = np.linspace(self.directions_min_angle, self.directions_max_angle, num_angles)
+            self.directions_probas = OrderedDict({angle: 1.0 / num_angles for angle in possible_angles})
         if None is not junction_directions_probas:
             self.junction_directions_probas = OrderedDict(junction_directions_probas)
         if offset_directions_probas is not None:
@@ -142,18 +162,20 @@ class SyntheticStructuredDataset(LineDrawingsDataset):
         # TODO @artonson: rewrite this choice using itertools.product, starting from max length
         for i in range(num_directions):
             # single primitives without junctions
-            junction_props[(i, )] = {
-                'junction_type': JunctionType.NO_JUNCTION,
-                'midpoint': np.array([uniform(high=patch_height), uniform(high=patch_width)])
+            junction_props[(i,)] = {
+                "junction_type": JunctionType.NO_JUNCTION,
+                "midpoint": np.array([uniform(high=patch_height), uniform(high=patch_width)]),
             }
             for j in range(i + 1, num_directions):
                 # pairs of primitives
                 junction_props[(i, j)] = {
-                    'junction_type': np.random.choice(list(JunctionType)),
-                    'midpoint': np.array([
-                        uniform(self.border, patch_height - self.border),
-                        uniform(self.border, patch_width - self.border)
-                    ])
+                    "junction_type": np.random.choice(list(JunctionType)),
+                    "midpoint": np.array(
+                        [
+                            uniform(self.border, patch_height - self.border),
+                            uniform(self.border, patch_width - self.border),
+                        ]
+                    ),
                 }
 
         # 3. Select number of primitives realizing each direction and gaps between them
@@ -166,13 +188,14 @@ class SyntheticStructuredDataset(LineDrawingsDataset):
             # direction /= np.linalg.norm(direction)
             direction = np.array([np.cos(alpha), np.sin(alpha)])
             props = {
-                'primitive_type': PrimitiveType.PT_LINE,
-                'direction': direction,
-                'num_primitives': np.random.randint(self.min_primitives[PrimitiveType.PT_LINE],
-                                                    self.max_primitives[PrimitiveType.PT_LINE] + 1),
-                'gap': uniform(self.min_primitives_gap, self.max_primitives_gap),
-                'stroke_width': uniform(self.min_stroke_width, self.max_stroke_width),
-                'length': uniform(self.min_stroke_length, self.max_stroke_length),
+                "primitive_type": PrimitiveType.PT_LINE,
+                "direction": direction,
+                "num_primitives": np.random.randint(
+                    self.min_primitives[PrimitiveType.PT_LINE], self.max_primitives[PrimitiveType.PT_LINE] + 1
+                ),
+                "gap": uniform(self.min_primitives_gap, self.max_primitives_gap),
+                "stroke_width": uniform(self.min_stroke_width, self.max_stroke_width),
+                "length": uniform(self.min_stroke_length, self.max_stroke_length),
             }
             direction_props[i] = props
 
@@ -184,7 +207,6 @@ class SyntheticStructuredDataset(LineDrawingsDataset):
             for j in range(i + 1, num_directions):
                 # np.random.uniform(np.pi / 6, np.pi * 5 / 6)
                 angle_by_pair[(i, j)] = np.random.choice(possible_angles)
-
 
         return num_directions, junction_props, angle_by_pair, direction_props
 
@@ -202,64 +224,47 @@ class SyntheticStructuredDataset(LineDrawingsDataset):
             return direction1
 
         def mid2end(mp, direction, length, **kwargs):
-            return mp - .5 * length * direction
-
+            return mp - 0.5 * length * direction
 
         primitives = {}
         if num_directions == 1:
-            endpoint = mid2end(junction_props[(0, )]['midpoint'], **direction_props[0])
-            primitives.update(self.generate_direction(
-                endpoint, **direction_props[0]))
+            endpoint = mid2end(junction_props[(0,)]["midpoint"], **direction_props[0])
+            primitives.update(self.generate_direction(endpoint, **direction_props[0]))
 
         if num_directions == 2:
-            junction_type = junction_props[(0, 1)]['junction_type']
+            junction_type = junction_props[(0, 1)]["junction_type"]
             if junction_type == JunctionType.NO_JUNCTION:
                 # arbitrary stroke not intersecting with other primitives
                 for i in range(num_directions):
-                    primitives.update(
-                        self.generate_direction(
-                            junction_props[(i, )]['midpoint'], **direction_props[i])
-                    )
+                    primitives.update(self.generate_direction(junction_props[(i,)]["midpoint"], **direction_props[i]))
 
             elif junction_type == JunctionType.L_JUNCTION:
                 # stroke sharing same endpoint
-                endpoint = junction_props[(0, 1)]['midpoint']
-                primitives.update(
-                    self.generate_direction(endpoint, **direction_props[0])
-                )
+                endpoint = junction_props[(0, 1)]["midpoint"]
+                primitives.update(self.generate_direction(endpoint, **direction_props[0]))
 
-                direction_props[1]['direction'] = alter_direction(direction_props[0]['direction'])
-                primitives.update(
-                    self.generate_direction(endpoint, **direction_props[1])
-                )
+                direction_props[1]["direction"] = alter_direction(direction_props[0]["direction"])
+                primitives.update(self.generate_direction(endpoint, **direction_props[1]))
 
             elif junction_type == JunctionType.T_JUNCTION:
                 # stroke sharing same endpoint connecting to middle of another stroke
-                junc_point = junction_props[(0, 1)]['midpoint']
+                junc_point = junction_props[(0, 1)]["midpoint"]
                 endpoint = mid2end(junc_point, **direction_props[0])
-                primitives.update(
-                    self.generate_direction(endpoint, **direction_props[0])
-                )
+                primitives.update(self.generate_direction(endpoint, **direction_props[0]))
 
-                direction_props[1]['direction'] = alter_direction(direction_props[0]['direction'])
+                direction_props[1]["direction"] = alter_direction(direction_props[0]["direction"])
                 endpoint = junc_point
-                primitives.update(
-                    self.generate_direction(endpoint, **direction_props[1])
-                )
+                primitives.update(self.generate_direction(endpoint, **direction_props[1]))
 
             elif junction_type == JunctionType.X_JUNCTION:
                 # strokes intersecting in middle of each other
-                junc_point = junction_props[(0, 1)]['midpoint']
+                junc_point = junction_props[(0, 1)]["midpoint"]
                 endpoint = mid2end(junc_point, **direction_props[0])
-                primitives.update(
-                    self.generate_direction(endpoint, **direction_props[0])
-                )
+                primitives.update(self.generate_direction(endpoint, **direction_props[0]))
 
-                direction_props[1]['direction'] = alter_direction(direction_props[0]['direction'])
+                direction_props[1]["direction"] = alter_direction(direction_props[0]["direction"])
                 endpoint = mid2end(junc_point, **direction_props[1])
-                primitives.update(
-                    self.generate_direction(endpoint, **direction_props[1])
-                )
+                primitives.update(self.generate_direction(endpoint, **direction_props[1]))
         # TODO fix it, DataLoader still fails on that
         elif num_directions == 3:
             pass
@@ -275,7 +280,7 @@ class SyntheticStructuredDataset(LineDrawingsDataset):
 
     def generate_direction(self, endpoint, direction, primitive_type, num_primitives, gap, stroke_width, length):
         primitives = []
-        ortho_sign = +1 if uniform() > .5 else -1
+        ortho_sign = +1 if uniform() > 0.5 else -1
         ortho_dir = ortho_sign * np.array([-direction[1], direction[0]])
         for i in range(num_primitives):
             random_rotation = rotation_matrix_2d(normal(scale=self.primitives_direction_noise_sigma))
@@ -322,13 +327,11 @@ class SyntheticStructuredDataset(LineDrawingsDataset):
             for primitive in primitives:
                 if primitive.is_drawn:
                     vector_to_draw_list.append((primitive_type, primitive))
-        if self.total_primitives < float('+inf'):
+        if self.total_primitives < float("+inf"):
             primitives_indexes = np.arange(len(vector_to_draw_list))
             if len(vector_to_draw_list) > self.total_primitives:
                 primitives_indexes = np.random.choice(
-                    primitives_indexes,
-                    size=int(self.total_primitives),
-                    replace=False
+                    primitives_indexes, size=int(self.total_primitives), replace=False
                 )
             vector_to_draw_list = [vector_to_draw_list[i] for i in primitives_indexes]
 
@@ -364,13 +367,11 @@ class SyntheticHandcraftedDataset(SyntheticStructuredDataset):
             for primitive in primitives:
                 if primitive.is_drawn:
                     vector_to_draw_list.append((primitive_type, primitive))
-        if self.total_primitives < float('+inf'):
+        if self.total_primitives < float("+inf"):
             primitives_indexes = np.arange(len(vector_to_draw_list))
             if len(vector_to_draw_list) > self.total_primitives:
                 primitives_indexes = np.random.choice(
-                    primitives_indexes,
-                    size=int(self.total_primitives),
-                    replace=False
+                    primitives_indexes, size=int(self.total_primitives), replace=False
                 )
             vector_to_draw_list = [vector_to_draw_list[i] for i in primitives_indexes]
 
@@ -429,7 +430,7 @@ class SyntheticHandcraftedDataset(SyntheticStructuredDataset):
 #     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass
     # dg = DegradationGenerator(degradations_list=['kanungo'], max_num_degradations=1)
     # config = dict(patch_size=(64, 64), border=4,
@@ -496,4 +497,3 @@ if __name__ == '__main__':
     #     png_image = gray_float_to_8bit(png_image)
     #     im = Image.fromarray(png_image, 'L')
     #     im.save('{}.png'.format(i))
-

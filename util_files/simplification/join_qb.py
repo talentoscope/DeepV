@@ -7,7 +7,7 @@ def log_debug(s):
     # print(s)
 
 
-def join_quad_beziers(curves, join_tol=.5, fit_tol=.5, w_tol=.5):
+def join_quad_beziers(curves, join_tol=0.5, fit_tol=0.5, w_tol=0.5):
     r"""
 
     Parameters
@@ -29,8 +29,8 @@ def join_quad_beziers(curves, join_tol=.5, fit_tol=.5, w_tol=.5):
     for i in range(previous_curves_n):
         curve = curves[i]
         p1 = curve[:spatial_dims_n]
-        p2 = curve[spatial_dims_n:spatial_dims_n * 2]
-        p3 = curve[spatial_dims_n * 2:spatial_dims_n * 3]
+        p2 = curve[spatial_dims_n : spatial_dims_n * 2]
+        p3 = curve[spatial_dims_n * 2 : spatial_dims_n * 3]
         _ = curve[spatial_dims_n * 3]
         _, pb = bisector_point(p1, p2, p3)
         source_points[i] = [p1.tolist(), pb.tolist(), p3.tolist()]
@@ -44,8 +44,8 @@ def join_quad_beziers(curves, join_tol=.5, fit_tol=.5, w_tol=.5):
 
             curve = curves[i]
             p1 = curve[:spatial_dims_n]
-            p2 = curve[spatial_dims_n:spatial_dims_n * 2]
-            p3 = curve[spatial_dims_n * 2:spatial_dims_n * 3]
+            p2 = curve[spatial_dims_n : spatial_dims_n * 2]
+            p3 = curve[spatial_dims_n * 2 : spatial_dims_n * 3]
             w = curve[spatial_dims_n * 3]
             tb, pb = bisector_point(p1, p2, p3)
 
@@ -58,12 +58,12 @@ def join_quad_beziers(curves, join_tol=.5, fit_tol=.5, w_tol=.5):
 
                 # 3. If widths are different -- don't fuse
                 if (that_w - w).abs() > w_tol:
-                    log_debug(f'{i}-{j}: Widths are different')
+                    log_debug(f"{i}-{j}: Widths are different")
                     continue
 
                 q1 = that_curve[:spatial_dims_n]
-                q2 = that_curve[spatial_dims_n:spatial_dims_n * 2]
-                q3 = that_curve[spatial_dims_n * 2:spatial_dims_n * 3]
+                q2 = that_curve[spatial_dims_n : spatial_dims_n * 2]
+                q3 = that_curve[spatial_dims_n * 2 : spatial_dims_n * 3]
                 sb, qb = bisector_point(q1, q2, q3)
                 del q2
 
@@ -83,17 +83,19 @@ def join_quad_beziers(curves, join_tol=.5, fit_tol=.5, w_tol=.5):
 
                 # 5. If all three are close -- fuse that curve into this curve
                 if (dq <= join_tol).all():
-                    log_debug(f'{i}-{j}: All three are close')
+                    log_debug(f"{i}-{j}: All three are close")
                     del curves[j]
                     del source_points[j]
                     continue
 
                 # 6. If all far, or
                 #       ends are close but bisector point is far, or vice versa -- skip
-                if ((dq > join_tol).all() or
-                        ((dq1 <= join_tol) and (dq3 <= join_tol) and (dqb > join_tol)) or
-                        ((dq1 > join_tol) and (dq3 > join_tol) and (dqb <= join_tol))):
-                    log_debug(f'{i}-{j}: Won\'t merge')
+                if (
+                    (dq > join_tol).all()
+                    or ((dq1 <= join_tol) and (dq3 <= join_tol) and (dqb > join_tol))
+                    or ((dq1 > join_tol) and (dq3 > join_tol) and (dqb <= join_tol))
+                ):
+                    log_debug(f"{i}-{j}: Won't merge")
                     continue
                 del dq
 
@@ -113,9 +115,9 @@ def join_quad_beziers(curves, join_tol=.5, fit_tol=.5, w_tol=.5):
                     tq3 = 1 - tq3
 
                 # 8.5.
-                eps = .05
+                eps = 0.05
                 if (tq1 < eps) or (tq3 < 1 + eps):
-                    log_debug(f'{i}-{j}: Won\'t merge')
+                    log_debug(f"{i}-{j}: Won't merge")
                     continue
                 del tq3
 
@@ -123,7 +125,7 @@ def join_quad_beziers(curves, join_tol=.5, fit_tol=.5, w_tol=.5):
                 fit, error = find_qbezier_best_join_fit(p1, pb, p3, q1, qb, q3, tb, sb, tq1)
                 del q1, qb, q3, sb, tq1
                 if error > fit_tol:
-                    log_debug(f'{i}-{j}: No good fit')
+                    log_debug(f"{i}-{j}: No good fit")
                     continue
 
                 # 9.5. Check fitness w.r.t source points
@@ -134,15 +136,16 @@ def join_quad_beziers(curves, join_tol=.5, fit_tol=.5, w_tol=.5):
 
                 source_points_of_both = source_points[i] + source_points[j]
                 sp_tensor = torch.tensor(source_points_of_both).permute(1, 0).contiguous()
-                dists, _ = calculate_canonical_coordinates_with_cardano(fit_p1, fit_p2, fit_p3, sp_tensor,
-                                                                        real_distance=True)
+                dists, _ = calculate_canonical_coordinates_with_cardano(
+                    fit_p1, fit_p2, fit_p3, sp_tensor, real_distance=True
+                )
                 if dists.pow(2).mean().sqrt() > fit_tol:
-                    log_debug(f'{i}-{j}: No good fit w.r.t source points')
+                    log_debug(f"{i}-{j}: No good fit w.r.t source points")
                     continue
                 del sp_tensor, dists, _, fit_p1, fit_p2, fit_p3
 
                 # 10. If the fit is good
-                log_debug(f'{i}-{j}: Found a good fit')
+                log_debug(f"{i}-{j}: Found a good fit")
                 #     remove that curve
                 del curves[j]
                 del source_points[j]
@@ -366,7 +369,9 @@ def bisector_point(p1, p2, p3):
     return tb, pb
 
 
-def calculate_canonical_coordinates_with_cardano(p1, p2, p3, pixel_coords, tol=1e-3, real_distance=False, division_epsilon=1e-12):
+def calculate_canonical_coordinates_with_cardano(
+    p1, p2, p3, pixel_coords, tol=1e-3, real_distance=False, division_epsilon=1e-12
+):
     r"""
     Parameters
     ----------
@@ -417,7 +422,7 @@ def calculate_canonical_coordinates_with_cardano(p1, p2, p3, pixel_coords, tol=1
     d = (p1 * A).sum(dim=spatial_dim_i)
     del A, B
 
-    delta = - b / (a * 3)
+    delta = -b / (a * 3)
     c_over_a = c / a
 
     p = c_over_a - delta.pow(2) * 3
@@ -440,7 +445,7 @@ def calculate_canonical_coordinates_with_cardano(p1, p2, p3, pixel_coords, tol=1
     alpha_cube_im = Q_abs_sqrt.where(~Q_nonneg, Q_abs_sqrt.new_zeros([]))
     del Q_abs_sqrt, Q_nonneg, halved_q
 
-    alpha_modulus = (alpha_cube_re.pow(2) + alpha_cube_im.pow(2)).pow(1/6)
+    alpha_modulus = (alpha_cube_re.pow(2) + alpha_cube_im.pow(2)).pow(1 / 6)
     alpha_phase = torch.atan2(alpha_cube_im, alpha_cube_re) / 3
     del alpha_cube_re, alpha_cube_im
 

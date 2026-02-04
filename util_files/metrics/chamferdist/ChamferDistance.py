@@ -1,9 +1,8 @@
+# https://github.com/krrish94/chamferdist/blob/97051583f6fe72d5d4a855696dbfda0ea9b73a6a/chamferdist/ChamferDistance.py
+import chamferdistcuda as chamfer
+import torch
 from torch import nn
 from torch.autograd import Function
-import torch
-
-#https://github.com/krrish94/chamferdist/blob/97051583f6fe72d5d4a855696dbfda0ea9b73a6a/chamferdist/ChamferDistance.py
-import chamferdistcuda as chamfer
 
 
 # Chamfer's distance module
@@ -40,8 +39,7 @@ class chamferFunction(Function):
 
         gradxyz1 = gradxyz1.cuda()
         gradxyz2 = gradxyz2.cuda()
-        chamfer.backward(xyz1, xyz2, gradxyz1, gradxyz2, graddist1, graddist2,
-                         idx1, idx2)
+        chamfer.backward(xyz1, xyz2, gradxyz1, gradxyz2, graddist1, graddist2, idx1, idx2)
         return gradxyz1, gradxyz2
 
 

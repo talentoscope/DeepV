@@ -1,14 +1,15 @@
 from abc import ABC, abstractmethod
 from copy import copy, deepcopy
 
-from scipy.optimize import minimize
 import numpy as np
 import svgpathtools
+from scipy.optimize import minimize
+
+from util_files import warnings
+from util_files.simplification.simplify import bezier as simplify_bezier
+from util_files.simplification.utils import pointsC_are_indistinguishable
 
 from .utils.common import mirror_point_x
-from util_files.simplification.utils import pointsC_are_indistinguishable
-from util_files.simplification.simplify import bezier as simplify_bezier
-from util_files import warnings
 
 INTERNAL_PRECISION = 4
 _cubic_to_quad = None
@@ -18,7 +19,8 @@ def cubic_to_quad(*args, maximum_allowed_distance=1):
     global _cubic_to_quad
     if _cubic_to_quad is None:
         import js2py
-        _cubic_to_quad = js2py.require('cubic2quad')
+
+        _cubic_to_quad = js2py.require("cubic2quad")
     return _cubic_to_quad(*args, maximum_allowed_distance)
 
 
@@ -57,9 +59,9 @@ class Primitive(ABC):
             t_self, t_other = params
             return abs(self.segment.poly()(t_self) - other.segment.poly()(t_other))
 
-        res = minimize(dist, [.5, .5], bounds=[[0, 1], [0, 1]])
+        res = minimize(dist, [0.5, 0.5], bounds=[[0, 1], [0, 1]])
         if not res.success:
-            warnings.warn('Minimization of distance failed', warnings.UndefinedWarning)
+            warnings.warn("Minimization of distance failed", warnings.UndefinedWarning)
         return res.fun
 
     def mirror(self, x):
@@ -95,16 +97,13 @@ class Primitive(ABC):
             return reversed_coords + [width]
 
     @abstractmethod
-    def collapsed_if_tiny(self, *args, **kwargs):
-        ...
+    def collapsed_if_tiny(self, *args, **kwargs): ...
 
     @abstractmethod
-    def simplified(self, *args, **kwargs):
-        ...
+    def simplified(self, *args, **kwargs): ...
 
     @abstractmethod
-    def svg_representation(self):
-        ...
+    def svg_representation(self): ...
 
     @property
     def end_points(self):
@@ -132,16 +131,16 @@ class Line(Primitive):
         return [cls(segment)]
 
     def collapsed_if_tiny(self, distinguishability_threshold):
-        r'''Returns (None,) if end points coincide and (self,) otherwise.'''
+        r"""Returns (None,) if end points coincide and (self,) otherwise."""
         if pointsC_are_indistinguishable(self.segment.start, self.segment.end, distinguishability_threshold):
-            return None,
-        return self.copy(),
+            return (None,)
+        return (self.copy(),)
 
     def simplified(self, distinguishability_threshold):
-        r'''Returns (None,) if end points coincide and (self,) otherwise.'''
+        r"""Returns (None,) if end points coincide and (self,) otherwise."""
         if pointsC_are_indistinguishable(self.segment.start, self.segment.end, distinguishability_threshold):
-            return None,
-        return self.copy(),
+            return (None,)
+        return (self.copy(),)
 
     def split_with_infline(self, l0, n):
         start, end = (np.array([p.real, p.imag]) for p in self.segment.bpoints())
@@ -152,7 +151,7 @@ class Line(Primitive):
             if 0 <= t <= 1:
                 intersection_point = start + seg_l * t
                 return Line.from_points(start, intersection_point), Line.from_points(intersection_point, end)
-        return self.copy(),
+        return (self.copy(),)
 
     def svg_representation(self):
         return (self.segment.start.real, self.segment.start.imag), (self.segment.end.real, self.segment.end.imag)
@@ -162,28 +161,31 @@ class _Bezier(Primitive):
     MAX_LINEAR_SEGMENTS = 2
 
     def collapsed_if_tiny(self, distinguishability_threshold):
-        if all(pointsC_are_indistinguishable(self.segment[0], p, distinguishability_threshold) for p in
-               self.segment[1:]):
-            return None,
-        return self.copy(),
+        if all(
+            pointsC_are_indistinguishable(self.segment[0], p, distinguishability_threshold) for p in self.segment[1:]
+        ):
+            return (None,)
+        return (self.copy(),)
 
     def simplified(self, distinguishability_threshold):
         r"""Returns
-            1. (None,) if all control points coincide
-            2. up to 3 Lines if their combination is "indistinguishable" from self when rendered
-            3. (self,) otherwise
+        1. (None,) if all control points coincide
+        2. up to 3 Lines if their combination is "indistinguishable" from self when rendered
+        3. (self,) otherwise
         """
-        if all(pointsC_are_indistinguishable(self.segment[0], p, distinguishability_threshold) for p in
-               self.segment[1:]):
-            return None,
+        if all(
+            pointsC_are_indistinguishable(self.segment[0], p, distinguishability_threshold) for p in self.segment[1:]
+        ):
+            return (None,)
 
         if distinguishability_threshold == 0:
-            return self.copy(),
+            return (self.copy(),)
 
-        segments = simplify_bezier(self.segment, distinguishability_threshold,
-                                   max_segments_n=self.__class__.MAX_LINEAR_SEGMENTS)
+        segments = simplify_bezier(
+            self.segment, distinguishability_threshold, max_segments_n=self.__class__.MAX_LINEAR_SEGMENTS
+        )
         if segments[0] == self.segment:
-            return self.copy(),
+            return (self.copy(),)
         else:
             return (Line(line) for line in segments)
 
@@ -225,7 +227,7 @@ class QBezier(_Bezier):
         ccoords = [coord for point in segment.bpoints() for coord in (point.real, point.imag)]
         qcoords = cubic_to_quad(*ccoords)
         qpoints = [qcoords[i] + qcoords[i + 1] * 1j for i in range(0, len(qcoords), 2)]
-        quads = [qpoints[i:i + 3] for i in range(0, len(qpoints) - 1, 2)]
+        quads = [qpoints[i : i + 3] for i in range(0, len(qpoints) - 1, 2)]
         return [cls(svgpathtools.QuadraticBezier(*quad)) for quad in quads]
 
     @classmethod
@@ -235,5 +237,8 @@ class QBezier(_Bezier):
 
 # Bezier = CBezier  # our canonical bezier curves are cubic
 Bezier = QBezier  # our canonical bezier curves are quadratic
-Primitive._seg2prim = {svgpathtools.Line: Line.from_line, svgpathtools.CubicBezier: Bezier.from_cubic,
-                       svgpathtools.QuadraticBezier: Bezier.from_quadratic}
+Primitive._seg2prim = {
+    svgpathtools.Line: Line.from_line,
+    svgpathtools.CubicBezier: Bezier.from_cubic,
+    svgpathtools.QuadraticBezier: Bezier.from_quadratic,
+}

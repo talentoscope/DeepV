@@ -1,10 +1,6 @@
-from svgpathtools import Arc
-from svgpathtools import CubicBezier
-from svgpathtools import Line
-from svgpathtools import Path
-from svgpathtools.path import polygon
-from svgpathtools import QuadraticBezier
 import svgpathtools
+from svgpathtools import Arc, CubicBezier, Line, Path, QuadraticBezier
+from svgpathtools.path import polygon
 
 from . import transforms
 
@@ -12,44 +8,53 @@ from . import transforms
 def adjust_path_ppi(path, attributes, new_ppi_to_old_ppi, scale_width=1):
     if new_ppi_to_old_ppi != 1:
         path = path.scaled(new_ppi_to_old_ppi)
-    if 'stroke-width' in attributes:
-        attributes['stroke-width'] = str(float(attributes['stroke-width']) * new_ppi_to_old_ppi * scale_width)
+    if "stroke-width" in attributes:
+        attributes["stroke-width"] = str(float(attributes["stroke-width"]) * new_ppi_to_old_ppi * scale_width)
     return path, attributes
 
 
 def clean_attributes(attributes):
     # leave only appearance attributes
     new_attributes = dict()
-    for key in set(['fill', 'fill-opacity',
-                    'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'stroke-opacity', 'stroke-miterlimit']
-                  ).intersection(attributes.keys()):
+    for key in set(
+        [
+            "fill",
+            "fill-opacity",
+            "stroke",
+            "stroke-width",
+            "stroke-linecap",
+            "stroke-linejoin",
+            "stroke-opacity",
+            "stroke-miterlimit",
+        ]
+    ).intersection(attributes.keys()):
         new_attributes[key] = attributes[key]
-    
+
     return new_attributes
 
 
 def flatten_transforms(paths, attribute_dicts):
     paths_out = []
     attributes_out = []
-    
+
     for path, attributes in zip(paths, attribute_dicts):
-        if 'transform' in attributes:
-            matrix = svgpathtools.parser.parse_transform(attributes['transform'])
+        if "transform" in attributes:
+            matrix = svgpathtools.parser.parse_transform(attributes["transform"])
             path = svgpathtools.path.transform(path, matrix)
-            del attributes['transform']
+            del attributes["transform"]
 
         paths_out.append(path)
-        attributes_out.append(attributes)            
+        attributes_out.append(attributes)
 
-    return paths_out, attributes_out            
+    return paths_out, attributes_out
 
 
 def get_graphics_in_rect(paths, attribute_dicts, boundary):
     paths_out = []
     attributes_out = []
-    
+
     left, top, right, bottom = boundary
-    boundary_rect = polygon(left + 1j * top, right + 1j * top, right + 1j * bottom, left+ 1j * bottom)
+    boundary_rect = polygon(left + 1j * top, right + 1j * top, right + 1j * bottom, left + 1j * bottom)
 
     for path, attributes in zip(paths, attribute_dicts):
         new_path = Path()
@@ -65,7 +70,7 @@ def get_graphics_in_rect(paths, attribute_dicts, boundary):
             intersections = []
             for edge in boundary_rect:
                 intersections = intersections + seg.intersect(edge)
-            
+
             # if svgpathtools found no intersections then there are 3 cases
             if len(intersections) == 0:
                 seg_is_in_patch = point_is_in_rect(seg.start, boundary)
@@ -88,11 +93,11 @@ def get_graphics_in_rect(paths, attribute_dicts, boundary):
                 split_points = sorted(set(split_points))
                 # split segment in the intersection points
                 for i in range(len(split_points) - 1):
-                    subseg = seg.cropped(split_points[i], split_points[i+1])
-                    
+                    subseg = seg.cropped(split_points[i], split_points[i + 1])
+
                     start_is_in_patch = point_is_in_rect(subseg.start, boundary)
                     end_is_in_patch = point_is_in_rect(subseg.end, boundary)
-                    
+
                     # for each type of segment if one of the endpoints lies outside of the patch then the segment is outside
                     if start_is_in_patch == -1 or end_is_in_patch == -1:
                         continue
@@ -105,20 +110,20 @@ def get_graphics_in_rect(paths, attribute_dicts, boundary):
 
                     # all the other types -- Arc, QuadraticBezier, CubicBezier -- have no more common points with the boundary other than the endpoints, so any inner point of the segment is either inside or outside, which corresponds to the insideness of the whole segment
                     # the only exception is when the patch boundary is tangent to the segment in an inner point, in which case this point isn't considered as intersection point by svgpathtools.whatsoever, in this case the segment is inside the patch
-                    if point_is_in_rect(subseg.point(.5), boundary) >= 0:
+                    if point_is_in_rect(subseg.point(0.5), boundary) >= 0:
                         new_path.append(subseg)
                         continue
 
         if len(new_path) > 0:
             paths_out.append(new_path)
-            attributes_out.append(attributes)            
+            attributes_out.append(attributes)
 
     return paths_out, attributes_out
 
 
 def outline_filled(attributes, outline_style=None):
     if path_is_filled(attributes):
-        attributes['fill'] = 'none'
+        attributes["fill"] = "none"
         if not path_is_outlined(attributes):
             for key in outline_style.keys():
                 attributes[key] = outline_style[key]
@@ -127,11 +132,15 @@ def outline_filled(attributes, outline_style=None):
 
 
 def path_is_filled(attributes):
-    return not ('fill' in attributes and attributes['fill'] == 'none')
+    return not ("fill" in attributes and attributes["fill"] == "none")
 
 
 def path_is_outlined(attributes):
-    return 'stroke' in attributes and attributes['stroke'] != 'none' and (not 'stroke-width' in attributes or attributes['stroke-width'] != '0')
+    return (
+        "stroke" in attributes
+        and attributes["stroke"] != "none"
+        and (not "stroke-width" in attributes or attributes["stroke-width"] != "0")
+    )
 
 
 def path_is_invisible(attributes):
@@ -140,11 +149,11 @@ def path_is_invisible(attributes):
 
 # this function may not work properly for points close to the edge since svgpathtools sometimes finds intersections of the segments that lie slightly off
 def point_is_in_rect(point, boundary):
-    '''Return 1 if the point is inside, -1 if it's outside, and 0 if it's on the boundary.'''
-    
+    """Return 1 if the point is inside, -1 if it's outside, and 0 if it's on the boundary."""
+
     left, top, right, bottom = boundary
     x, y = point.real, point.imag
-    
+
     if x < left or x > right or y < top or y > bottom:
         return -1
     if left < x < right:
@@ -174,7 +183,7 @@ def remove_empty_paths(paths, attribute_dicts, remove_filled=False):
         if len(path) > 0:
             paths_out.append(path)
             attributes_out.append(attributes)
-        
+
     return paths_out, attributes_out
 
 

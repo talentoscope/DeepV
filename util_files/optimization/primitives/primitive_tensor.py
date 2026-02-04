@@ -2,8 +2,17 @@ import cairocffi as cairo
 import numpy as np
 import torch
 
-from ..parameters import collinearity_beta, division_epsilon, elementary_halfwidth, empty_pixel_tolerance,\
-    foreground_pixel_min_shading, min_visible_width, neighbourhood_padding, reinit_initial_length, reinit_initial_width
+from ..parameters import (
+    collinearity_beta,
+    division_epsilon,
+    elementary_halfwidth,
+    empty_pixel_tolerance,
+    foreground_pixel_min_shading,
+    min_visible_width,
+    neighbourhood_padding,
+    reinit_initial_length,
+    reinit_initial_width,
+)
 
 
 class PrimitiveTensor:
@@ -66,8 +75,9 @@ class PrimitiveTensor:
         self.size_fixed = False
         self.invalidate_size_dependent()
 
-    def get_q_collinearity(self, pixel_coords, q_prim, collinearity_beta=collinearity_beta,
-                           division_epsilon=division_epsilon):
+    def get_q_collinearity(
+        self, pixel_coords, q_prim, collinearity_beta=collinearity_beta, division_epsilon=division_epsilon
+    ):
         r"""
 
         Parameters
@@ -83,8 +93,9 @@ class PrimitiveTensor:
             Tensor of shape [patches_n, primitives_n, pixels_n] with True for pixels in neighbourhood of the primitive.
         """
         # 0. Reuse cached values if they weren't invalidated and pixel_coords are the same
-        reuse_pixel_coords = ((self._canonical_pixel_coords is not None) and
-                              torch.all(self._pixel_coords == pixel_coords))
+        reuse_pixel_coords = (self._canonical_pixel_coords is not None) and torch.all(
+            self._pixel_coords == pixel_coords
+        )
         if reuse_pixel_coords and (self._q_collinearity is not None):
             return self._q_collinearity
 
@@ -93,7 +104,7 @@ class PrimitiveTensor:
         # 1. Find canonical coordinates of the pixels
         if not reuse_pixel_coords:
             # FIXME resolve the cashing clash with neighbourhood function where from_midpoint=True
-            assert False, 'Should not use from_midpoint=True here'
+            assert False, "Should not use from_midpoint=True here"
             canonical_x_abs, canonical_y = self.calculate_canonical_coordinates(pixel_coords, from_midpoint=True)
             canonical_x_abs = canonical_x_abs.data
             canonical_y = canonical_y.data
@@ -115,7 +126,7 @@ class PrimitiveTensor:
         # 4. Calculate collinearity factors
         spatial_dim_i = 1
         others_vf_norm = others_vector_field.norm(dim=spatial_dim_i, keepdim=True)
-        others_vector_field /= (others_vf_norm.expand_as(others_vector_field) + division_epsilon)
+        others_vector_field /= others_vf_norm.expand_as(others_vector_field) + division_epsilon
         collinearity = (others_vector_field * vector_field).sum(spatial_dim_i)
         del vector_field, others_vector_field
 
@@ -126,9 +137,15 @@ class PrimitiveTensor:
         self._q_collinearity = collinearity
         return collinearity
 
-    def get_neighbourhood_weighting(self, pixel_coords, pixel_values, empty_pixel_tol=empty_pixel_tolerance,
-                                    elementary_halfwidth=elementary_halfwidth, x_padding=neighbourhood_padding,
-                                    y_padding=neighbourhood_padding):
+    def get_neighbourhood_weighting(
+        self,
+        pixel_coords,
+        pixel_values,
+        empty_pixel_tol=empty_pixel_tolerance,
+        elementary_halfwidth=elementary_halfwidth,
+        x_padding=neighbourhood_padding,
+        y_padding=neighbourhood_padding,
+    ):
         r"""
 
         Parameters
@@ -144,8 +161,9 @@ class PrimitiveTensor:
             Tensor of shape [patches_n, primitives_n, pixels_n] with True for pixels in neighbourhood of the primitive.
         """
         # 0. Reuse cached values if they weren't invalidated and pixel_coords are the same
-        reuse_pixel_coords = ((self._canonical_pixel_coords is not None) and
-                              torch.all(self._pixel_coords == pixel_coords))
+        reuse_pixel_coords = (self._canonical_pixel_coords is not None) and torch.all(
+            self._pixel_coords == pixel_coords
+        )
         if reuse_pixel_coords and (self._in_neighbourhood is not None):
             return self._in_neighbourhood
 
@@ -262,9 +280,16 @@ class PrimitiveTensor:
     def invalidate_size_dependent(self):
         return NotImplementedError
 
-    def reinit_collapsed_primitives(self, pixel_coords, raster, primitive_rasterization,
-                                    min_visible_width=min_visible_width, min_foreground=foreground_pixel_min_shading,
-                                    initial_width=reinit_initial_width, initial_length=reinit_initial_length):
+    def reinit_collapsed_primitives(
+        self,
+        pixel_coords,
+        raster,
+        primitive_rasterization,
+        min_visible_width=min_visible_width,
+        min_foreground=foreground_pixel_min_shading,
+        initial_width=reinit_initial_width,
+        initial_length=reinit_initial_length,
+    ):
         r"""
 
         Parameters
@@ -296,7 +321,7 @@ class PrimitiveTensor:
         # 3. In each patch among the pixels not already covered by some primitive,
         #    find the 'most not covered' pixel, i.e with the max shading value
         pixels_dim_i = 1
-        not_covered = primitive_rasterization == 0.
+        not_covered = primitive_rasterization == 0.0
         raster = raster.where(not_covered, raster.new_zeros([]))
         del not_covered
         values, pixel_ids = raster.max(dim=pixels_dim_i)
@@ -326,8 +351,9 @@ class PrimitiveTensor:
         pixel_coords_to_reinit_at = torch.gather(pixel_coords, dim=pixels_dim_i, index=pixel_ids)[:, :, 0]
         del pixel_ids, pixel_coords
 
-        self.reinit_primitives(primitives_to_reinit, pixel_coords_to_reinit_at,
-                               initial_width=initial_width, initial_length=initial_length)
+        self.reinit_primitives(
+            primitives_to_reinit, pixel_coords_to_reinit_at, initial_width=initial_width, initial_length=initial_length
+        )
 
     def render_single_primitive_with_cairo(self, ctx, patch_i, primitive_i):
         raise NotImplementedError
@@ -371,8 +397,9 @@ class PrimitiveTensor:
                     self.render_single_primitive_with_cairo(ctx, patch_i, primitive_i)
 
                     # remove int32 padding and copy data
-                    renderings[patch_i, primitive_i].numpy()[:] = torch.as_tensor(
-                        buffer.reshape(height, buffer_width)[:, :width], dtype=self.dtype) / 255
+                    renderings[patch_i, primitive_i].numpy()[:] = (
+                        torch.as_tensor(buffer.reshape(height, buffer_width)[:, :width], dtype=self.dtype) / 255
+                    )
 
         return renderings
 
@@ -415,8 +442,9 @@ class PrimitiveTensor:
                     self.render_single_primitive_with_cairo(ctx, patch_i, primitive_i, min_width=min_width)
 
                 # remove int32 padding and copy data
-                renderings[patch_i].numpy()[:] = torch.as_tensor(
-                    buffer.reshape(height, buffer_width)[:, :width], dtype=self.dtype) / 255
+                renderings[patch_i].numpy()[:] = (
+                    torch.as_tensor(buffer.reshape(height, buffer_width)[:, :width], dtype=self.dtype) / 255
+                )
 
         return renderings
 

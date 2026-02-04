@@ -1,0 +1,4 @@
+# Path configuration - override these for your environment
+code_dir: /code
+data_dir: /data
+logs_dir: /logs

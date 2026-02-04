@@ -1,8 +1,8 @@
-
-import torch, torch.nn as nn
-from torch.autograd import Variable
 import numpy as np
+import torch
+import torch.nn as nn
 from skimage.measure import compare_psnr
+from torch.autograd import Variable
 
 SMOOTH = 1e-6
 
@@ -33,10 +33,10 @@ def PSNR(outputs: torch.Tensor, labels: torch.Tensor):
 
 
 class CleaningLoss(nn.Module):
-    def __init__(self, kind='MSE', with_restore=True, alpha=1):
+    def __init__(self, kind="MSE", with_restore=True, alpha=1):
         super().__init__()
 
-        if kind == 'MSE':
+        if kind == "MSE":
             self.loss_extraction = nn.MSELoss()
             self.loss_restoration = nn.MSELoss()
         else:
@@ -58,7 +58,7 @@ class CleaningLoss(nn.Module):
         return loss
 
 
-def MSE_loss(X_batch, y_batch, model=None, device='cpu'):
+def MSE_loss(X_batch, y_batch, model=None, device="cpu"):
     X_batch = Variable(torch.FloatTensor(X_batch)).to(device)
     y_batch = Variable(y_batch.type(torch.FloatTensor)).to(device)
 
@@ -84,7 +84,7 @@ def MSE_synthetic_loss(X_batch, y_batch_er, y_batch_e, model=None, device=None):
     return loss_first(logits_er, y_batch_er) + loss_second(logits_e, y_batch_e)
 
 
-def BCE_loss(X_batch, y_batch, model=None, device='cpu'):
+def BCE_loss(X_batch, y_batch, model=None, device="cpu"):
     X_batch = Variable(torch.FloatTensor(X_batch)).to(device)
     y_batch = Variable(y_batch.type(torch.FloatTensor)).to(device)
 

@@ -1,15 +1,15 @@
-from glob import glob
 import os
 import sys
+from glob import glob
 
 import numpy as np
 
-sys.path.append('/code')
+sys.path.append("/code")
 from util_files.data.graphics.graphics import VectorImage
 from util_files.rendering.cairo import render
 
 
-def find_duplicates(filepath, others_paths, max_iou=.9):
+def find_duplicates(filepath, others_paths, max_iou=0.9):
     image = VectorImage.from_svg(filepath)
     rendering_binarized = image.render(render) < 255 / 2
     width = image.width
@@ -27,8 +27,8 @@ def find_duplicates(filepath, others_paths, max_iou=.9):
             print(other_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     filepath = sys.argv[1]
     others_root = sys.argv[2]
-    others_paths = glob(f'{others_root}/**/*.svg', recursive=True)
+    others_paths = glob(f"{others_root}/**/*.svg", recursive=True)
     find_duplicates(filepath, others_paths)

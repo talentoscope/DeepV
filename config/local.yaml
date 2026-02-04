@@ -1,0 +1,7 @@
+# Local development configuration
+defaults:
+  - _self_
+  - paths: local
+
+# Local overrides
+gpu: 0  # Use GPU 0 if available

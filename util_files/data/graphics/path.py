@@ -2,24 +2,25 @@ from copy import copy, deepcopy
 
 import svgpathtools
 
-from .utils import parse
-from .primitives import Primitive
-from .utils.splitting import split_to_patches, crop_to_bbox
-from . import units
-
 from util_files.data.graphics_primitives import PT_LINE, PT_QBEZIER
+
+from . import units
+from .primitives import Primitive
+from .utils import parse
+from .utils.splitting import crop_to_bbox, split_to_patches
 
 
 class Path:
     def __init__(self, path, attributes, flatten_transforms=True, convert_to_pixels=True):
         # geometry
         if flatten_transforms:
-            if 'transform' in attributes:
-                matrix = svgpathtools.parser.parse_transform(attributes['transform'])
+            if "transform" in attributes:
+                matrix = svgpathtools.parser.parse_transform(attributes["transform"])
                 path = svgpathtools.path.transform(path, matrix)
 
-        self.segments = [primitive for seg in path if not isinstance(seg, svgpathtools.Arc)
-                         for primitive in Primitive.from_seg(seg)]
+        self.segments = [
+            primitive for seg in path if not isinstance(seg, svgpathtools.Arc) for primitive in Primitive.from_seg(seg)
+        ]
 
         # appearance
         self.fill = parse.fill(attributes)
@@ -57,24 +58,24 @@ class Path:
         else:
             raise NotImplementedError
         path = svgpathtools.Path(primitive)
-        attributes = {'stroke': 'black', 'stroke-width': f'{width}', 'fill': 'none'}
+        attributes = {"stroke": "black", "stroke-width": f"{width}", "fill": "none"}
         return cls(path, attributes)
 
     @classmethod
-    def make_line(cls, p1, p2, width, color='black'):
+    def make_line(cls, p1, p2, width, color="black"):
         path = cls(
             svgpathtools.Path(
                 svgpathtools.Line(p1[0] + p1[1] * 1j, p2[0] + p2[1] * 1j),
             ),
-            {'stroke': color, 'stroke-width': f'{width}', 'fill': 'none'}
+            {"stroke": color, "stroke-width": f"{width}", "fill": "none"},
         )
-        path.svg_attributes['stroke'] = color
+        path.svg_attributes["stroke"] = color
         if isinstance(width, units.GraphicUnits):
             path.width = width
         return path
 
     @classmethod
-    def make_rectangle(cls, left, top, bottom, right, width, color='black'):
+    def make_rectangle(cls, left, top, bottom, right, width, color="black"):
         path = cls(
             svgpathtools.Path(
                 svgpathtools.Line(left + top * 1j, right + top * 1j),
@@ -82,9 +83,9 @@ class Path:
                 svgpathtools.Line(right + bottom * 1j, left + bottom * 1j),
                 svgpathtools.Line(left + bottom * 1j, left + top * 1j),
             ),
-            {'stroke': color, 'stroke-width': f'{width}', 'fill': 'none'}
+            {"stroke": color, "stroke-width": f"{width}", "fill": "none"},
         )
-        path.svg_attributes['stroke'] = color
+        path.svg_attributes["stroke"] = color
         if isinstance(width, units.GraphicUnits):
             path.width = width
         return path
@@ -96,10 +97,10 @@ class Path:
         subpath_start = 0
         for i in range(len(self) - 1):
             if self[i].end != self.segments[i + 1].start:
-                subpath = self.copy(segments=self[subpath_start: i + 1])
+                subpath = self.copy(segments=self[subpath_start : i + 1])
                 subpaths.append(subpath)
                 subpath_start = i + 1
-        subpath = self.copy(segments=self[subpath_start: len(self)])
+        subpath = self.copy(segments=self[subpath_start : len(self)])
         subpaths.append(subpath)
         return subpaths
 
@@ -170,8 +171,7 @@ class Path:
                     self.width = self.width.as_pixels()
 
     def __repr__(self):
-        return "Path({})".format(
-            ",\n     ".join(repr(x) for x in self.segments))
+        return "Path({})".format(",\n     ".join(repr(x) for x in self.segments))
 
     def rotate(self, rotation_deg, origin):
         [seg.rotate(rotation_deg, origin) for seg in self.segments]
@@ -193,13 +193,13 @@ class Path:
     def to_svgpathtools(self):
         path = svgpathtools.Path(*(seg.to_svgpathtools() for seg in self.segments))
         attributes = self.svg_attributes.copy()
-        if 'fill' not in attributes:
-            attributes['fill'] = 'black' if self.fill else 'none'
+        if "fill" not in attributes:
+            attributes["fill"] = "black" if self.fill else "none"
         if self.width is not None:
-            if 'stroke' not in attributes:
-                attributes['stroke'] = 'black'
-            if 'stroke-width' not in attributes:
-                attributes['stroke-width'] = str(self.width)
+            if "stroke" not in attributes:
+                attributes["stroke"] = "black"
+            if "stroke-width" not in attributes:
+                attributes["stroke-width"] = str(self.width)
         return path, attributes
 
     def translate(self, t):
@@ -212,12 +212,14 @@ class Path:
 
     def with_removed_tiny_segments(self, threshold):
         self.segments = list(
-            filter(None, (subseg for seg in self.segments for subseg in seg.collapsed_if_tiny(threshold))))
+            filter(None, (subseg for seg in self.segments for subseg in seg.collapsed_if_tiny(threshold)))
+        )
         return self
 
     def with_simplified_segments(self, distinguishability_threshold):
         self.segments = list(
-            filter(None, (subseg for seg in self.segments for subseg in seg.simplified(distinguishability_threshold))))
+            filter(None, (subseg for seg in self.segments for subseg in seg.simplified(distinguishability_threshold)))
+        )
         return self
 
     @property

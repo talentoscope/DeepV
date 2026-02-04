@@ -1,7 +1,7 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.init as init
-import numpy as np
 
 __author__ = "Yu-Hsiang Huang"
 
@@ -10,7 +10,7 @@ __author__ = "Yu-Hsiang Huang"
 
 
 class Linear(nn.Module):
-    ''' Simple Linear layer with xavier init '''
+    """Simple Linear layer with xavier init"""
 
     def __init__(self, d_in, d_out, bias=True):
         super(Linear, self).__init__()
@@ -22,7 +22,7 @@ class Linear(nn.Module):
 
 
 class Bottle(nn.Module):
-    ''' Perform the reshape routine before and after an operation '''
+    """Perform the reshape routine before and after an operation"""
 
     def forward(self, input):
         if len(input.size()) <= 2:
@@ -33,17 +33,19 @@ class Bottle(nn.Module):
 
 
 class BottleLinear(Bottle, Linear):
-    ''' Perform the reshape routine before and after a linear projection '''
+    """Perform the reshape routine before and after a linear projection"""
+
     pass
 
 
 class BottleSoftmax(Bottle, nn.Softmax):
-    ''' Perform the reshape routine before and after a softmax operation'''
+    """Perform the reshape routine before and after a softmax operation"""
+
     pass
 
 
 class LayerNormalization(nn.Module):
-    ''' Layer normalization module '''
+    """Layer normalization module"""
 
     def __init__(self, d_hid, eps=1e-3):
         super(LayerNormalization, self).__init__()
@@ -65,7 +67,7 @@ class LayerNormalization(nn.Module):
 
 
 class BatchBottle(nn.Module):
-    ''' Perform the reshape routine before and after an operation '''
+    """Perform the reshape routine before and after an operation"""
 
     def forward(self, input):
         if len(input.size()) <= 2:
@@ -76,14 +78,15 @@ class BatchBottle(nn.Module):
 
 
 class BottleLayerNormalization(BatchBottle, LayerNormalization):
-    ''' Perform the reshape routine before and after a layer normalization'''
+    """Perform the reshape routine before and after a layer normalization"""
+
     pass
 
 
 class ScaledDotProductAttention(nn.Module):
-    ''' Scaled Dot-Product Attention '''
+    """Scaled Dot-Product Attention"""
 
-    def __init__(self, d_model, attn_dropout=0.):
+    def __init__(self, d_model, attn_dropout=0.0):
         super(ScaledDotProductAttention, self).__init__()
         self.temper = np.power(d_model, 0.5)
         self.dropout = nn.Dropout(attn_dropout)
@@ -93,12 +96,13 @@ class ScaledDotProductAttention(nn.Module):
         attn = torch.bmm(q, k.transpose(1, 2)) / self.temper
 
         if attn_mask is not None:
-            assert attn_mask.size() == attn.size(), \
-                'Attention mask shape {} mismatch ' \
-                'with Attention logit tensor shape ' \
-                '{}.'.format(attn_mask.size(), attn.size())
+            assert attn_mask.size() == attn.size(), (
+                "Attention mask shape {} mismatch "
+                "with Attention logit tensor shape "
+                "{}.".format(attn_mask.size(), attn.size())
+            )
 
-            attn.data.masked_fill_(attn_mask, -float('inf'))
+            attn.data.masked_fill_(attn_mask, -float("inf"))
 
         attn = self.softmax(attn)
         attn = self.dropout(attn)
@@ -108,10 +112,9 @@ class ScaledDotProductAttention(nn.Module):
 
 
 class MultiHeadAttention(nn.Module):
-    ''' Multi-Head Attention module '''
+    """Multi-Head Attention module"""
 
-    def __init__(self, n_head, d_model, d_k=None, d_v=None, d_out=None,
-                 use_residual=True, dropout=0.):
+    def __init__(self, n_head, d_model, d_k=None, d_v=None, d_out=None, use_residual=True, dropout=0.0):
         """
         :param n_head: number of parallel attentions (to be concatenated)
         :param d_model: previous layer's last dimension
@@ -178,8 +181,9 @@ class MultiHeadAttention(nn.Module):
         v_s = torch.bmm(v_s, self.w_vs).view(-1, len_v, d_v)  # (n_head*mb_size) x len_v x d_v
 
         # perform attention, result size = (n_head * mb_size) x len_q x d_v
-        outputs, attns = self.attention(q_s, k_s, v_s,
-                                        attn_mask=None if attn_mask is None else attn_mask.repeat(n_head, 1, 1))
+        outputs, attns = self.attention(
+            q_s, k_s, v_s, attn_mask=None if attn_mask is None else attn_mask.repeat(n_head, 1, 1)
+        )
 
         # back to original mb_size batch, result size = mb_size x len_q x (n_head*d_v)
         outputs = torch.cat(torch.split(outputs, mb_size, dim=0), dim=-1)
@@ -194,9 +198,9 @@ class MultiHeadAttention(nn.Module):
 
 
 class PositionwiseFeedForward(nn.Module):
-    ''' A two-feed-forward-layer module '''
+    """A two-feed-forward-layer module"""
 
-    def __init__(self, d_hid, d_inner_hid=None, d_out=None, use_residual=True, dropout=0.):
+    def __init__(self, d_hid, d_inner_hid=None, d_out=None, use_residual=True, dropout=0.0):
         super(PositionwiseFeedForward, self).__init__()
         d_inner_hid = d_inner_hid or d_hid
         d_out = d_out or d_hid
@@ -221,7 +225,7 @@ class PositionwiseFeedForward(nn.Module):
 
 
 class TransformerLayer(nn.Module):
-    ''' Compose with three layers '''
+    """Compose with three layers"""
 
     def __init__(self, d_model, d_inner=None, n_head=8, d_k=None, d_v=None, dropout=0.1):
         super(TransformerLayer, self).__init__()
@@ -240,7 +244,7 @@ class TransformerLayer(nn.Module):
 
 
 def get_sinusoid_encoding_table(n_position, d_hid, scale=2.0, padding_idx=None):
-    ''' Sinusoid position encoding table '''
+    """Sinusoid position encoding table"""
 
     def cal_angle(position, hid_idx):
         return position / np.power(10000, float(scale) * (hid_idx // 2) / d_hid)
@@ -248,12 +252,12 @@ def get_sinusoid_encoding_table(n_position, d_hid, scale=2.0, padding_idx=None):
     def get_posi_angle_vec(position):
         return [cal_angle(position, hid_j) for hid_j in range(d_hid)]
 
-    sinusoid_table = np.array([get_posi_angle_vec(pos_i) for pos_i in range(n_position)], dtype='float32')
+    sinusoid_table = np.array([get_posi_angle_vec(pos_i) for pos_i in range(n_position)], dtype="float32")
     sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])  # dim 2i
     sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2])  # dim 2i+1
 
     if padding_idx is not None:
         # zero vector for padding dimension
-        sinusoid_table[padding_idx] = 0.
+        sinusoid_table[padding_idx] = 0.0
 
     return torch.FloatTensor(sinusoid_table)

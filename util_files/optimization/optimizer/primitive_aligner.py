@@ -1,13 +1,17 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 
+from ..parameters import (
+    neighbourhood_pos_weight,
+    pixel_center_coodinates_are_integer,
+    reinit_period,
+)
 from .logging import Logger
-from ..parameters import neighbourhood_pos_weight, pixel_center_coodinates_are_integer, reinit_period
 
 
 class PrimitiveAligner:
-    def __init__(self, initial_primitives_tensor, raster_tensor, logger=None, loglevel='debug'):
+    def __init__(self, initial_primitives_tensor, raster_tensor, logger=None, loglevel="debug"):
         r"""
 
         Parameters
@@ -46,15 +50,15 @@ class PrimitiveAligner:
 
         if fontsize is None:
             fontsize = 3 * ax_size
-        initial_pred_ax.set_xlabel('Initial prediction', fontsize=fontsize)
-        initial_skeleton_ax.set_xlabel('Initial skeleton', fontsize=fontsize)
-        refined_pred_ax.set_xlabel('Refined prediction', fontsize=fontsize)
-        refined_skeleton_ax.set_xlabel('Refined skeleton', fontsize=fontsize)
-        target_ax.set_xlabel('Target', fontsize=fontsize)
-        dif_ax.set_xlabel('Difference', fontsize=fontsize)
+        initial_pred_ax.set_xlabel("Initial prediction", fontsize=fontsize)
+        initial_skeleton_ax.set_xlabel("Initial skeleton", fontsize=fontsize)
+        refined_pred_ax.set_xlabel("Refined prediction", fontsize=fontsize)
+        refined_skeleton_ax.set_xlabel("Refined skeleton", fontsize=fontsize)
+        target_ax.set_xlabel("Target", fontsize=fontsize)
+        dif_ax.set_xlabel("Difference", fontsize=fontsize)
 
         for ax in axes:
-            ax.xaxis.set_label_position('top')
+            ax.xaxis.set_label_position("top")
             ax.get_xaxis().set_ticks([])
             ax.get_yaxis().set_ticks([])
         fig.subplots_adjust(wspace=0, hspace=0)
@@ -63,22 +67,22 @@ class PrimitiveAligner:
         _, image_height, image_width = self.q_raster.shape
 
         self.im_target = im_target = np.vstack(self.q_raster.cpu()[patch_ids])
-        self.target_plot = target_ax.imshow(im_target, vmin=0, vmax=1, cmap='gray_r')
+        self.target_plot = target_ax.imshow(im_target, vmin=0, vmax=1, cmap="gray_r")
 
         initial_prediction = np.vstack(self.prim_ten.render_with_cairo_total(image_width, image_height)[patch_ids])
-        self.initial_pred_plot = initial_pred_ax.imshow(initial_prediction, vmin=0, vmax=1, cmap='gray_r')
+        self.initial_pred_plot = initial_pred_ax.imshow(initial_prediction, vmin=0, vmax=1, cmap="gray_r")
 
         initial_skeleton = self.prim_ten.render_skeleton_total(image_width, image_height)[patch_ids]
         self.initial_skel_plot = initial_skeleton_ax.imshow(np.vstack(initial_skeleton))
 
         refined_prediction = initial_prediction.copy()
-        self.refined_pred_plot = refined_pred_ax.imshow(refined_prediction, vmin=0, vmax=1, cmap='gray_r')
+        self.refined_pred_plot = refined_pred_ax.imshow(refined_prediction, vmin=0, vmax=1, cmap="gray_r")
 
         refined_skeleton = initial_skeleton.copy()
         self.refined_skel_plot = refined_skeleton_ax.imshow(np.vstack(refined_skeleton))
 
         difference = im_target - initial_prediction
-        self.dif_plot = dif_ax.imshow(difference, vmin=-1, vmax=1, cmap='gray_r')
+        self.dif_plot = dif_ax.imshow(difference, vmin=-1, vmax=1, cmap="gray_r")
 
         if store_plots:
             self.stored_plots = []
@@ -105,7 +109,7 @@ class PrimitiveAligner:
 
     def save_plots(self, filepath, fps=30):
         if self.stored_plots is None:
-            raise ValueError('Not prepared for saving')
+            raise ValueError("Not prepared for saving")
 
         import matplotlib.animation as animation
 
@@ -114,11 +118,17 @@ class PrimitiveAligner:
             self.refined_pred_plot.set_array(im_refined)
             self.dif_plot.set_array(im_dif)
             self.refined_skel_plot.set_array(im_refined_skeleton)
-            return [self.initial_pred_plot, self.initial_skel_plot, self.refined_pred_plot,
-                    self.refined_skel_plot, self.target_plot, self.dif_plot]
+            return [
+                self.initial_pred_plot,
+                self.initial_skel_plot,
+                self.refined_pred_plot,
+                self.refined_skel_plot,
+                self.target_plot,
+                self.dif_plot,
+            ]
 
         anim = animation.FuncAnimation(self.fig, animate_func, frames=len(self.stored_plots))
-        return anim.save(filepath, fps=fps, extra_args=['-vcodec', 'libx264'])
+        return anim.save(filepath, fps=fps, extra_args=["-vcodec", "libx264"])
 
     def step(self, iteration_i, draw_visualization=False, reinit_period=reinit_period):
         logger = self.logger
@@ -132,28 +142,35 @@ class PrimitiveAligner:
 
         self.zero_grad()
 
-        logger.debug('Calculate renderings')  # %%
+        logger.debug("Calculate renderings")  # %%
         patches_n, patch_height, patch_width = q_raster.shape
         pixels_n = patch_height * patch_width
-        q_prim = prim_ten.render_with_cairo_each(patch_width, patch_height).to(device, dtype)  # patches_n x prims_n x height x width
-        primitive_rasterization = prim_ten.render_with_cairo_total(patch_width, patch_height)  # used later for visualization
+        q_prim = prim_ten.render_with_cairo_each(patch_width, patch_height).to(
+            device, dtype
+        )  # patches_n x prims_n x height x width
+        primitive_rasterization = prim_ten.render_with_cairo_total(
+            patch_width, patch_height
+        )  # used later for visualization
         q_all = primitive_rasterization.to(device, dtype)  # patches_n x height x width
 
-        logger.debug('Reinitialize')  # %%
+        logger.debug("Reinitialize")  # %%
         if iteration_i % reinit_period == 0:
-            prim_ten.reinit_collapsed_primitives(pixel_coords, q_raster.reshape(patches_n, pixels_n),
-                                                 q_all.reshape(patches_n, pixels_n))
+            prim_ten.reinit_collapsed_primitives(
+                pixel_coords, q_raster.reshape(patches_n, pixels_n), q_all.reshape(patches_n, pixels_n)
+            )
             prim_ten.synchronize_parameters()
 
         if draw_visualization:  # %%
-            logger.debug('Draw visualization')
+            logger.debug("Draw visualization")
             self.draw_visualization(primitive_rasterization)
         del primitive_rasterization
 
-        logger.debug('Calculate neighbourhoods')  # %%
-        c_prim = prim_ten.get_neighbourhood_weighting(pixel_coords, q_raster.reshape(patches_n, pixels_n))  # patches_n x prims_n x pixels_n
+        logger.debug("Calculate neighbourhoods")  # %%
+        c_prim = prim_ten.get_neighbourhood_weighting(
+            pixel_coords, q_raster.reshape(patches_n, pixels_n)
+        )  # patches_n x prims_n x pixels_n
 
-        logger.debug('Calculate pos energies')  # %%
+        logger.debug("Calculate pos energies")  # %%
         # same as: q_pos = (q_all - q_prim - q_raster) * (1 + c_prim * (neighbourhood_pos_weight - 1))
         q_pos = q_all.unsqueeze(1) - q_prim
         q_pos -= q_raster.unsqueeze(1)
@@ -171,10 +188,10 @@ class PrimitiveAligner:
         # prim_ten.debug_ax.imshow(np.vstack(_))
         energy_pos = energy_pos.sum(dim=[1, 2]).mean()
         energy_pos.backward()
-        logger.debug(f'Pos energy {energy_pos.item()}')
+        logger.debug(f"Pos energy {energy_pos.item()}")
         del energy_pos
 
-        logger.debug('Calculate size energies')  # %%
+        logger.debug("Calculate size energies")  # %%
         # same as: q_size = torch.where(c_prim, q_all - q_raster, q_prim)
         q_size = q_all
         del q_all
@@ -184,7 +201,7 @@ class PrimitiveAligner:
         q_size = q_size.where(c_prim, q_prim)
         del c_prim
 
-        logger.debug('Calculate collinearity energies')  # %%
+        logger.debug("Calculate collinearity energies")  # %%
         q_collinearity = prim_ten.get_q_collinearity(pixel_coords, q_prim)
         del q_prim
         q_size += q_collinearity
@@ -196,29 +213,29 @@ class PrimitiveAligner:
         del q_size
         energy_size = energy_size.sum(dim=[1, 2]).mean()
         energy_size.backward()
-        logger.debug(f'Size energy {energy_size.item()}')
+        logger.debug(f"Size energy {energy_size.item()}")
         del energy_size
 
         self.optimization_step()
         prim_ten.synchronize_parameters()
 
-        logger.debug('Join lined up primitives')  # %%
+        logger.debug("Join lined up primitives")  # %%
         # TODO
 
-        logger.debug('Apply constraints')  # %%
+        logger.debug("Apply constraints")  # %%
         prim_ten.constrain_parameters(patch_width=patch_width, patch_height=patch_height)
         prim_ten.synchronize_parameters()
 
     def optimization_step(self):
         for p in self.prim_ten.canonical_parameters:
-            p = p['parameter']
+            p = p["parameter"]
             if p.grad is not None:
                 grad = p.grad.data
                 grad[~torch.isfinite(grad)] = 0
 
     def zero_grad(self):
         for p in self.prim_ten.canonical_parameters:
-            p = p['parameter']
+            p = p["parameter"]
             if p.grad is not None:
                 p.grad.detach_()
                 p.grad.zero_()
@@ -232,6 +249,6 @@ def prepare_pixel_coordinates(raster_tensor, dtype=None):
     pixel_coords = torch.meshgrid(torch.arange(patch_height, dtype=dtype), torch.arange(patch_width, dtype=dtype))
     pixel_coords = torch.stack([pixel_coords[1].reshape(-1), pixel_coords[0].reshape(-1)])
     if not pixel_center_coodinates_are_integer:
-        pixel_coords += .5
+        pixel_coords += 0.5
 
     return pixel_coords

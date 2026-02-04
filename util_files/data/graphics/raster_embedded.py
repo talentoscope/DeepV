@@ -1,5 +1,5 @@
-from math import ceil
 from copy import deepcopy
+from math import ceil
 
 from .utils.raster_utils import image_to_datauri
 
@@ -13,7 +13,9 @@ class RasterEmbedded:
 
     def get_svg_code(self):
         datauri = image_to_datauri(self.image)
-        return f'\t<image x="{self.x}" y="{self.y}" height="{self.height}" width="{self.width}" xlink:href="{datauri}"/>\n'
+        return (
+            f'\t<image x="{self.x}" y="{self.y}" height="{self.height}" width="{self.width}" xlink:href="{datauri}"/>\n'
+        )
 
     def copy(self):
         return deepcopy(self)
@@ -33,7 +35,7 @@ class RasterEmbedded:
         right_crop_data = int(ceil(right_crop / self.width * w))
         bottom_crop_data = int(ceil(bottom_crop / self.height * h))
         top_crop_data = int(ceil(top_crop / self.height * h))
-        self.image = self.image[bottom_crop_data: h - top_crop_data, left_crop_data: w - right_crop_data]
+        self.image = self.image[bottom_crop_data : h - top_crop_data, left_crop_data : w - right_crop_data]
 
         # update parameters
         self.x += left_crop

@@ -5,9 +5,18 @@ from util_files.data.graphics.units import Pixels
 from util_files.data.graphics_primitives import PT_LINE, PT_QBEZIER
 
 
-def vector_image_from_patches(primitives, patch_offsets, control_points_n, patch_size, image_size,
-                              pixel_center_coodinates_are_integer=False, scale=None,
-                              min_width=.3, min_confidence=.5, min_length=1.7):
+def vector_image_from_patches(
+    primitives,
+    patch_offsets,
+    control_points_n,
+    patch_size,
+    image_size,
+    pixel_center_coodinates_are_integer=False,
+    scale=None,
+    min_width=0.3,
+    min_confidence=0.5,
+    min_length=1.7,
+):
     r"""
 
     Parameters
@@ -35,8 +44,9 @@ def vector_image_from_patches(primitives, patch_offsets, control_points_n, patch
 
     # 1. Shift primitives w.r.t patch offsets
     parameters_dim_i = 1
-    primitive_shifts = torch.cat([patch_offsets] * control_points_n +
-                                 [patch_offsets.new_zeros(patches_n, 2)], dim=parameters_dim_i)
+    primitive_shifts = torch.cat(
+        [patch_offsets] * control_points_n + [patch_offsets.new_zeros(patches_n, 2)], dim=parameters_dim_i
+    )
     primitive_shifts = primitive_shifts.reshape(patches_n, 1, parameters_n)
     primitives = primitives + primitive_shifts
     del primitive_shifts
@@ -51,7 +61,7 @@ def vector_image_from_patches(primitives, patch_offsets, control_points_n, patch
     maxy = height
     bounding_boxes = torch.tensor([minx, maxx, miny, maxy], dtype=dtype)
     if pixel_center_coodinates_are_integer:
-        bounding_boxes -= .5
+        bounding_boxes -= 0.5
     box_shifts = patch_offsets.repeat_interleave(2, dim=spatial_dims_dim_i)
     bounding_boxes = bounding_boxes.reshape(1, -1)
     bounding_boxes = bounding_boxes + box_shifts
@@ -59,13 +69,17 @@ def vector_image_from_patches(primitives, patch_offsets, control_points_n, patch
 
     # 3. Get rid of patch dimension
     primitives = primitives.reshape(-1, parameters_n)
-    bounding_boxes = (bounding_boxes.reshape(patches_n, 1, -1).expand(patches_n, primitives_n, -1)
-                                    .reshape(patches_n * primitives_n, -1))
+    bounding_boxes = (
+        bounding_boxes.reshape(patches_n, 1, -1)
+        .expand(patches_n, primitives_n, -1)
+        .reshape(patches_n * primitives_n, -1)
+    )
 
     # 4. Get rid of primitives with small width, low confidence, and nans in parameters
     #    get rid of confidence parameter
-    good_primitives = ((primitives[:, -2] >= min_width) & (primitives[:, -1] >= min_confidence) &
-                       torch.isfinite(primitives).all(dim=1))
+    good_primitives = (
+        (primitives[:, -2] >= min_width) & (primitives[:, -1] >= min_confidence) & torch.isfinite(primitives).all(dim=1)
+    )
     primitives = primitives[good_primitives, :-1].contiguous()
     bounding_boxes = bounding_boxes[good_primitives].contiguous()
     del good_primitives, patches_n
@@ -76,7 +90,7 @@ def vector_image_from_patches(primitives, patch_offsets, control_points_n, patch
     length = primitives.new_zeros(primitives_n)
     p1 = primitives[:, :spatial_dims_n]
     for p2_i in range(1, control_points_n):
-        p2 = primitives[:, spatial_dims_n * p2_i: spatial_dims_n * (p2_i + 1)]
+        p2 = primitives[:, spatial_dims_n * p2_i : spatial_dims_n * (p2_i + 1)]
         length += torch.norm(p2 - p1, dim=1)
         p1 = p2
     del p1, p2
@@ -114,7 +128,7 @@ def primitive_to_path_and_crop(arg):
     elif params_n:
         path = Path.from_primitive(PT_QBEZIER, primitive_parameters)
     else:
-        raise NotImplementedError(f'Unknown primitive with {params_n} parameters')
+        raise NotImplementedError(f"Unknown primitive with {params_n} parameters")
 
     path.crop(bbox)
     if len(path) == 0:

@@ -2,25 +2,26 @@ import os
 
 import numpy as np
 import svgwrite
+from OCC.Core.Bnd import Bnd_Box2d
+
 # https://anaconda.org/pythonocc/pythonocc-core
 from OCC.Core.BRep import BRep_Builder
 from OCC.Core.BRepAdaptor import BRepAdaptor_Curve
-from OCC.Core.Bnd import Bnd_Box2d
-from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
 from OCC.Core.GeomAbs import GeomAbs_C1
+from OCC.Core.GeomAPI import GeomAPI_PointsToBSpline
 from OCC.Core.GeomConvert import GeomConvert_BSplineCurveToBezierCurve
-from OCC.Core.IFSelect import IFSelect_RetDone, IFSelect_ItemsByEntity
+from OCC.Core.gp import gp_Ax2, gp_Dir, gp_Pnt, gp_Pnt2d
+from OCC.Core.IFSelect import IFSelect_ItemsByEntity, IFSelect_RetDone
 from OCC.Core.STEPControl import STEPControl_Reader
 from OCC.Core.TColgp import TColgp_Array1OfPnt
 from OCC.Core.TopoDS import TopoDS_Compound
-from OCC.Core.gp import gp_Pnt, gp_Dir, gp_Pnt2d, gp_Ax2
-from utils.topology_utils import get_sorted_hlr_edges, discretize_edge
+from utils.topology_utils import discretize_edge, get_sorted_hlr_edges
 
-CURVE_TYPES = {1: 'Circle', 2: 'Ellipse', 6: 'BSpline'}
+CURVE_TYPES = {1: "Circle", 2: "Ellipse", 6: "BSpline"}
 
 
 def read_step_file(filename, return_as_shapes=False, verbosity=True):
-    """ read the STEP file and returns a compound
+    """read the STEP file and returns a compound
     filename: the file path
     return_as_shapes: optional, False by default. If True returns a list of shapes,
                       else returns a single compound
@@ -175,12 +176,21 @@ def edge_to_svg(topods_edge, bezier_tol=0.01, bezier_degree=2):
             return polyline_to_svg(points_2d)
 
 
-def export_shape_to_svg(shape, filename=None,
-                        width=800, height=600, margin_left=30,
-                        margin_top=30, export_hidden_edges=True,
-                        location=(0, 0, 0), direction=(1, 1, 1),
-                        bezier_degree=2, bezier_tol=0.01,
-                        color="black", line_width=0.5):
+def export_shape_to_svg(
+    shape,
+    filename=None,
+    width=800,
+    height=600,
+    margin_left=30,
+    margin_top=30,
+    export_hidden_edges=True,
+    location=(0, 0, 0),
+    direction=(1, 1, 1),
+    bezier_degree=2,
+    bezier_tol=0.01,
+    color="black",
+    line_width=0.5,
+):
     """
     export a single shape to an svg file and/or string.
     shape: the TopoDS_Shape to export
@@ -203,8 +213,9 @@ def export_shape_to_svg(shape, filename=None,
     location = gp_Pnt(*location)
     direction = gp_Dir(*direction)
     camera_ax = gp_Ax2(location, direction)
-    visible_edges, hidden_edges = get_sorted_hlr_edges(shape, position=location, direction=direction,
-                                                       export_hidden_edges=export_hidden_edges)
+    visible_edges, hidden_edges = get_sorted_hlr_edges(
+        shape, position=location, direction=direction, export_hidden_edges=export_hidden_edges
+    )
 
     # compute paths for all edges
     # we compute a global 2d bounding box as well, to be able to compute
@@ -215,7 +226,8 @@ def export_shape_to_svg(shape, filename=None,
     paths = []
     for visible_edge in visible_edges:
         visible_svg_line, visible_edge_box2d = edge_to_svg(
-            visible_edge, bezier_degree=bezier_degree, bezier_tol=bezier_tol)
+            visible_edge, bezier_degree=bezier_degree, bezier_tol=bezier_tol
+        )
 
         if visible_svg_line:
             paths.append(visible_svg_line)
@@ -224,7 +236,8 @@ def export_shape_to_svg(shape, filename=None,
     if export_hidden_edges:
         for hidden_edge in hidden_edges:
             hidden_svg_line, hidden_edge_box2d = edge_to_svg(
-                hidden_edge, bezier_degree=bezier_degree, bezier_tol=bezier_tol)
+                hidden_edge, bezier_degree=bezier_degree, bezier_tol=bezier_tol
+            )
 
             if hidden_svg_line:
                 # hidden lines are dashed style
@@ -241,8 +254,7 @@ def export_shape_to_svg(shape, filename=None,
     # build the svg drawing
     drawing = svgwrite.Drawing(filename, (width, height), debug=True)
     # adjust the view box so that the lines fit then svg canvas
-    drawing.viewbox(x_min - margin_left, y_min - margin_top,
-                    bb2d_width + 2 * margin_left, bb2d_height + 2 * margin_top)
+    drawing.viewbox(x_min - margin_left, y_min - margin_top, bb2d_width + 2 * margin_left, bb2d_height + 2 * margin_top)
 
     for path in paths:
         path.stroke(color, width=line_width, linecap="round")

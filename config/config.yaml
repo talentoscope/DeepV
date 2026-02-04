@@ -1,0 +1,16 @@
+# @package _global_
+
+# Default configuration for DeepV pipeline
+defaults:
+  - _self_
+  - pipeline: default
+  - model: default
+  - data: default
+  - training: default
+  - paths: default
+
+# Global settings
+seed: 42
+gpu: null  # null means CPU, or specify GPU id(s)
+verbose: true
+experiment_name: ${now:%Y-%m-%d_%H-%M-%S}

@@ -7,7 +7,7 @@ from util_files import warnings
 class GraphicUnits:
     def __init__(self, value, attributes={}):
         self.value = value
-        self.units = ''
+        self.units = ""
         self.attributes = attributes
 
     def __copy__(self):
@@ -113,11 +113,11 @@ class GraphicUnits:
             return self.value / other
 
     def __rtruediv__(self, other):
-        warnings.warn('Division of number by unit', warnings.UndefinedWarning)
+        warnings.warn("Division of number by unit", warnings.UndefinedWarning)
         return other / self.value
 
     def scale(self, other):
-        if ('constant' not in self.attributes) or (not self.attributes['constant']):
+        if ("constant" not in self.attributes) or (not self.attributes["constant"]):
             self.value *= other
         return self
 
@@ -125,7 +125,7 @@ class GraphicUnits:
 class Pixels(GraphicUnits):
     def __init__(self, value, attributes={}):
         super().__init__(value, attributes=attributes)
-        self.units = 'px'
+        self.units = "px"
 
     def as_pixels(self):
         return self
@@ -137,7 +137,7 @@ class Pixels(GraphicUnits):
 class Points(GraphicUnits):
     def __init__(self, value, attributes={}):
         super().__init__(value, attributes=attributes)
-        self.units = 'pt'
+        self.units = "pt"
 
     def as_pixels(self):
         return Pixels(self.value * 4 / 3, attributes=self.attributes)
@@ -146,13 +146,13 @@ class Points(GraphicUnits):
         return self
 
 
-_dim_repr = re.compile('^((?:[+-]?)(?:\\d*\\.\\d+|\\d+)(?:e[+-]?\\d+)?)(.*)$', re.I | re.U | re.X)
+_dim_repr = re.compile("^((?:[+-]?)(?:\\d*\\.\\d+|\\d+)(?:e[+-]?\\d+)?)(.*)$", re.I | re.U | re.X)
 
 
 def fromrepr(representation, default_units=None):
     if isinstance(representation, numbers.Number):
         value = representation
-        dim = ''
+        dim = ""
     else:
         value, dim = _dim_repr.findall(str(representation).lower())[0]
         value = float(value)
@@ -160,14 +160,14 @@ def fromrepr(representation, default_units=None):
     if int(value) == value:
         value = int(value)
 
-    if dim == '':
+    if dim == "":
         if default_units is not None:
             return default_units(value)
         else:
             return GraphicUnits(value)
-    elif dim == 'px':
+    elif dim == "px":
         return Pixels(value)
-    elif dim == 'pt':
+    elif dim == "pt":
         return Points(value)
     else:
         raise ValueError('Unknown dimension units "{}"'.format(dim))

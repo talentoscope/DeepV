@@ -1,6 +1,6 @@
+import logging
 import time
 from contextlib import contextmanager
-import logging
 
 
 class Logger(logging.Logger):
@@ -11,7 +11,7 @@ class Logger(logging.Logger):
         start = time.clock()
         yield
         duration = time.clock() - start
-        self.debug(duration_of_what + ' complete in {0:.3f} seconds'.format(duration))
+        self.debug(duration_of_what + " complete in {0:.3f} seconds".format(duration))
 
     def info_scalars(self, s, scalars_dict, **kwargs):
         for key, value in scalars_dict.items():
@@ -19,19 +19,20 @@ class Logger(logging.Logger):
             self.info(log_s)
 
     def info_trainable_params(self, torch_model):
-        self.info('Total number of trainable parameters for {model}: {params}'.format(
-            model=torch_model.__class__,
-            params=sum(p.numel() for p in torch_model.parameters() if p.requires_grad)))
+        self.info(
+            "Total number of trainable parameters for {model}: {params}".format(
+                model=torch_model.__class__, params=sum(p.numel() for p in torch_model.parameters() if p.requires_grad)
+            )
+        )
 
 
 def create_logger(options):
     loglevel = logging.DEBUG if options.verbose else logging.INFO
     logging.setLoggerClass(Logger)
-    logger = logging.getLogger('train')
+    logger = logging.getLogger("train")
     logger.setLevel(loglevel)
 
-    formatter = logging.Formatter(
-        fmt='%(asctime)s %(levelname)s: %(message)s')
+    formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s: %(message)s")
 
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(loglevel)

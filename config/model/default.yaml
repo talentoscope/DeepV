@@ -1,0 +1,3 @@
+# Model configuration
+model_path: /logs/models/vectorization/lines/model_lines.weights
+json_path: /code/Deep-Vectorization-of-Technical-Drawings/vectorization/models/specs/resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json

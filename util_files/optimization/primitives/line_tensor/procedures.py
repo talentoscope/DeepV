@@ -30,4 +30,3 @@ def calculate_canonical_coordinates(pixel_coords, p1, dir):
     canonical_pixel_y = translated_pixel_x * dir[:, 0] + translated_pixel_y * dir[:, 1]
     del translated_pixel_x, translated_pixel_y, p1, dir
     return canonical_pixel_x, canonical_pixel_y
-

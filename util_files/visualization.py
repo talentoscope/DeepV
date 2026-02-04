@@ -5,7 +5,9 @@ import numpy as np
 import torch
 
 import util_files.data.graphics_primitives as graphics_primitives
-from util_files.rendering.cairo import render as _render, render_with_skeleton as _render_with_skeleton
+from util_files.rendering.cairo import render as _render
+from util_files.rendering.cairo import render_with_skeleton as _render_with_skeleton
+
 # raise DeprecationWarning('vectran.train.diff_rendering is deprecated, '
 #                          'use vectran.renderers.differentiable_rendering.sigmoids_renderer.renderer.Renderer')
 # from vectran.train import diff_rendering
@@ -22,12 +24,22 @@ def _get_items_by_ids(loader, ids: Iterable):
         try:
             inputs
         except NameError:
-            inputs = torch.empty(len(ids), *batch_inputs.shape[1:], dtype=batch_inputs.dtype,
-                                 layout=batch_inputs.layout,
-                                 device=batch_inputs.device, pin_memory=batch_inputs.is_pinned())
-            targets = torch.empty(len(ids), *batch_targets.shape[1:], dtype=batch_targets.dtype,
-                                  layout=batch_targets.layout,
-                                  device=batch_targets.device, pin_memory=batch_targets.is_pinned())
+            inputs = torch.empty(
+                len(ids),
+                *batch_inputs.shape[1:],
+                dtype=batch_inputs.dtype,
+                layout=batch_inputs.layout,
+                device=batch_inputs.device,
+                pin_memory=batch_inputs.is_pinned(),
+            )
+            targets = torch.empty(
+                len(ids),
+                *batch_targets.shape[1:],
+                dtype=batch_targets.dtype,
+                layout=batch_targets.layout,
+                device=batch_targets.device,
+                pin_memory=batch_targets.is_pinned(),
+            )
 
         first_id_in_next_batch = first_id_in_batch + len(batch_inputs)
         while sorted_ids[current_outputs_id] < first_id_in_next_batch:
@@ -38,7 +50,8 @@ def _get_items_by_ids(loader, ids: Iterable):
             if current_outputs_id >= len(sorted_ids):
                 stop = True
                 break
-        if stop: break
+        if stop:
+            break
         first_id_in_batch = first_id_in_next_batch
 
     ids_back_to_original_order = torch.argsort(ids_sorting_ids)
@@ -55,42 +68,41 @@ def get_ranked_subset_ids(scores: Iterable[Number], subset_size: int) -> (Iterab
     return worst_ids, best_ids, average_ids
 
 
-def make_ranked_images_from_loader_and_model(model: Callable, loader, scores: Iterable[Number],
-                                             imgrid_shape: Tuple[int, int], epoch_i=1, **kwargs) -> (
-np.ndarray, np.ndarray, np.ndarray):
+def make_ranked_images_from_loader_and_model(
+    model: Callable, loader, scores: Iterable[Number], imgrid_shape: Tuple[int, int], epoch_i=1, **kwargs
+) -> (np.ndarray, np.ndarray, np.ndarray):
     images_n = np.prod(imgrid_shape)
     worst_ids, best_ids, average_ids = get_ranked_subset_ids(scores, images_n)
     all_ids = np.concatenate((worst_ids, best_ids, average_ids))
     inputs, targets = _get_items_by_ids(loader, all_ids)
     with torch.no_grad():
         outputs = model(inputs)
-#     if epoch_i % 2 == 0:
-#         y_pred = outputs.detach()
-#         # y_pred_nowc = y_pred[..., :-2]
-#         y_pred_nowc = y_pred[..., :]
-#         y_pred_nowc.requires_grad = True
+    #     if epoch_i % 2 == 0:
+    #         y_pred = outputs.detach()
+    #         # y_pred_nowc = y_pred[..., :-2]
+    #         y_pred_nowc = y_pred[..., :]
+    #         y_pred_nowc.requires_grad = True
 
+    #         # optimizer = torch.optim.Adam([y_pred_nowc], betas=(0.9, 0.98), eps=1e-09, lr=0.001)
+    #         optimizer = torch.optim.SGD([y_pred_nowc], lr=0.1)
+    #         mse_loss = torch.nn.MSELoss()
 
-#         # optimizer = torch.optim.Adam([y_pred_nowc], betas=(0.9, 0.98), eps=1e-09, lr=0.001)
-#         optimizer = torch.optim.SGD([y_pred_nowc], lr=0.1)
-#         mse_loss = torch.nn.MSELoss()
+    #         for i in range(1500):
+    #             # Train for one batch
 
-#         for i in range(1500):
-#             # Train for one batch
+    #             # y_pred_render = torch.cat((y_pred_nowc * 64, y_pred[..., -2:-1] * 64, y_pred[..., 5:]), dim=-1)
+    #             y_pred_render = torch.cat((y_pred_nowc[..., :5] * 64, y_pred_nowc[..., 5:]), dim=-1)
 
-#             # y_pred_render = torch.cat((y_pred_nowc * 64, y_pred[..., -2:-1] * 64, y_pred[..., 5:]), dim=-1)
-#             y_pred_render = torch.cat((y_pred_nowc[..., :5] * 64, y_pred_nowc[..., 5:]), dim=-1)
+    #             images_pred = diff_rendering.render(y_pred_render, (64, 64), sigmoid_rate=10)
 
-#             images_pred = diff_rendering.render(y_pred_render, (64, 64), sigmoid_rate=10)
+    #             loss = mse_loss(images_pred, inputs[:, 0, :, :])  # [B, C, H, W]
 
-#             loss = mse_loss(images_pred, inputs[:, 0, :, :])  # [B, C, H, W]
+    #             optimizer.zero_grad()
 
-#             optimizer.zero_grad()
-
-#             loss.backward()
-#             optimizer.step()
-#         #         y_pred[...,-2:] = width
-#         outputs = y_pred
+    #             loss.backward()
+    #             optimizer.step()
+    #         #         y_pred[...,-2:] = width
+    #         outputs = y_pred
     outputs = outputs.detach().cpu().numpy()
 
     targets = targets.detach().cpu().numpy()
@@ -103,8 +115,9 @@ np.ndarray, np.ndarray, np.ndarray):
 
     worst_grid = make_images(outputs[worst_ids].reshape(lines_shape), targets[worst_ids].reshape(lines_shape), **kwargs)
     best_grid = make_images(outputs[best_ids].reshape(lines_shape), targets[best_ids].reshape(lines_shape), **kwargs)
-    average_grid = make_images(outputs[average_ids].reshape(lines_shape), targets[average_ids].reshape(lines_shape),
-                               **kwargs)
+    average_grid = make_images(
+        outputs[average_ids].reshape(lines_shape), targets[average_ids].reshape(lines_shape), **kwargs
+    )
 
     return worst_grid, best_grid, average_grid
 
@@ -118,18 +131,30 @@ def make_ranked_images(lines_out, lines_gt, imgrid_shape, ranks, **kwargs):
 
     lines_shape = (*imgrid_shape, *lines_out.shape[-2:])
 
-    worst_grid = make_images(lines_out[worst_ids].reshape(lines_shape), lines_gt[worst_ids].reshape(lines_shape),
-                             **kwargs)
+    worst_grid = make_images(
+        lines_out[worst_ids].reshape(lines_shape), lines_gt[worst_ids].reshape(lines_shape), **kwargs
+    )
     best_grid = make_images(lines_out[best_ids].reshape(lines_shape), lines_gt[best_ids].reshape(lines_shape), **kwargs)
-    average_grid = make_images(lines_out[average_ids].reshape(lines_shape), lines_gt[average_ids].reshape(lines_shape),
-                               **kwargs)
+    average_grid = make_images(
+        lines_out[average_ids].reshape(lines_shape), lines_gt[average_ids].reshape(lines_shape), **kwargs
+    )
 
     return worst_grid, best_grid, average_grid
 
 
-def make_images(lines_out, lines_gt, patch_size, patch_padding=(2, 2), patch_padding_color=230,
-                stack_grids_horizontally=True, grid_padding=5, grid_padding_color=200, with_skeleton=True,
-                skeleton_line_width=2, skeleton_node_size=8):
+def make_images(
+    lines_out,
+    lines_gt,
+    patch_size,
+    patch_padding=(2, 2),
+    patch_padding_color=230,
+    stack_grids_horizontally=True,
+    grid_padding=5,
+    grid_padding_color=200,
+    with_skeleton=True,
+    skeleton_line_width=2,
+    skeleton_node_size=8,
+):
     # calculate dimensions and allocate image grid
     patch_width, patch_height = patch_size
     patches_n_vert, patches_n_hor = lines_out.shape[:2]
@@ -154,24 +179,27 @@ def make_images(lines_out, lines_gt, patch_size, patch_padding=(2, 2), patch_pad
         subgrid = imgrid[grid_origin_i:, grid_origin_j:]
         for patch_i in range(1, patches_n_vert):
             patch_origin_i = (patch_height + padding_vert) * patch_i
-            subgrid[patch_origin_i - padding_vert: patch_origin_i] = patch_padding_color
+            subgrid[patch_origin_i - padding_vert : patch_origin_i] = patch_padding_color
         for patch_j in range(1, patches_n_hor):
             patch_origin_j = (patch_width + padding_hor) * patch_j
-            subgrid[:, patch_origin_j - padding_hor: patch_origin_j] = patch_padding_color
+            subgrid[:, patch_origin_j - padding_hor : patch_origin_j] = patch_padding_color
 
         # fill paddings between grids
         for grid_origin_i, grid_origin_j in grid_origins[1:]:
             if stack_grids_horizontally:
-                imgrid[:, grid_origin_j - grid_padding: grid_origin_j] = grid_padding_color
+                imgrid[:, grid_origin_j - grid_padding : grid_origin_j] = grid_padding_color
             else:
-                imgrid[grid_origin_i - grid_padding: grid_origin_i] = grid_padding_color
+                imgrid[grid_origin_i - grid_padding : grid_origin_i] = grid_padding_color
     pt = graphics_primitives.PrimitiveType.PT_QBEZIER
     # substitute renderer
     if with_skeleton:
-        renderer = lambda lines: render_with_skeleton(lines, patch_size=patch_size,
-                                                      skeleton_line_width=skeleton_line_width,
-                                                      skeleton_node_size=skeleton_node_size,
-                                                      primitive_type=pt)
+        renderer = lambda lines: render_with_skeleton(
+            lines,
+            patch_size=patch_size,
+            skeleton_line_width=skeleton_line_width,
+            skeleton_node_size=skeleton_node_size,
+            primitive_type=pt,
+        )
     else:
         renderer = lambda lines: render_without_skeleton(lines, patch_size=patch_size, primitive_type=pt)[..., None]
 
@@ -185,12 +213,17 @@ def make_images(lines_out, lines_gt, patch_size, patch_padding=(2, 2), patch_pad
 
     # render overlay
     if with_skeleton:
-        renderer = lambda lines_out, lines_gt: render_overlay_colored(lines_out, lines_gt, patch_size, primitive_type=pt)
+        renderer = lambda lines_out, lines_gt: render_overlay_colored(
+            lines_out, lines_gt, patch_size, primitive_type=pt
+        )
     else:
-        renderer = lambda lines_out, lines_gt: render_overlay(lines_out, lines_gt, patch_size, primitive_type=pt)[..., None]
+        renderer = lambda lines_out, lines_gt: render_overlay(lines_out, lines_gt, patch_size, primitive_type=pt)[
+            ..., None
+        ]
     grid_origin_i, grid_origin_j = grid_origins[2]
-    render_line_pairs_to(imgrid[grid_origin_i:, grid_origin_j:], lines_out, lines_gt, renderer, patch_size,
-                         patch_padding)
+    render_line_pairs_to(
+        imgrid[grid_origin_i:, grid_origin_j:], lines_out, lines_gt, renderer, patch_size, patch_padding
+    )
 
     if with_skeleton:
         return imgrid
@@ -199,32 +232,40 @@ def make_images(lines_out, lines_gt, patch_size, patch_padding=(2, 2), patch_pad
 
 
 def postprocess_primitives(primitives, linear_patch_size):
-    drawn_primitives = primitives[primitives[..., -1] > .5]
+    drawn_primitives = primitives[primitives[..., -1] > 0.5]
     return drawn_primitives[:, :-1] * linear_patch_size
 
 
-def render_with_skeleton(lines, patch_size, skeleton_line_width=2, skeleton_node_size=8,
-                         primitive_type=graphics_primitives.PrimitiveType.PT_LINE):
+def render_with_skeleton(
+    lines,
+    patch_size,
+    skeleton_line_width=2,
+    skeleton_node_size=8,
+    primitive_type=graphics_primitives.PrimitiveType.PT_LINE,
+):
     scaled_primitives = postprocess_primitives(lines, patch_size[0])
     # TODO fix
-    return _render_with_skeleton({primitive_type: scaled_primitives}, patch_size,
-                                 data_representation='vahe', line_width=skeleton_line_width,
-                                 node_size=skeleton_node_size)
+    return _render_with_skeleton(
+        {primitive_type: scaled_primitives},
+        patch_size,
+        data_representation="vahe",
+        line_width=skeleton_line_width,
+        node_size=skeleton_node_size,
+    )
 
 
 def render_without_skeleton(lines, patch_size, primitive_type=graphics_primitives.PrimitiveType.PT_LINE):
     scaled_primitives = postprocess_primitives(lines, patch_size[0])
     # TODO fix
-    return _render({primitive_type: scaled_primitives}, patch_size,
-                   data_representation='vahe')
+    return _render({primitive_type: scaled_primitives}, patch_size, data_representation="vahe")
 
 
 def render_overlay(lines_out, lines_gt, patch_size, primitive_type=graphics_primitives.PrimitiveType.PT_LINE):
     scaled_out = postprocess_primitives(lines_out, patch_size[0])
     scaled_gt = postprocess_primitives(lines_gt, patch_size[0])
     # TODO fix
-    out_image = _render({primitive_type: scaled_out}, patch_size, data_representation='vahe')
-    gt_image = _render({primitive_type: scaled_gt}, patch_size, data_representation='vahe')
+    out_image = _render({primitive_type: scaled_out}, patch_size, data_representation="vahe")
+    gt_image = _render({primitive_type: scaled_gt}, patch_size, data_representation="vahe")
 
     return np.uint8(255) - ((np.uint8(255) - out_image) // np.uint8(2) + (np.uint8(255) - gt_image) // np.uint8(2))
 
@@ -233,8 +274,8 @@ def render_overlay_colored(lines_out, lines_gt, patch_size, primitive_type=graph
     scaled_out = postprocess_primitives(lines_out, patch_size[0])
     scaled_gt = postprocess_primitives(lines_gt, patch_size[0])
     # TODO fix
-    out_image = _render({primitive_type: scaled_out}, patch_size, data_representation='vahe')
-    gt_image = _render({primitive_type: scaled_gt}, patch_size, data_representation='vahe')
+    out_image = _render({primitive_type: scaled_out}, patch_size, data_representation="vahe")
+    gt_image = _render({primitive_type: scaled_gt}, patch_size, data_representation="vahe")
 
     return np.dstack([out_image, gt_image, np.full_like(out_image, 255)])
 
@@ -251,7 +292,7 @@ def render_lines_to(imgrid, lines, renderer, patch_size, patch_padding):
 
             rendering = renderer(lines[patch_i, patch_j])
             rendering_h, rendering_w = rendering.shape[:2]
-            imgrid[i_start: i_start + rendering_h, j_start: j_start + rendering_w] = rendering
+            imgrid[i_start : i_start + rendering_h, j_start : j_start + rendering_w] = rendering
 
 
 def render_line_pairs_to(imgrid, lines_out, lines_gt, renderer, patch_size, patch_padding):
@@ -266,4 +307,4 @@ def render_line_pairs_to(imgrid, lines_out, lines_gt, renderer, patch_size, patc
 
             rendering = renderer(lines_out[patch_i, patch_j], lines_gt[patch_i, patch_j])
             rendering_h, rendering_w = rendering.shape[:2]
-            imgrid[i_start: i_start + rendering_h, j_start: j_start + rendering_w] = rendering
+            imgrid[i_start : i_start + rendering_h, j_start : j_start + rendering_w] = rendering

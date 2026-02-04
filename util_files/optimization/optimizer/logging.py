@@ -4,13 +4,13 @@ import logging
 
 class Logger(logging.Logger):
     @classmethod
-    def prepare_logger(cls, loglevel='debug', logger_id='default_logger', logfile=None):
+    def prepare_logger(cls, loglevel="debug", logger_id="default_logger", logfile=None):
         loglevel = Logger.get_log_level(loglevel)
         logging.setLoggerClass(cls)
         logger = logging.getLogger(logger_id)
         logger.setLevel(loglevel)
 
-        formatter = logging.Formatter(fmt='%(asctime)s %(levelname)s: %(message)s')
+        formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s: %(message)s")
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(loglevel)
         stream_handler.setFormatter(formatter)
@@ -29,13 +29,7 @@ class Logger(logging.Logger):
     @staticmethod
     def get_log_level(loglevel):
         if isinstance(loglevel, str):
-            loglevel = {
-                'critical': 50,
-                'error': 40,
-                'warning': 30,
-                'info': 20,
-                'debug': 10
-            }[loglevel]
+            loglevel = {"critical": 50, "error": 40, "warning": 30, "info": 20, "debug": 10}[loglevel]
 
         if loglevel >= 50:
             return logging.CRITICAL
@@ -56,11 +50,10 @@ class StreamHandler(io.StringIO):
         super().__init__()
         self.logger = logger
         self.level = level
-        self.buf = ''
+        self.buf = ""
 
     def write(self, buf):
-        self.buf = buf.strip('\r\n')
+        self.buf = buf.strip("\r\n")
 
     def flush(self):
         self.logger.log(self.level, self.buf)
-

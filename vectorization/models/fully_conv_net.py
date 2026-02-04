@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 from vectorization.modules.base import ParameterizedModule
+
 # TODO @mvkolos: parameterize the model with reasonable layer sizes
 
 
@@ -28,10 +29,10 @@ class GlobalPooling(nn.Module):
 
 
 class FullyConvolutionalNet(ParameterizedModule):
-    def __init__(self, hidden_dim=128, input_channels=1, pooling='max'):
+    def __init__(self, hidden_dim=128, input_channels=1, pooling="max"):
         super().__init__()
         self.hidden_dim = hidden_dim
-        if pooling == 'max':
+        if pooling == "max":
             self.pooling = nn.MaxPool2d
             self.adpooling = nn.AdaptiveMaxPool2d
         else:
@@ -44,7 +45,6 @@ class FullyConvolutionalNet(ParameterizedModule):
             nn.Conv2d(64, 128, kernel_size=(2, 2)),
             nn.LeakyReLU(),
             self.pooling((2, 2)),
-
             nn.Conv2d(128, 128, kernel_size=(3, 3)),
             nn.Dropout(p=0.2),
             nn.BatchNorm2d(128),
@@ -55,12 +55,11 @@ class FullyConvolutionalNet(ParameterizedModule):
             nn.Conv2d(64, 64, kernel_size=(3, 3)),
             nn.BatchNorm2d(64),
             nn.LeakyReLU(),
-            self.adpooling((10, 6)),  #FIXME (n_primitives, n_predicted_params)
+            self.adpooling((10, 6)),  # FIXME (n_primitives, n_predicted_params)
             GlobalMaxPooling(dim=1),
-            nn.Sigmoid()
+            nn.Sigmoid(),
         )
 
     def forward(self, images, n):
         img_code = self.conv(images)  # [b, c, h, w]
         return img_code  # .transpose(1, 2)  #[b, n, output_dim]
-

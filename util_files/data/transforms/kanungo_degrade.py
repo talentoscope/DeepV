@@ -1,11 +1,11 @@
 import numpy as np
-from scipy.ndimage import distance_transform_cdt, binary_closing
+from scipy.ndimage import binary_closing, distance_transform_cdt
 
 
 def threshold_gray_float(gray, t):
     binary = np.copy(gray)
-    binary[gray > t] = 1.
-    binary[gray <= t] = 0.
+    binary[gray > t] = 1.0
+    binary[gray <= t] = 0.0
     return binary
 
 
@@ -37,13 +37,13 @@ def kanungo_degrade(image, eta=0.0, alpha=1.5, beta=1.5, alpha_0=1.0, beta_0=1.0
     image = image / np.amax(image)
 
     # flip foreground pixels
-    fg_dist = distance_transform_cdt(image, metric='taxicab')
-    fg_prob = alpha_0 * np.exp(-alpha * (fg_dist ** 2)) + eta
+    fg_dist = distance_transform_cdt(image, metric="taxicab")
+    fg_prob = alpha_0 * np.exp(-alpha * (fg_dist**2)) + eta
     fg_prob[image == 0] = 0
     fg_flip = np.random.binomial(1, fg_prob)
 
-    bg_dist = distance_transform_cdt(1 - image, metric='taxicab')
-    bg_prob = beta_0 * np.exp(-beta * (bg_dist ** 2)) + eta
+    bg_dist = distance_transform_cdt(1 - image, metric="taxicab")
+    bg_prob = beta_0 * np.exp(-beta * (bg_dist**2)) + eta
     bg_prob[image == 1] = 0
     bg_flip = np.random.binomial(1, bg_prob)
 
@@ -54,13 +54,15 @@ def kanungo_degrade(image, eta=0.0, alpha=1.5, beta=1.5, alpha_0=1.0, beta_0=1.0
     result[fg_mask] = 1 - result[fg_mask]
 
     if do_closing:
-        sel = np.array([
-            [1, 1],
-            [1, 1],
-        ])
+        sel = np.array(
+            [
+                [1, 1],
+                [1, 1],
+            ]
+        )
         result = binary_closing(result, sel)
 
     # result = 255 - result.astype(np.uint8) * 255
-    result = 1. - result.astype('float32')
+    result = 1.0 - result.astype("float32")
 
     return result

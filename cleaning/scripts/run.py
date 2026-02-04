@@ -30,7 +30,7 @@ def clean_image(rgb, cleaning_model):
     # ensure the channel dimension is the first one
     if np.argmin(rgb.shape) != 0:
         # assuming it's (h,w,c)
-        rgb = rgb.transpose([2,0,1])
+        rgb = rgb.transpose([2, 0, 1])
 
     # ensure the input is [0,1] data
     rgb = (rgb / rgb.max()).astype(np.float32)
@@ -39,7 +39,7 @@ def clean_image(rgb, cleaning_model):
     h, w = rgb.shape[1:]
     pad_h = ((h - 1) // 8 + 1) * 8 - h
     pad_w = ((w - 1) // 8 + 1) * 8 - w
-    input_np = np.pad(rgb, [(0, 0), (0, pad_h), (0, pad_w)], mode='constant', constant_values=1)
+    input_np = np.pad(rgb, [(0, 0), (0, pad_h), (0, pad_w)], mode="constant", constant_values=1)
 
     input = torch.from_numpy(np.ascontiguousarray(input_np[None])).cuda()
     cleaned, _ = cleaning_model(input)
@@ -64,15 +64,11 @@ def split_to_patches(rgb, patch_size, overlap=0):
     # TODO @artonson: add correct handling of rightmost patches (currently ignored)
     height, width, channels = rgb.shape
     assert patch_size > 0 and 0 <= overlap < patch_size
-    patches = patchify(rgb,
-                       patch_size=(patch_size, patch_size, channels),
-                       step=patch_size - overlap)
+    patches = patchify(rgb, patch_size=(patch_size, patch_size, channels), step=patch_size - overlap)
     patches = patches.reshape((-1, patch_size, patch_size))
     height_offsets = np.arange(0, height, step=patch_size - overlap)
     width_offsets = np.arange(0, width, step=patch_size - overlap)
-    patches_offsets = np.array(list(
-        product(height_offsets, width_offsets)
-    ))
+    patches_offsets = np.array(list(product(height_offsets, width_offsets)))
     return patches, patches_offsets
 
 
@@ -83,7 +79,7 @@ def save_output(output_vector, output_filename):
     :param output_filename:
     :return:
     """
-    with open(output_filename, 'w') as output_file:
+    with open(output_filename, "w") as output_file:
         for primitive in output_vector:
             primitive.write(output_file)
 
@@ -112,11 +108,11 @@ def main(options):
             skio.imsave(options.cleaned_filename, cleaned_rgb)
 
     if options.vectorize:
-        vector_model =  load_vector_model(options.vector_model_filename)
+        vector_model = load_vector_model(options.vector_model_filename)
         if options.use_patches:
             patches_rgb, patches_offsets = split_to_patches(cleaned_rgb, options.patch_size)
-            #patches_vector = []
-            #for patch_idx, patch_rgb in enumerate(patches_rgb):
+            # patches_vector = []
+            # for patch_idx, patch_rgb in enumerate(patches_rgb):
             #    patch_vector = vectorize(patch_rgb, vector_model)
             #    if options.vector_patch_path:
             #        patch_output_filename = \
@@ -125,40 +121,81 @@ def main(options):
             #        save_output(patch_vector, patch_output_filename)
 
             #    patches_vector.append(patch_vector)
-            #output_vector = assemble_vector_patches(patches_vector, patches_offsets)
+            # output_vector = assemble_vector_patches(patches_vector, patches_offsets)
         else:
             output_vector = vectorize(cleaned_rgb, vector_model)
-    
+
     if options.output_filename:
         save_output(output_vector, options.output_filename)
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', type=int, default=0, help='GPU to use [default: GPU 0].')
-    parser.add_argument('-np', '--no-patches', action='store_false', dest='use_patches', default=True,
-                        help='Set to disable vectorization via patches [default: use patches].')
-    parser.add_argument('-s', '--patch-size', type=int, dest='patch_size', default=64,
-                        help='Patch size in pixels [default: 64].')
+    parser.add_argument("--gpu", type=int, default=0, help="GPU to use [default: GPU 0].")
+    parser.add_argument(
+        "-np",
+        "--no-patches",
+        action="store_false",
+        dest="use_patches",
+        default=True,
+        help="Set to disable vectorization via patches [default: use patches].",
+    )
+    parser.add_argument(
+        "-s", "--patch-size", type=int, dest="patch_size", default=64, help="Patch size in pixels [default: 64]."
+    )
 
-    parser.add_argument('-nc', '--no-cleaning', action='store_false', dest='use_cleaning', default=True,
-                        help='Set to disable cleaning [default: use cleaning].')
-    parser.add_argument('-c', '--cleaning-model-file', dest='cleaning_model_filename',
-                        help='Path to cleaning model file [default: none].')
+    parser.add_argument(
+        "-nc",
+        "--no-cleaning",
+        action="store_false",
+        dest="use_cleaning",
+        default=True,
+        help="Set to disable cleaning [default: use cleaning].",
+    )
+    parser.add_argument(
+        "-c",
+        "--cleaning-model-file",
+        dest="cleaning_model_filename",
+        help="Path to cleaning model file [default: none].",
+    )
 
-    parser.add_argument('-nv', '--no-vectorization', action='store_false', dest='vectorize', default=True,
-                        help='Set to disable vectorization [default: vectorize].')
-    parser.add_argument('-v', '--vector-model-file', dest='vector_model_filename',
-                        help='Path to vectorization model file [default: none].')
+    parser.add_argument(
+        "-nv",
+        "--no-vectorization",
+        action="store_false",
+        dest="vectorize",
+        default=True,
+        help="Set to disable vectorization [default: vectorize].",
+    )
+    parser.add_argument(
+        "-v",
+        "--vector-model-file",
+        dest="vector_model_filename",
+        help="Path to vectorization model file [default: none].",
+    )
 
-    parser.add_argument('-i', '--input-file', required=True, dest='input_filename',
-                        help='Path to input image file [default: none].')
-    parser.add_argument('-oc', '--cleaned-file', dest='cleaned_filename',
-                        help='Path to cleaned image file [default: none, meaning don\'t save the file].')
-    parser.add_argument('-op', '--patch-output-path', dest='patch_output_filename',
-                        help='Path to directory containing vectorized patches [default: none, meaning don\'t save the files].')
-    parser.add_argument('-o', '--output-file', required=False, dest='output_filename',
-                        help='Path to input vector SVG file [default: none].')
+    parser.add_argument(
+        "-i", "--input-file", required=True, dest="input_filename", help="Path to input image file [default: none]."
+    )
+    parser.add_argument(
+        "-oc",
+        "--cleaned-file",
+        dest="cleaned_filename",
+        help="Path to cleaned image file [default: none, meaning don't save the file].",
+    )
+    parser.add_argument(
+        "-op",
+        "--patch-output-path",
+        dest="patch_output_filename",
+        help="Path to directory containing vectorized patches [default: none, meaning don't save the files].",
+    )
+    parser.add_argument(
+        "-o",
+        "--output-file",
+        required=False,
+        dest="output_filename",
+        help="Path to input vector SVG file [default: none].",
+    )
     return parser.parse_args()
 
 

@@ -1,12 +1,15 @@
 from itertools import groupby
 
 import numpy as np
+
 # import svgpathtools
 #
 # from vectran.data.graphics_primitives import PT_LINE, PT_QBEZIER
 
 
-def has_overlaps(primitives, render, extra_line_width=.5, max_relative_overlap=.5):  # max_relative_overlap=.9, max_absolute_overlap=10):
+def has_overlaps(
+    primitives, render, extra_line_width=0.5, max_relative_overlap=0.5
+):  # max_relative_overlap=.9, max_absolute_overlap=10):
     primitives = [(prim_type, prim) for prim_type, prim_set in primitives.items() for prim in prim_set]
     primitives = np.array(primitives)
     get_type = lambda x: x[0]
@@ -16,8 +19,10 @@ def has_overlaps(primitives, render, extra_line_width=.5, max_relative_overlap=.
         prim_type, primitive = primitives[i]
         primitive = np.array(primitive)
         other_primitives = primitives[np.arange(len(primitives)) != i]
-        other_primitives = {prim_type: np.asarray(list(map(get_prim, primitives_subset))) for
-                            prim_type, primitives_subset in groupby(other_primitives, get_type)}
+        other_primitives = {
+            prim_type: np.asarray(list(map(get_prim, primitives_subset)))
+            for prim_type, primitives_subset in groupby(other_primitives, get_type)
+        }
         primitive[-1] += extra_line_width
         overlap = get_overlap_ratio({prim_type: [primitive]}, other_primitives, render)
         if overlap > max_relative_overlap:

@@ -1,0 +1,4 @@
+# Local paths for development - relative to project root
+code_dir: .
+data_dir: ./data
+logs_dir: ./logs

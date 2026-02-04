@@ -7,22 +7,24 @@ from vectorization.modules.maybe_module import MaybeModule
 class _BasicLinear(nn.Module):
     """A n-layer-feed-forward-layer module."""
 
-    def __init__(self, in_features, out_features, normalization='batch_norm', dropout=0.):
+    def __init__(self, in_features, out_features, normalization="batch_norm", dropout=0.0):
         super(_BasicLinear, self).__init__()
 
         # callable functions used for creating classes
         normalization_modules = {
-            'batch_norm': nn.BatchNorm1d,
-            'instance_norm': nn.InstanceNorm1d,
-            'none': lambda num_features: MaybeModule(False, None)
+            "batch_norm": nn.BatchNorm1d,
+            "instance_norm": nn.InstanceNorm1d,
+            "none": lambda num_features: MaybeModule(False, None),
         }
 
-        self.layer = nn.Sequential(*(
-            nn.Linear(in_features, out_features),
-            normalization_modules[normalization](out_features),
-            nn.LeakyReLU(inplace=True),
-            nn.Dropout(dropout)
-        ))
+        self.layer = nn.Sequential(
+            *(
+                nn.Linear(in_features, out_features),
+                normalization_modules[normalization](out_features),
+                nn.LeakyReLU(inplace=True),
+                nn.Dropout(dropout),
+            )
+        )
 
     def forward(self, features):
         return self.layer(features)
@@ -35,7 +37,7 @@ class LinearBlockSequence(ParameterizedModule):
 
     @classmethod
     def from_spec(cls, spec):
-        layers = [_BasicLinear(**layer_spec) for layer_spec in spec['layers']]
+        layers = [_BasicLinear(**layer_spec) for layer_spec in spec["layers"]]
         return cls(layers)
 
     def forward(self, conv_features, max_lines):
@@ -51,5 +53,5 @@ class LinearBlockSequence(ParameterizedModule):
 
 
 fc_module_by_kind = {
-    'linear_block_seq': LinearBlockSequence,
+    "linear_block_seq": LinearBlockSequence,
 }

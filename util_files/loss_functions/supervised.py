@@ -1,7 +1,9 @@
 import torch.nn
+
 from .lovacz_losses import lovasz_hinge
 
-def convex(value1, value2, value1_weight=1.):
+
+def convex(value1, value2, value1_weight=1.0):
     """
 
     :param value1: First loss
@@ -10,7 +12,8 @@ def convex(value1, value2, value1_weight=1.):
     :return: weighted sum of two losses
     """
 
-    return value1_weight * value1 + (1. - value1_weight) * value2
+    return value1_weight * value1 + (1.0 - value1_weight) * value2
+
 
 def pseudoLap1_weight_loop(l1_loss):
 
@@ -20,9 +23,10 @@ def pseudoLap1_weight_loop(l1_loss):
     # l1_loss[l1_loss > 0.06] *= 2
     # l1_loss[l1_loss > 0.1] *= 2
     l1_loss = l1_loss.where(l1_loss <= 0.01, l1_loss * 2)
-    for i in range(1,6):
-        l1_loss = l1_loss.where(l1_loss <= i*2e-2, l1_loss * 2)
+    for i in range(1, 6):
+        l1_loss = l1_loss.where(l1_loss <= i * 2e-2, l1_loss * 2)
     return l1_loss
+
 
 def pseudoLap1_weight_no_loop(l1_loss):
 
@@ -37,7 +41,8 @@ def pseudoLap1_weight_no_loop(l1_loss):
     #     l1_loss = l1_loss.where(l1_loss <= i*2e-2, l1_loss * 2)
     return l1_loss
 
-def mapping_l2(y_pred,y_true):
+
+def mapping_l2(y_pred, y_true):
     """
     :param y_pred:
     :param y_true:
@@ -62,7 +67,8 @@ def mapping_l2(y_pred,y_true):
 
     return map_loss
 
-def mapping_l1(y_pred,y_true):
+
+def mapping_l1(y_pred, y_true):
     """
 
     Mapping l1 loss:
@@ -78,27 +84,30 @@ def mapping_l1(y_pred,y_true):
     # first_x[first_x == second_x] += 1e-7
     first_x = first_x.where(first_x != second_x, first_x + 1e-7)
 
-    loss_x = - (first_x + second_x) * ((second_x <= 0)*(first_x < 0)).type(first_x.dtype) +\
-             (first_x + second_x) * ((second_x >= 0)*(first_x >= 0)).type(first_x.dtype)-\
-             (first_x**2 + second_x**2)/(first_x - second_x) * ((second_x > 0)*(first_x < 0)).type(first_x.dtype) +\
-             (first_x**2 + second_x**2)/(first_x - second_x) * ((second_x <= 0)*(first_x > 0)).type(first_x.dtype)
+    loss_x = (
+        -(first_x + second_x) * ((second_x <= 0) * (first_x < 0)).type(first_x.dtype)
+        + (first_x + second_x) * ((second_x >= 0) * (first_x >= 0)).type(first_x.dtype)
+        - (first_x**2 + second_x**2) / (first_x - second_x) * ((second_x > 0) * (first_x < 0)).type(first_x.dtype)
+        + (first_x**2 + second_x**2) / (first_x - second_x) * ((second_x <= 0) * (first_x > 0)).type(first_x.dtype)
+    )
 
     first_y = y_true[..., 1] - y_pred[..., 1]
     second_y = y_true[..., 3] - y_pred[..., 3]
     first_y = first_y.where(first_y != second_y, first_y + 1e-7)
     # first_y[first_y == second_y] += 1e-7
-    loss_y = - (first_y + second_y) * ((second_y <= 0) * (first_y < 0)).type(first_y.dtype) + \
-             (first_y + second_y) * ((second_y >= 0) * (first_y >= 0)).type(first_y.dtype) - \
-             (first_y ** 2 + second_y ** 2) / (first_y - second_y) * ((second_y > 0) * (first_y < 0)).type(first_y.dtype) + \
-             (first_y ** 2 + second_y ** 2) / (first_y - second_y) * ((second_y <= 0) * (first_y > 0)).type(first_y.dtype)
+    loss_y = (
+        -(first_y + second_y) * ((second_y <= 0) * (first_y < 0)).type(first_y.dtype)
+        + (first_y + second_y) * ((second_y >= 0) * (first_y >= 0)).type(first_y.dtype)
+        - (first_y**2 + second_y**2) / (first_y - second_y) * ((second_y > 0) * (first_y < 0)).type(first_y.dtype)
+        + (first_y**2 + second_y**2) / (first_y - second_y) * ((second_y <= 0) * (first_y > 0)).type(first_y.dtype)
+    )
 
     map_loss = loss_x + loss_y
 
     return map_loss
 
 
-def vectran_loss(y_pred, y_true, l2_weight=.5, bce_weight=.5, reduction='mean',**kwargs):
-
+def vectran_loss(y_pred, y_true, l2_weight=0.5, bce_weight=0.5, reduction="mean", **kwargs):
     """
 
     :param y_pred: pred y lines with [...,[x0,y0,x1,y1,...]]
@@ -119,7 +128,7 @@ def vectran_loss(y_pred, y_true, l2_weight=.5, bce_weight=.5, reduction='mean',*
     l2_loss = mse(cpoints_pred, cpoints_true)
     bce_loss = bce(logits_pred, logits_true)
 
-    if 'none' == reduction:
+    if "none" == reduction:
         l1_loss = l1_loss.mean((1, 2))
         l2_loss = l2_loss.mean((1, 2))
         bce_loss = bce_loss.mean((1))
@@ -128,7 +137,7 @@ def vectran_loss(y_pred, y_true, l2_weight=.5, bce_weight=.5, reduction='mean',*
     return loss
 
 
-def vectran_mapping_L2(y_pred, y_true, l2_weight=.5,  bce_weight=.5, reduction='mean',width_weight =0.2, **kwargs):
+def vectran_mapping_L2(y_pred, y_true, l2_weight=0.5, bce_weight=0.5, reduction="mean", width_weight=0.2, **kwargs):
     """
 
 
@@ -149,14 +158,13 @@ def vectran_mapping_L2(y_pred, y_true, l2_weight=.5,  bce_weight=.5, reduction='
         mse = torch.nn.MSELoss(reduction=reduction)
         width_l2_loss = mse(y_pred[..., -2], y_true[..., -2])
 
-
     cpoints_pred, logits_pred = y_pred[..., :-1], y_pred[..., -1]
     cpoints_true, logits_true = y_true[..., :-1], y_true[..., -1]
     l1_loss = l1(cpoints_pred, cpoints_true)
     map_loss = mapping_l2(cpoints_pred, cpoints_true)
     bce_loss = bce(logits_pred, logits_true)
 
-    if 'none' == reduction:
+    if "none" == reduction:
         l1_loss = l1_loss.mean((1, 2))
         map_loss = map_loss.mean((1))
         bce_loss = bce_loss.mean((1))
@@ -172,7 +180,8 @@ def vectran_mapping_L2(y_pred, y_true, l2_weight=.5,  bce_weight=.5, reduction='
     loss = convex(bce_loss, endpoint_loss, bce_weight)
     return loss
 
-def vectran_mapping_L1(y_pred, y_true, l2_weight=.5,  bce_weight=.5, reduction='mean',width_weight =0.2, **kwargs):
+
+def vectran_mapping_L1(y_pred, y_true, l2_weight=0.5, bce_weight=0.5, reduction="mean", width_weight=0.2, **kwargs):
     """
 
     :param y_pred: pred y lines with [...,[x0,y0,x1,y1,...]]
@@ -192,14 +201,13 @@ def vectran_mapping_L1(y_pred, y_true, l2_weight=.5,  bce_weight=.5, reduction='
         l1_w = torch.nn.MSELoss(reduction=reduction)
         width_l1_loss = l1_w(y_pred[..., -2], y_true[..., -2])
 
-
     cpoints_pred, logits_pred = y_pred[..., :-1], y_pred[..., -1]
     cpoints_true, logits_true = y_true[..., :-1], y_true[..., -1]
     l1_loss = l1(cpoints_pred, cpoints_true)
     map_loss = mapping_l1(cpoints_pred, cpoints_true)
     bce_loss = bce(logits_pred, logits_true)
 
-    if 'none' == reduction:
+    if "none" == reduction:
         l1_loss = l1_loss.mean((1, 2))
         map_loss = map_loss.mean((1))
         bce_loss = bce_loss.mean((1))
@@ -215,8 +223,8 @@ def vectran_mapping_L1(y_pred, y_true, l2_weight=.5,  bce_weight=.5, reduction='
     loss = convex(bce_loss, endpoint_loss, bce_weight)
     return loss
 
-def pseudoLap1_func(y_pred, y_true, bce_weight=.5, reduction='mean', func=pseudoLap1_weight_loop, **kwargs):
 
+def pseudoLap1_func(y_pred, y_true, bce_weight=0.5, reduction="mean", func=pseudoLap1_weight_loop, **kwargs):
     """
 
     :param y_pred: pred y lines with [...,[x0,y0,x1,y1,...]]
@@ -226,7 +234,7 @@ def pseudoLap1_func(y_pred, y_true, bce_weight=.5, reduction='mean', func=pseudo
     :param reduction: default mean, if none saved  mean loss by sample
     :return: loss function of mapping
     """
-    l1 = torch.nn.L1Loss(reduction='none')
+    l1 = torch.nn.L1Loss(reduction="none")
     bce = torch.nn.BCELoss(reduction=reduction)
 
     cpoints_pred, logits_pred = y_pred[..., :-1], y_pred[..., -1]
@@ -234,7 +242,7 @@ def pseudoLap1_func(y_pred, y_true, bce_weight=.5, reduction='mean', func=pseudo
     l1_loss = l1(cpoints_pred, cpoints_true)
     bce_loss = bce(logits_pred, logits_true)
     endpoint_loss = func(l1_loss)
-    if 'none' == reduction:
+    if "none" == reduction:
         endpoint_loss = endpoint_loss.mean((1, 2))
         bce_loss = bce_loss.mean((1))
     else:
@@ -244,16 +252,16 @@ def pseudoLap1_func(y_pred, y_true, bce_weight=.5, reduction='mean', func=pseudo
 
 
 from functools import partial
+
 pseudoLap1_loop = partial(pseudoLap1_func, func=pseudoLap1_weight_loop)
 pseudoLap1_no_loop = partial(pseudoLap1_func, func=pseudoLap1_weight_no_loop)
 
 
 prepare_losses = {
-    'vectran_loss': vectran_loss,
-    'vectran_mapping_L2': vectran_mapping_L2,
-    'vectran_mapping_L1': vectran_mapping_L1,
-    'pseudoLap1_loop' : pseudoLap1_loop,
-    'pseudoLap1_no_loop' : pseudoLap1_no_loop,
-    'lovasz_hinge': lovasz_hinge
-
+    "vectran_loss": vectran_loss,
+    "vectran_mapping_L2": vectran_mapping_L2,
+    "vectran_mapping_L1": vectran_mapping_L1,
+    "pseudoLap1_loop": pseudoLap1_loop,
+    "pseudoLap1_no_loop": pseudoLap1_no_loop,
+    "lovasz_hinge": lovasz_hinge,
 }

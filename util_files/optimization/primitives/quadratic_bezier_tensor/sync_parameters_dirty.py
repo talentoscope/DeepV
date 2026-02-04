@@ -71,7 +71,7 @@ def synchronize_parameters(self):
     p3 = b + b_to_p3 * b_to_p3_len
 
     # 6. Find new curve that goes from P1 through B to P3.
-    p2 = ((b - p3 * tb.pow(2) - p1 * (1 - tb).pow(2)) / (tb * (1 - tb) * 2))
+    p2 = (b - p3 * tb.pow(2) - p1 * (1 - tb).pow(2)) / (tb * (1 - tb) * 2)
 
     # 7. Update the main and auxiliary parameters w.r.t these P1, P2, P3
     self.set_parameters(p1, p2, p3)

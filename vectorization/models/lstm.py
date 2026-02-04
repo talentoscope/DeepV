@@ -4,20 +4,32 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from vectorization.modules.base import ParameterizedModule
-from vectorization.modules._transformer_modules import get_sinusoid_encoding_table
 from vectorization.models.common import ConvFeatureExtractor
+from vectorization.modules._transformer_modules import get_sinusoid_encoding_table
+from vectorization.modules.base import ParameterizedModule
+
 
 # TODO @mvkolos, @artonson: derive the models classes from base; parameterize the model with reasonable layer sizes
 class LSTMTagger(ParameterizedModule):
-    def __init__(self, hidden_dim=128, ffn_dim=512, n_head=8, num_layers=10, input_channels=1, output_dim=5, resnet_count=0, **kwargs):
+    def __init__(
+        self,
+        hidden_dim=128,
+        ffn_dim=512,
+        n_head=8,
+        num_layers=10,
+        input_channels=1,
+        output_dim=5,
+        resnet_count=0,
+        **kwargs,
+    ):
         super(LSTMTagger, self).__init__()
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
 
-        #TODO rewrite to new standart
+        # TODO rewrite to new standart
         self.conv = ConvFeatureExtractor(
-            in_channels=input_channels, resnet_count=resnet_count, hidden_dim=hidden_dim,  **kwargs)
+            in_channels=input_channels, resnet_count=resnet_count, hidden_dim=hidden_dim, **kwargs
+        )
 
         self.lstm = nn.LSTM(hidden_dim, hidden_dim, num_layers, batch_first=True, bidirectional=True)
         self.hidden2tag = nn.Linear(2 * hidden_dim, output_dim)
@@ -51,12 +63,23 @@ class LSTMTagger(ParameterizedModule):
 
 
 class LSTMTagger_normal(ParameterizedModule):
-    def __init__(self, hidden_dim=128, ffn_dim=512, n_head=8, num_layers=10, input_channels=1, output_dim=5, resnet_count=0, **kwargs):
+    def __init__(
+        self,
+        hidden_dim=128,
+        ffn_dim=512,
+        n_head=8,
+        num_layers=10,
+        input_channels=1,
+        output_dim=5,
+        resnet_count=0,
+        **kwargs,
+    ):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         self.conv = ConvFeatureExtractor(
-            in_channels=input_channels, resnet_count=resnet_count, hidden_dim=hidden_dim,  **kwargs)
+            in_channels=input_channels, resnet_count=resnet_count, hidden_dim=hidden_dim, **kwargs
+        )
         if resnet_count:
             self.lstm = nn.LSTM(93312, hidden_dim, num_layers, batch_first=True, bidirectional=True)
 
@@ -84,10 +107,9 @@ class LSTMTagger_normal(ParameterizedModule):
         out, (h0, c0) = self.lstm(img_seq, (h0, c0))
 
         fc = self.hidden2tag(self.relu(out))
-        coord = (self.final_tanh(fc[:, :, :-1]) + 1.) / 2.  # [b, n, output_dim-1]
-        prob = self.final_sigm(fc[:, :, -1]).unsqueeze(-1) # [b, n, 1]
-        return torch.cat((coord, prob), dim = -1)  # [b, n, output_dim]
-
+        coord = (self.final_tanh(fc[:, :, :-1]) + 1.0) / 2.0  # [b, n, output_dim-1]
+        prob = self.final_sigm(fc[:, :, -1]).unsqueeze(-1)  # [b, n, 1]
+        return torch.cat((coord, prob), dim=-1)  # [b, n, output_dim]
 
 
 class Attn(nn.Module):
@@ -97,11 +119,11 @@ class Attn(nn.Module):
         self.hidden_size = hidden_size
         self.attn = nn.Linear(hidden_size + input_size, hidden_size)
         self.v = nn.Parameter(torch.rand(hidden_size))
-        stdv = 1. / math.sqrt(self.v.size(0))
+        stdv = 1.0 / math.sqrt(self.v.size(0))
         self.v.data.normal_(mean=0, std=stdv)
 
     def forward(self, hidden, encoder_outputs, src_len=None):
-        '''
+        """
         :param hidden:
             previous hidden state of the decoder, in shape (layers*directions,B,H)
         :param encoder_outputs:
@@ -110,7 +132,7 @@ class Attn(nn.Module):
             used for masking. NoneType or tensor in shape (B) indicating sequence length
         :return
             attention energies in shape (B,T)
-        '''
+        """
         max_len = encoder_outputs.size(0)
         this_batch_size = encoder_outputs.size(1)
 
@@ -139,7 +161,7 @@ class ATTNLSTMCell(nn.Module):
     def __init__(self, hidden_size, input_size, encoder_size):
         super().__init__()
         self.hidden_size = hidden_size
-        self.attn = Attn('concat', hidden_size, encoder_size)
+        self.attn = Attn("concat", hidden_size, encoder_size)
         self.lstm = nn.LSTMCell(encoder_size + input_size, hidden_size)
 
     def forward(self, current_input, last_hidden, encoder_outputs):
@@ -191,13 +213,24 @@ class BidirectionalATTNLSTM(nn.Module):
 
 
 class LSTMTagger_attent(ParameterizedModule):
-    def __init__(self, hidden_dim=128, ffn_dim=512, n_head=8, num_layers=10, input_channels=1, output_dim=6, resnet_count=0,
-                 device ='cuda:1', **kwargs):
+    def __init__(
+        self,
+        hidden_dim=128,
+        ffn_dim=512,
+        n_head=8,
+        num_layers=10,
+        input_channels=1,
+        output_dim=6,
+        resnet_count=0,
+        device="cuda:1",
+        **kwargs,
+    ):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         self.conv = ConvFeatureExtractor(
-            in_channels=input_channels, resnet_count=resnet_count, hidden_dim=hidden_dim,  **kwargs)
+            in_channels=input_channels, resnet_count=resnet_count, hidden_dim=hidden_dim, **kwargs
+        )
 
         self.lstms = [
             BidirectionalATTNLSTM(hidden_dim, hidden_dim * 2, hidden_dim).to(device),
@@ -214,14 +247,15 @@ class LSTMTagger_attent(ParameterizedModule):
         img_code = self.conv(images)  # [b, c, h, w]
         img_seq = img_code.reshape([img_code.shape[0], img_code.shape[1], -1]).transpose(1, 2)  # [b, h * w , c]
         # Forward propagate LSTM
-        input_seq = get_sinusoid_encoding_table(n, self.hidden_dim * 2)[None].repeat(img_seq.shape[0], 1,
-                                                                                     1)  # [b, n, i]
+        input_seq = get_sinusoid_encoding_table(n, self.hidden_dim * 2)[None].repeat(
+            img_seq.shape[0], 1, 1
+        )  # [b, n, i]
         input_seq = input_seq.to(images.device)
         for lstm in self.lstms:
             _, input_seq = lstm(input_seq, img_seq)
 
         # input_seq
         fc = self.final_fc(self.relu(input_seq))
-        coord = (self.final_tanh(fc[:, :, :-1]) + 1.) / 2.  # [b, n, output_dim-1]
+        coord = (self.final_tanh(fc[:, :, :-1]) + 1.0) / 2.0  # [b, n, output_dim-1]
         prob = self.final_sigm(fc[:, :, -1]).unsqueeze(-1)
         return torch.cat((coord, prob), dim=-1)  # [b, n, output_dim]

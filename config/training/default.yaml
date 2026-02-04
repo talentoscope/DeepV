@@ -1,0 +1,6 @@
+# Training configuration for cleaning module
+model: UNET  # UNET, UNET_MSE, SmallUnet
+n_epochs: 10
+batch_size: 8
+added_part: No  # No or Yes
+model_path: null  # Path to checkpoint, null for training from scratch

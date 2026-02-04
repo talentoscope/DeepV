@@ -292,9 +292,6 @@ The Deep Vectorization project aims to convert raster technical drawings (e.g., 
 
 ### Testing
 - No test suite; critical for reliability.
-- Suggestions: Add pytest, aim for 70%+ coverage, include integration tests for pipeline, use GitHub Actions for CI. Include integration tests for new features.
-### Testing
-- No test suite; critical for reliability.
 - Suggestions: Add `pytest`, aim for 70%+ coverage, and include integration tests for the pipeline. Run tests and linters locally (see `CONTRIBUTING.md`) and optionally add CI later if you want automated runs on a remote service.
 
 ### Documentation

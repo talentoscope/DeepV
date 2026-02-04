@@ -1,10 +1,10 @@
 import numpy as np
-from scipy.ndimage.morphology import binary_dilation
+from scipy.ndimage import binary_dilation
 from scipy.spatial.distance import directed_hausdorff
-# import point_cloud_utils as pcu  # FIXME: remove pcu from the project
-
 
 import util_files.color_utils as color_utils
+
+# import point_cloud_utils as pcu  # FIXME: remove pcu from the project
 
 
 def _is_binary_1bit(image):
@@ -23,11 +23,11 @@ def _prepare_raster(raster, binarization=None, envelope=0):
     raster = ensure_tensor(raster)
 
     # binarize the input raster images
-    if binarization == 'maxink':
+    if binarization == "maxink":
         binarization_func = color_utils.img_8bit_to_binary_maxink
-    elif binarization == 'maxwhite':
+    elif binarization == "maxwhite":
         binarization_func = color_utils.img_8bit_to_binary_maxwhite
-    elif binarization == 'median':
+    elif binarization == "median":
         binarization_func = color_utils.img_8bit_to_binary_median
     elif None is binarization:
         binarization_func = lambda image: image
@@ -35,7 +35,7 @@ def _prepare_raster(raster, binarization=None, envelope=0):
         raise NotImplementedError
 
     raster = binarization_func(raster)
-    assert _is_binary_1bit(raster), 'images are not binary (only values 0 and 1 allowed in images)'
+    assert _is_binary_1bit(raster), "images are not binary (only values 0 and 1 allowed in images)"
 
     # invert images so that we compute a correct metric
     raster = 1 - raster
@@ -44,13 +44,11 @@ def _prepare_raster(raster, binarization=None, envelope=0):
     # to compute metrics with spatial tolerance
     if envelope:
         assert isinstance(envelope, int)
-        raster = np.array([binary_dilation(r, iterations=envelope)
-                           for r in raster]).astype(np.uint8)
+        raster = np.array([binary_dilation(r, iterations=envelope) for r in raster]).astype(np.uint8)
     return raster
 
 
-def psnr_score(raster_true, raster_pred, max_db=60,
-               average=None, envelope_true=0, binarization=None):
+def psnr_score(raster_true, raster_pred, max_db=60, average=None, envelope_true=0, binarization=None):
     """Computes PSNR metric between ground-truth and predicted images.
 
     :param raster_true: the input ground truth raster image
@@ -103,15 +101,15 @@ def psnr_score(raster_true, raster_pred, max_db=60,
     mse = ((raster_true - raster_pred) ** 2).mean(axis=axes)
     max_value = np.max(raster_true, axis=axes)
     psnr = 20 * np.log10(max_value) - 10 * np.log10(mse + smooth)
-    if average == 'mean':
+    if average == "mean":
         psnr = np.mean(psnr, axis=0)
 
     return psnr
 
 
-def precision_recall_fscore_iou_support(raster_true, raster_pred, beta=1.,
-                                        smooth=1e-6, average=None, rtol=1e-8,
-                                        envelope_true=0, binarization=None):
+def precision_recall_fscore_iou_support(
+    raster_true, raster_pred, beta=1.0, smooth=1e-6, average=None, rtol=1e-8, envelope_true=0, binarization=None
+):
     """Computes precision, recall, F1 score, and Intersection over Union
     metrics all in one pass.
 
@@ -179,16 +177,15 @@ def precision_recall_fscore_iou_support(raster_true, raster_pred, beta=1.,
 
     recall = (tp + smooth) / (tp + fn + smooth)
 
-    beta2 = beta ** 2
-    f_score = (1 + beta2) * (precision * recall + smooth) / \
-              (beta2 * precision + recall + smooth)
+    beta2 = beta**2
+    f_score = (1 + beta2) * (precision * recall + smooth) / (beta2 * precision + recall + smooth)
     f_score[np.isclose(recall, 0, rtol=rtol) & np.isclose(precision, 0, rtol=rtol)] = 0
 
     union = tp + fp + fn
     iou_score = (tp + smooth) / (union + smooth)
 
     # compute averaged versions if needed
-    if average == 'mean':
+    if average == "mean":
         precision = np.mean(precision, axis=0)
         recall = np.mean(recall, axis=0)
         f_score = np.mean(f_score, axis=0)
@@ -197,29 +194,39 @@ def precision_recall_fscore_iou_support(raster_true, raster_pred, beta=1.,
     return precision, recall, f_score, iou_score
 
 
-def f1_score(raster_true, raster_pred, beta=1,
-             smooth=1e-6, average=None, rtol=1e-8,
-             envelope_true=0, binarization=None):
+def f1_score(
+    raster_true, raster_pred, beta=1, smooth=1e-6, average=None, rtol=1e-8, envelope_true=0, binarization=None
+):
     """Computes F1 score.
     See parameters for `precision_recall_fscore_iou_support`."""
-    _, _, f1, _ = precision_recall_fscore_iou_support(raster_true, raster_pred,
-                                                      beta=beta, smooth=smooth,
-                                                      average=average, rtol=rtol,
-                                                      envelope_true=envelope_true,
-                                                      binarization=binarization)
+    _, _, f1, _ = precision_recall_fscore_iou_support(
+        raster_true,
+        raster_pred,
+        beta=beta,
+        smooth=smooth,
+        average=average,
+        rtol=rtol,
+        envelope_true=envelope_true,
+        binarization=binarization,
+    )
     return f1
 
 
-def iou_score(raster_true, raster_pred, beta=1,
-              smooth=1e-6, average=None, rtol=1e-8,
-              envelope_true=0, binarization=None):
+def iou_score(
+    raster_true, raster_pred, beta=1, smooth=1e-6, average=None, rtol=1e-8, envelope_true=0, binarization=None
+):
     """Computes Intersection over Union score.
     See parameters for `precision_recall_fscore_iou_support`."""
-    _, _, _, iou = precision_recall_fscore_iou_support(raster_true, raster_pred,
-                                                       beta=beta, smooth=smooth,
-                                                       average=average, rtol=rtol,
-                                                       envelope_true=envelope_true,
-                                                       binarization=binarization)
+    _, _, _, iou = precision_recall_fscore_iou_support(
+        raster_true,
+        raster_pred,
+        beta=beta,
+        smooth=smooth,
+        average=average,
+        rtol=rtol,
+        envelope_true=envelope_true,
+        binarization=binarization,
+    )
     return iou
 
 
@@ -274,36 +281,43 @@ def iou_score(raster_true, raster_pred, beta=1,
 #     return np.mean(chamfer_dist)
 
 
-
-
-def precision_score(raster_true, raster_pred, beta=1,
-                    smooth=1e-6, average=None, rtol=1e-8,
-                    envelope_true=0, binarization=None):
+def precision_score(
+    raster_true, raster_pred, beta=1, smooth=1e-6, average=None, rtol=1e-8, envelope_true=0, binarization=None
+):
     """Computes precision.
     See parameters for `precision_recall_fscore_iou_support`."""
-    p, _, _, _ = precision_recall_fscore_iou_support(raster_true, raster_pred,
-                                                       beta=beta, smooth=smooth,
-                                                       average=average, rtol=rtol,
-                                                       envelope_true=envelope_true,
-                                                       binarization=binarization)
+    p, _, _, _ = precision_recall_fscore_iou_support(
+        raster_true,
+        raster_pred,
+        beta=beta,
+        smooth=smooth,
+        average=average,
+        rtol=rtol,
+        envelope_true=envelope_true,
+        binarization=binarization,
+    )
     return p
 
 
-def recall_score(raster_true, raster_pred, beta=1,
-                 smooth=1e-6, average=None, rtol=1e-8,
-                 envelope_true=0, binarization=None):
+def recall_score(
+    raster_true, raster_pred, beta=1, smooth=1e-6, average=None, rtol=1e-8, envelope_true=0, binarization=None
+):
     """Computes recall.
     See parameters for `precision_recall_fscore_iou_support`."""
-    _, r, _, _ = precision_recall_fscore_iou_support(raster_true, raster_pred,
-                                                     beta=beta, smooth=smooth,
-                                                     average=average, rtol=rtol,
-                                                     envelope_true=envelope_true,
-                                                     binarization=binarization)
+    _, r, _, _ = precision_recall_fscore_iou_support(
+        raster_true,
+        raster_pred,
+        beta=beta,
+        smooth=smooth,
+        average=average,
+        rtol=rtol,
+        envelope_true=envelope_true,
+        binarization=binarization,
+    )
     return r
 
 
-def hausdorff_score(raster_true, raster_pred, sample_size=1,
-                    envelope_true=0, binarization=None, average=None):
+def hausdorff_score(raster_true, raster_pred, sample_size=1, envelope_true=0, binarization=None, average=None):
     """Computes Hausdorff metric between ground-truth and predicted images.
     The measure is co_prepare_rastermputed by sampling the inky region of images.
 
@@ -358,36 +372,38 @@ def hausdorff_score(raster_true, raster_pred, sample_size=1,
         # TODO update to filter out inf numbers when computing average
         coords_true = np.argwhere(r_true == 1)
         if 0 == len(coords_true):
-            score = float('+inf')
+            score = float("+inf")
         else:
             sample_idx_true = np.random.choice(len(coords_true), sample_size, replace=True)
             sample_true = coords_true[sample_idx_true]
 
         coords_pred = np.argwhere(r_pred == 1)
         if 0 == len(coords_pred):
-            score = float('+inf')
+            score = float("+inf")
         else:
             sample_idx_pred = np.random.choice(len(coords_pred), sample_size, replace=True)
             sample_pred = coords_pred[sample_idx_pred]
 
         if len(coords_true) > 0 and len(coords_pred) > 0:
-            score = max(directed_hausdorff(sample_true, sample_pred)[0], directed_hausdorff(sample_pred, sample_true)[0])
+            score = max(
+                directed_hausdorff(sample_true, sample_pred)[0], directed_hausdorff(sample_pred, sample_true)[0]
+            )
         hausdorff_score.append(score)
     hausdorff_score = np.array(hausdorff_score)
 
-    if average == 'mean':
+    if average == "mean":
         hausdorff_score = np.mean(hausdorff_score, axis=0)
 
     return hausdorff_score
 
 
 __all__ = [
-    'f1_score',
-    'precision_score',
-    'recall_score',
-    'iou_score',
+    "f1_score",
+    "precision_score",
+    "recall_score",
+    "iou_score",
     # 'cd_score',
     # 'emd_score',
-    'psnr_score',
-    'hausdorff_score',
+    "psnr_score",
+    "hausdorff_score",
 ]

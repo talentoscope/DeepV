@@ -1,17 +1,19 @@
 import numpy as np
 
-from util_files.data.graphics.primitives import Line, CBezier, QBezier
-from . common import bbox
+from util_files.data.graphics.primitives import CBezier, Line, QBezier
+
+from .common import bbox
 
 
 def split_by_line(segs, line):
-    '''Returns subsegments_on_the_left, subsegments_on_the_right'''
+    """Returns subsegments_on_the_left, subsegments_on_the_right"""
     l0, l1 = np.asarray(line)
     assert np.any(l0 != l1)
 
     l = l1 - l0
     l = l / np.linalg.norm(l)
-    n = np.roll(l, 1, axis=-1);  n[0] *= -1 # normal is 90 degrees counterclockwise, i.e it is directed to the left
+    n = np.roll(l, 1, axis=-1)
+    n[0] *= -1  # normal is 90 degrees counterclockwise, i.e it is directed to the left
     dist = lambda p: (p.real - l0[0]) * n[0] + (p.imag - l0[1]) * n[1]
 
     left_segs = []
@@ -44,21 +46,21 @@ def split_by_line(segs, line):
                 else:
                     right_segs.append(subseg)
                     continue
-            elif isinstance(subseg, (CBezier, QBezier)): # doesn't work for quartics and higher order
-                if any(dist(p) > 0 for p in [subseg.start, subseg.end, subseg.point(.5)]):
+            elif isinstance(subseg, (CBezier, QBezier)):  # doesn't work for quartics and higher order
+                if any(dist(p) > 0 for p in [subseg.start, subseg.end, subseg.point(0.5)]):
                     left_segs.append(subseg)
                     continue
                 else:
                     right_segs.append(subseg)
                     continue
             else:
-                raise NotImplementedError('Don\'t know how to split {}'.format(subseg.__class__))
+                raise NotImplementedError("Don't know how to split {}".format(subseg.__class__))
 
     return left_segs, right_segs
 
 
 def split_to_patches(segments, origin, patch_size, patches_n):
-    '''Returns i,j,v analogous to "coo" sparse format'''
+    """Returns i,j,v analogous to "coo" sparse format"""
     patch_w, patch_h = patch_size
     patches_row_n, patches_col_n = patches_n
 

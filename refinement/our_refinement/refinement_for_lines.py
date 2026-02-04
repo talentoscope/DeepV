@@ -1,7 +1,8 @@
-from refinement.our_refinement.utils.lines_refinement_functions import *
 import argparse
-from util_files.metrics.iou import calc_iou__vect_image
 import signal
+
+from refinement.our_refinement.utils.lines_refinement_functions import *
+from util_files.metrics.iou import calc_iou__vect_image
 
 
 def register_sigint_flag(flag_list):
@@ -15,8 +16,10 @@ def register_sigint_flag(flag_list):
         flag_list[0] = True
 
     signal.signal(signal.SIGINT, _handler)
+
+
 def render_optimization_hard(patches_rgb, patches_vector, device, options, name):
-    '''
+    """
 
     :param patches_rgb: patches with rgb(from 0 to 255) [b,3,64,64](can change but code should be changed respectevly)
     :param patches_vector: patches with predicted vector [b,line_count,5](check this)
@@ -24,17 +27,17 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
     :param options: dict with information #Todo add example
     :param name:
     :return:  patches with refined vectors [b,line_count,5](check this)
-    '''
+    """
     patches_rgb_im = np.copy(patches_rgb)
 
     first_encounter = True
 
     patches_vector = torch.tensor(patches_vector)
     y_pred_rend = torch.zeros((patches_vector.shape[0], patches_vector.shape[1], patches_vector.shape[2] - 1))
-    patches_rgb = 1 - torch.tensor(patches_rgb).squeeze(3).unsqueeze(1) / 255.
-    print('init_random', options.init_random)
-    if (options.init_random):
-        print('init_random', options.init_random)
+    patches_rgb = 1 - torch.tensor(patches_rgb).squeeze(3).unsqueeze(1) / 255.0
+    print("init_random", options.init_random)
+    if options.init_random:
+        print("init_random", options.init_random)
         patches_vector = torch.rand((patches_vector.shape)) * 64
         patches_vector[..., 4] = 1
 
@@ -58,14 +61,14 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
 
         initial_vector = patches_vector.detach()[take_batches].cpu()
 
-        removed_lines = initial_vector[..., -1] < .5 * h
+        removed_lines = initial_vector[..., -1] < 0.5 * h
         rand_x1 = torch.rand_like(initial_vector[removed_lines, [0]]) * w
         rand_y1 = torch.rand_like(initial_vector[removed_lines, [1]]) * h
         initial_vector[removed_lines, [0]] = rand_x1
         initial_vector[removed_lines, [2]] = rand_x1 + 1
         initial_vector[removed_lines, [1]] = rand_y1
         initial_vector[removed_lines, [3]] = rand_y1 + 1
-        initial_vector[removed_lines, [4]] = 2 ** -8
+        initial_vector[removed_lines, [4]] = 2**-8
         initial_vector = initial_vector[..., :5].numpy()
 
         rasters_batch = torch.nn.functional.pad(rasters_batch, [padding, padding, padding, padding])
@@ -80,7 +83,7 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
         width = lines_batch[:, :, 4]
         X = x2 - x1
         Y = y2 - y1
-        length = torch.sqrt(X ** 2 + Y ** 2)
+        length = torch.sqrt(X**2 + Y**2)
         theta = torch.atan2(Y, X)
         cx = (x1 + x2) / 2
         cy = (y1 + y2) / 2
@@ -98,8 +101,9 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
         size_optimizer.zero_grad()
         size_optimizer.step()
 
-        patches_to_optimize = np.full(lines_batch.shape[0], True,
-                                      np.bool)  # my_iou_score(vector_rendering, rasters_batch) < .98
+        patches_to_optimize = np.full(
+            lines_batch.shape[0], True, np.bool
+        )  # my_iou_score(vector_rendering, rasters_batch) < .98
         cx_final = torch.empty_like(cx)
         cy_final = torch.empty_like(cy)
         theta_final = torch.empty_like(theta)
@@ -123,7 +127,7 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
         7. Find the patches with high enough IOU value and do not optimize them furher
         """
 
-        vector_rendering = render_lines_pt(lines_batch.detach())
+        vector_rendering = render_lines_with_type(lines_batch.detach(), options.rendering_type)
 
         its_time_to_stop = [False]
         register_sigint_flag(its_time_to_stop)
@@ -142,12 +146,15 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
                     y1 = cy.data - length.data * torch.sin(theta.data) / 2
                     lines_batch = torch.stack([x1, y1, x2, y2, width.data], -1)
                     lines_batch.data[..., -1][lines_batch[..., -1] < 1 / 4] = 0
-                    vector_rendering[patches_to_optimize] = render_lines_pt(lines_batch[patches_to_optimize].detach())
+                    vector_rendering[patches_to_optimize] = render_lines_with_type(
+                        lines_batch[patches_to_optimize].detach(), options.rendering_type
+                    )
                     im = rasters_batch[patches_to_optimize].clone()
                     # the line below is explained in `reinit_excess_lines`
                     im.masked_fill_(vector_rendering[patches_to_optimize] > 0, 0)
-                    reinit_excess_lines(cx, cy, width, length, im.reshape(im.shape[0], -1),
-                                        patches_to_consider=patches_to_optimize)
+                    reinit_excess_lines(
+                        cx, cy, width, length, im.reshape(im.shape[0], -1), patches_to_consider=patches_to_optimize
+                    )
 
                 # 2. Optimize mean field energy w.r.t position parameters with fixed size parameters
                 x2 = cx + length.data * torch.cos(theta) / 2
@@ -155,15 +162,17 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
                 y2 = cy + length.data * torch.sin(theta) / 2
                 y1 = cy - length.data * torch.sin(theta) / 2
                 lines_batch = torch.stack([x1, y1, x2, y2, width.data], -1)
-                mean_field_energy = mean_field_energy_lines(lines_batch[patches_to_optimize],
-                                                            rasters_batch[patches_to_optimize])
+                mean_field_energy = mean_field_energy_lines(
+                    lines_batch[patches_to_optimize], rasters_batch[patches_to_optimize]
+                )
 
                 pos_optimizer.zero_grad()
                 mean_field_energy.backward()
                 pos_optimizer.step()
                 #    Apply constraints to the parameters of the lines after this and other parts of iteration
-                constrain_parameters(cx, cy, theta, length, width, canvas_width=w, canvas_height=h,
-                                     size_optimizer=size_optimizer)
+                constrain_parameters(
+                    cx, cy, theta, length, width, canvas_width=w, canvas_height=h, size_optimizer=size_optimizer
+                )
 
                 # 3. Optimize mean field energy w.r.t size parameters
                 #    with fixed positions of the left points of the lines and their orientations
@@ -180,12 +189,17 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
                 (excess_energy + collinearity_energy).backward()
                 size_optimizer.step()
 
-                cx.data[patches_to_optimize] = x1.data[patches_to_optimize] + length.data[
-                    patches_to_optimize] * torch.cos(theta.data[patches_to_optimize]) / 2
-                cy.data[patches_to_optimize] = y1.data[patches_to_optimize] + length.data[
-                    patches_to_optimize] * torch.sin(theta.data[patches_to_optimize]) / 2
-                constrain_parameters(cx, cy, theta, length, width, canvas_width=w, canvas_height=h,
-                                     size_optimizer=size_optimizer)
+                cx.data[patches_to_optimize] = (
+                    x1.data[patches_to_optimize]
+                    + length.data[patches_to_optimize] * torch.cos(theta.data[patches_to_optimize]) / 2
+                )
+                cy.data[patches_to_optimize] = (
+                    y1.data[patches_to_optimize]
+                    + length.data[patches_to_optimize] * torch.sin(theta.data[patches_to_optimize]) / 2
+                )
+                constrain_parameters(
+                    cx, cy, theta, length, width, canvas_width=w, canvas_height=h, size_optimizer=size_optimizer
+                )
 
                 # 4. Optimize mean field energy w.r.t size parameters
                 #    with fixed positions of the right points of the lines and their orientations
@@ -202,12 +216,17 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
                 (excess_energy + collinearity_energy).backward()
                 size_optimizer.step()
 
-                cx.data[patches_to_optimize] = x2.data[patches_to_optimize] - length.data[
-                    patches_to_optimize] * torch.cos(theta.data[patches_to_optimize]) / 2
-                cy.data[patches_to_optimize] = y2.data[patches_to_optimize] - length.data[
-                    patches_to_optimize] * torch.sin(theta.data[patches_to_optimize]) / 2
-                constrain_parameters(cx, cy, theta, length, width, canvas_width=w, canvas_height=h,
-                                     size_optimizer=size_optimizer)
+                cx.data[patches_to_optimize] = (
+                    x2.data[patches_to_optimize]
+                    - length.data[patches_to_optimize] * torch.cos(theta.data[patches_to_optimize]) / 2
+                )
+                cy.data[patches_to_optimize] = (
+                    y2.data[patches_to_optimize]
+                    - length.data[patches_to_optimize] * torch.sin(theta.data[patches_to_optimize]) / 2
+                )
+                constrain_parameters(
+                    cx, cy, theta, length, width, canvas_width=w, canvas_height=h, size_optimizer=size_optimizer
+                )
 
                 # 5. Snap lines that have coinciding ends, close orientations and close widths
                 if (i + 1) % 20 == 0:
@@ -231,29 +250,41 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
                 width_final[width_final < 1 / 4] = 0
 
                 # 6.3. Collapse the lines that don't add new information to the rasterization
-                collapse_redundant_lines(cx_final, cy_final, theta_final, length_final, width_final,
-                                         patches_to_consider=patches_to_optimize)
-                x2 = cx_final.data[patches_to_optimize] + length_final.data[patches_to_optimize] * torch.cos(
-                    theta_final.data[patches_to_optimize]) / 2
-                x1 = cx_final.data[patches_to_optimize] - length_final.data[patches_to_optimize] * torch.cos(
-                    theta_final.data[patches_to_optimize]) / 2
-                y2 = cy_final.data[patches_to_optimize] + length_final.data[patches_to_optimize] * torch.sin(
-                    theta_final.data[patches_to_optimize]) / 2
-                y1 = cy_final.data[patches_to_optimize] - length_final.data[patches_to_optimize] * torch.sin(
-                    theta_final.data[patches_to_optimize]) / 2
+                collapse_redundant_lines(
+                    cx_final, cy_final, theta_final, length_final, width_final, patches_to_consider=patches_to_optimize
+                )
+                x2 = (
+                    cx_final.data[patches_to_optimize]
+                    + length_final.data[patches_to_optimize] * torch.cos(theta_final.data[patches_to_optimize]) / 2
+                )
+                x1 = (
+                    cx_final.data[patches_to_optimize]
+                    - length_final.data[patches_to_optimize] * torch.cos(theta_final.data[patches_to_optimize]) / 2
+                )
+                y2 = (
+                    cy_final.data[patches_to_optimize]
+                    + length_final.data[patches_to_optimize] * torch.sin(theta_final.data[patches_to_optimize]) / 2
+                )
+                y1 = (
+                    cy_final.data[patches_to_optimize]
+                    - length_final.data[patches_to_optimize] * torch.sin(theta_final.data[patches_to_optimize]) / 2
+                )
                 #                 print( torch.stack([x1, y1, x2, y2, width_final[patches_to_optimize]], -1).shape)
                 #                 print(lines_batch_final[patches_to_optimize].shape)
                 #                 print(patches_to_optimize.shape)
-                lines_batch_final[patches_to_optimize] = torch.stack([x1, y1, x2, y2, width_final[patches_to_optimize]],
-                                                                     -1)
+                lines_batch_final[patches_to_optimize] = torch.stack(
+                    [x1, y1, x2, y2, width_final[patches_to_optimize]], -1
+                )
 
                 # 6.4. Render the lines and calculate the difference from the raster
-                vector_rendering[patches_to_optimize] = render_lines_pt(lines_batch_final[patches_to_optimize])
+                vector_rendering[patches_to_optimize] = render_lines_with_type(
+                    lines_batch_final[patches_to_optimize], options.rendering_type
+                )
                 im = rasters_batch[patches_to_optimize] - vector_rendering[patches_to_optimize]
 
-            #TODO add IOU calc
+            # TODO add IOU calc
 
-            if (i % 20 == 0):
+            if i % 20 == 0:
                 iou_mass.append(calc_iou__vect_image(lines_batch_final.data / 64, patches_rgb_im[take_batches]))
                 mass_for_iou_one.append(lines_batch_final.cpu().data.detach().numpy())
 
@@ -270,22 +301,34 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
     prd[prd > 1] = 1
     prd[prd < 0.3] = 0
     y_pred_rend = torch.cat((y_pred_rend, prd.unsqueeze(2)), dim=-1)
-    os.makedirs(options.output_dir + 'arrays/', exist_ok=True)
+    os.makedirs(options.output_dir + "arrays/", exist_ok=True)
     if options.init_random:
-        np.save(options.output_dir + 'arrays/hard_optimization_iou_random_' + name, iou_all)
-        np.save(options.output_dir + 'arrays/hard_optimization_iou_mass_random_' + name, mass_for_iou)
+        np.save(options.output_dir + "arrays/hard_optimization_iou_random_" + name, iou_all)
+        np.save(options.output_dir + "arrays/hard_optimization_iou_mass_random_" + name, mass_for_iou)
     else:
-        np.save(options.output_dir + 'arrays/hard_optimization_iou_' + name, iou_all)
-        np.save(options.output_dir + 'arrays/hard_optimization_iou_mass_' + name, mass_for_iou)
+        np.save(options.output_dir + "arrays/hard_optimization_iou_" + name, iou_all)
+        np.save(options.output_dir + "arrays/hard_optimization_iou_mass_" + name, mass_for_iou)
 
     return y_pred_rend
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--output_dir', type=str, default="/vage/Download/testing_line/", help='dir to folder for output')
-    parser.add_argument('--diff_render_it', type=int, default=90, help='iteration count')
-    parser.add_argument('--init_random', action='store_true', default=False, dest='init_random',
-                        help='init model with random [default: False].')
-    parser.add_argument('--rendering_type', type=str, default='hard', help='hard -oleg,simple Alexey')
+    parser.add_argument(
+        "--output_dir", type=str, default="/vage/Download/testing_line/", help="dir to folder for output"
+    )
+    parser.add_argument("--diff_render_it", type=int, default=90, help="iteration count")
+    parser.add_argument(
+        "--init_random",
+        action="store_true",
+        default=False,
+        dest="init_random",
+        help="init model with random [default: False].",
+    )
+    parser.add_argument(
+        "--rendering_type",
+        type=str,
+        default="hard",
+        help="hard - analytical rendering, bezier_splatting - fast differentiable rendering",
+    )
     return parser.parse_args()

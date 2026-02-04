@@ -1,7 +1,7 @@
 import os
 import sys
 
-sys.path.append('/code')
+sys.path.append("/code")
 from util_files.data.graphics.graphics import VectorImage
 
 
@@ -15,5 +15,5 @@ def remove_duplicates_and_trim(src_filename, dst_filename):
     vector_image.save(dst_filename)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     remove_duplicates_and_trim(sys.argv[1], sys.argv[2])

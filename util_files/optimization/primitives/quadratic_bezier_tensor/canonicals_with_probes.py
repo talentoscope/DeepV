@@ -1,5 +1,6 @@
-import torch
 import numpy as np
+import torch
+
 
 def calculate_canonical_coordinates_with_probes(self, pixel_coords):
     r"""
@@ -42,11 +43,14 @@ def calculate_canonical_coordinates_with_probes(self, pixel_coords):
     # 3. Calculate the canonical coordinates of the pixels.
     #    Canonical X is the distance from the pixel to the curve, i.e the distance to the closest probe.
     #    Canonical Y is the length of the curve arc from P1 to the closest probe.
-    expanded_transposed_probes = (probes.reshape(probes_n, patches_n, spatial_dims_n, primitives_n, 1)
-                                  .permute(1, 2, 3, 4, 0)
-                                  .expand(patches_n, spatial_dims_n, primitives_n, pixels_n, probes_n))
-    closest_probe_id = (closest_probe_id.reshape(patches_n, 1, primitives_n, pixels_n, 1)
-                        .expand(patches_n, spatial_dims_n, primitives_n, pixels_n, 1))
+    expanded_transposed_probes = (
+        probes.reshape(probes_n, patches_n, spatial_dims_n, primitives_n, 1)
+        .permute(1, 2, 3, 4, 0)
+        .expand(patches_n, spatial_dims_n, primitives_n, pixels_n, probes_n)
+    )
+    closest_probe_id = closest_probe_id.reshape(patches_n, 1, primitives_n, pixels_n, 1).expand(
+        patches_n, spatial_dims_n, primitives_n, pixels_n, 1
+    )
     projections = torch.gather(expanded_transposed_probes, dim=-1, index=closest_probe_id, sparse_grad=False)
     del expanded_transposed_probes
     projections = projections[..., 0]  # get rid of probes dimension
@@ -55,19 +59,24 @@ def calculate_canonical_coordinates_with_probes(self, pixel_coords):
     spatial_dim_i = 1
     canonical_pixel_x = torch.norm(from_curve_to_pixel, dim=spatial_dim_i)
 
-    tangents = (tangents.reshape(probes_n, patches_n, spatial_dims_n, primitives_n, 1)
-                .permute(1, 2, 3, 4, 0)
-                .expand(patches_n, spatial_dims_n, primitives_n, pixels_n, probes_n))
+    tangents = (
+        tangents.reshape(probes_n, patches_n, spatial_dims_n, primitives_n, 1)
+        .permute(1, 2, 3, 4, 0)
+        .expand(patches_n, spatial_dims_n, primitives_n, pixels_n, probes_n)
+    )
     tangents = torch.gather(tangents, dim=-1, index=closest_probe_id, sparse_grad=False)[..., 0]
-    x_sign = torch.sign(tangents[:, 1] * from_curve_to_pixel.data[:, 0] -
-                        tangents[:, 0] * from_curve_to_pixel.data[:, 1])
+    x_sign = torch.sign(
+        tangents[:, 1] * from_curve_to_pixel.data[:, 0] - tangents[:, 0] * from_curve_to_pixel.data[:, 1]
+    )
     del tangents
     canonical_pixel_x = canonical_pixel_x * x_sign
     del x_sign
 
-    arc_lens = (arc_lens.reshape(probes_n, patches_n, primitives_n, 1)
-                .permute(1, 2, 3, 0)
-                .expand(patches_n, primitives_n, pixels_n, probes_n))
+    arc_lens = (
+        arc_lens.reshape(probes_n, patches_n, primitives_n, 1)
+        .permute(1, 2, 3, 0)
+        .expand(patches_n, primitives_n, pixels_n, probes_n)
+    )
     closest_probe_id = closest_probe_id[:, 0]  # get rid of spatial dimension
     canonical_pixel_y = torch.gather(arc_lens, dim=-1, index=closest_probe_id, sparse_grad=False)
     del arc_lens
@@ -83,15 +92,17 @@ def calculate_canonical_coordinates_with_probes(self, pixel_coords):
         # Y
         tangent = tangent.reshape(patches_n, spatial_dims_n, primitives_n, 1)
         from_endpoint_to_pixel = from_curve_to_pixel.where(mask, from_curve_to_pixel.new_zeros([]))
-        canonical_pixel_y_end = (tangent[:, 0] * from_endpoint_to_pixel[:, 0] +
-                                 tangent[:, 1] * from_endpoint_to_pixel[:, 1])
+        canonical_pixel_y_end = (
+            tangent[:, 0] * from_endpoint_to_pixel[:, 0] + tangent[:, 1] * from_endpoint_to_pixel[:, 1]
+        )
         canonical_pixel_y_end = y_end_clamper(canonical_pixel_y_end)
         canonical_pixel_y = canonical_pixel_y + canonical_pixel_y_end
         del canonical_pixel_y_end
 
         # X
-        canonical_pixel_x_end = (tangent[:, 1] * from_endpoint_to_pixel[:, 0] -
-                                 tangent[:, 0] * from_endpoint_to_pixel[:, 1])
+        canonical_pixel_x_end = (
+            tangent[:, 1] * from_endpoint_to_pixel[:, 0] - tangent[:, 0] * from_endpoint_to_pixel[:, 1]
+        )
         del tangent, from_endpoint_to_pixel
         # canonical_pixel_x_end = canonical_pixel_x_end.abs()
         mask = mask[:, 0]  # get rid of spatial dimension
@@ -151,7 +162,7 @@ def probe(self, interval=1):
     tangents = torch.cat([tangents, tangents[-1:]], dim=0)
 
     arc_lens = arc_lens.norm(dim=spatial_dim_i, keepdim=True)
-    assert arc_lens.data.max() <= interval, 'We probed the curves at intervals greater than `interval`'
+    assert arc_lens.data.max() <= interval, "We probed the curves at intervals greater than `interval`"
     arc_lens = arc_lens.cumsum(dim=0)
     arc_lens = torch.nn.functional.pad(arc_lens, [0, 0, 0, 0, 0, 0, 1, 0])
 

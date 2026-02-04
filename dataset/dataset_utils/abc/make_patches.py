@@ -1,16 +1,16 @@
-from contextlib import contextmanager
 import os
 import signal
 import sys
+from contextlib import contextmanager
 
 import numpy as np
 
 # sys.path.append('/code')
 sys.path.append('/code/Deep-Vectorization-of-Technical-Drawings/')
-from util_files.data.graphics.graphics import VectorImage, Path
-from util_files.simplification.join_qb import join_quad_beziers
-from util_files.rendering.cairo import render, PT_LINE, PT_QBEZIER
+from util_files.data.graphics.graphics import Path, VectorImage
+from util_files.rendering.cairo import PT_LINE, PT_QBEZIER, render
 from util_files.simplification.detect_overlaps import has_overlaps
+from util_files.simplification.join_qb import join_quad_beziers
 
 
 class TimeoutException(Exception): pass

@@ -48,7 +48,7 @@ def calculate_canonical_coordinates_with_cardano(self, pixel_coords, tol=1e-3, d
     d = (p1 * A).sum(dim=spatial_dim_i)
     del A, B
 
-    delta = - b / (a * 3)
+    delta = -b / (a * 3)
     c_over_a = c / a
 
     p = c_over_a - delta.pow(2) * 3
@@ -71,7 +71,7 @@ def calculate_canonical_coordinates_with_cardano(self, pixel_coords, tol=1e-3, d
     alpha_cube_im = Q_abs_sqrt.where(~Q_nonneg, Q_abs_sqrt.new_zeros([]))
     del Q_abs_sqrt, Q_nonneg, halved_q
 
-    alpha_modulus = (alpha_cube_re.pow(2) + alpha_cube_im.pow(2)).pow(1/6)
+    alpha_modulus = (alpha_cube_re.pow(2) + alpha_cube_im.pow(2)).pow(1 / 6)
     alpha_phase = torch.atan2(alpha_cube_im, alpha_cube_re) / 3
     del alpha_cube_re, alpha_cube_im
 

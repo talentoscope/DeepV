@@ -3,7 +3,7 @@ import torch
 
 point_potential_close_range = 1
 point_potential_far_range = 32
-point_potential_far_weight = 1./50
+point_potential_far_weight = 1.0 / 50
 point_potential_close_weight = 1 - point_potential_far_weight
 
 
@@ -21,11 +21,16 @@ def unit_term_point_to_point(r2, term_range):
     energies : torch.Tensor
         of same shape as `r2`
     """
-    return torch.exp(-r2 / (term_range ** 2))
+    return torch.exp(-r2 / (term_range**2))
 
 
-def unit_energy_point_to_point(r2, close_range=point_potential_close_range, close_weight=point_potential_close_weight,
-                               far_range=point_potential_far_range, far_weight=point_potential_far_weight):
+def unit_energy_point_to_point(
+    r2,
+    close_range=point_potential_close_range,
+    close_weight=point_potential_close_weight,
+    far_range=point_potential_far_range,
+    far_weight=point_potential_far_weight,
+):
     r"""
 
     Parameters
@@ -42,8 +47,9 @@ def unit_energy_point_to_point(r2, close_range=point_potential_close_range, clos
     energies : torch.Tensor
         of same shape as `r2`
     """
-    return (unit_term_point_to_point(r2, close_range) * close_weight +
-            unit_term_point_to_point(r2, far_range) * far_weight)
+    return (
+        unit_term_point_to_point(r2, close_range) * close_weight + unit_term_point_to_point(r2, far_range) * far_weight
+    )
 
 
 def unit_term_line_to_canonical_point(halfwidth, length, x, y, term_range):
@@ -70,12 +76,19 @@ def unit_term_line_to_canonical_point(halfwidth, length, x, y, term_range):
         of same shape as input
     """
     erf = lambda arg: torch.erf(arg / term_range)
-    return (erf(length - y) + erf(y)) * (erf(halfwidth - x) + erf(halfwidth + x)) * (term_range ** 2) * np.pi / 4
+    return (erf(length - y) + erf(y)) * (erf(halfwidth - x) + erf(halfwidth + x)) * (term_range**2) * np.pi / 4
 
 
-def unit_energy_line_to_canonical_point(halfwidth, length, x, y, close_range=point_potential_close_range,
-                                        close_weight=point_potential_close_weight, far_range=point_potential_far_range,
-                                        far_weight=point_potential_far_weight):
+def unit_energy_line_to_canonical_point(
+    halfwidth,
+    length,
+    x,
+    y,
+    close_range=point_potential_close_range,
+    close_weight=point_potential_close_weight,
+    far_range=point_potential_far_range,
+    far_weight=point_potential_far_weight,
+):
     r"""Energy of interaction of a line and a point in canonical coordinates of the line,
     where the left end of the line is in the origin and the right end is on the positive side of y axis.
 
@@ -101,6 +114,7 @@ def unit_energy_line_to_canonical_point(halfwidth, length, x, y, close_range=poi
     energies : torch.Tensor
         of same shape as input
     """
-    return (unit_term_line_to_canonical_point(halfwidth, length, x, y, close_range) * close_weight +
-            unit_term_line_to_canonical_point(halfwidth, length, x, y, far_range) * far_weight)
-
+    return (
+        unit_term_line_to_canonical_point(halfwidth, length, x, y, close_range) * close_weight
+        + unit_term_line_to_canonical_point(halfwidth, length, x, y, far_range) * far_weight
+    )

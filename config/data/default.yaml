@@ -1,0 +1,4 @@
+# Data configuration
+data_dir: /data/abc_png_svg/
+image_name: 00050000_99fd5beca7714bc586260b6a_step_000.png  # null means process all images
+output_dir: /logs/outputs/vectorization/lines/

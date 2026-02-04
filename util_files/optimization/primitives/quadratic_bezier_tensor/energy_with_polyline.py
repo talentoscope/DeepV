@@ -86,7 +86,8 @@ def unit_energy(self, pixel_coords, division_epsilon=division_epsilon):
         length = length.reshape(segments_n, patches_n, primitives_n, 1)
         halfwidth = halfwidth.data
         len_dependent_terms = self.energy_procedures.unit_energy_line_to_canonical_point(
-            halfwidth, length, canonical_x, canonical_y)
+            halfwidth, length, canonical_x, canonical_y
+        )
         del canonical_x, canonical_y, length
 
         segments_dim_i = 0

@@ -1,12 +1,13 @@
 import os
-import numpy as np
-import torch
 import random
-from torch.utils.data.dataset import Dataset
-from torch.utils.data import DataLoader
-from torchvision import transforms
-from PIL import Image
+
+import numpy as np
 import PIL
+import torch
+from PIL import Image
+from torch.utils.data import DataLoader
+from torch.utils.data.dataset import Dataset
+from torchvision import transforms
 
 
 class MakeData(Dataset):
@@ -14,11 +15,11 @@ class MakeData(Dataset):
         tmp_df_x = []
         tmp_df_y = []
         for it in os.listdir(img_path):
-            if '_' not in it and '.svg' not in it:
+            if "_" not in it and ".svg" not in it:
                 tmp_df_x.append(it)
         tmp_df_x.sort()
         for it in tmp_df_x:
-            tmp_df_y.append(it[:-4] + '_gt.png')
+            tmp_df_y.append(it[:-4] + "_gt.png")
         self.img_path_x = img_path
         self.img_path_y = img_y_path
         self.transform = transform
@@ -26,9 +27,11 @@ class MakeData(Dataset):
         self.X_train = tmp_df_x
         self.y_train = tmp_df_y
 
-        self.trans = transforms.Compose([
-            transforms.ToTensor(),
-        ])
+        self.trans = transforms.Compose(
+            [
+                transforms.ToTensor(),
+            ]
+        )
 
     def randomCrop(self, img, mask, width, height):
         print(img.size, width, height)
@@ -45,10 +48,10 @@ class MakeData(Dataset):
     def transformation(self, img, img_y):
         img = PIL.ImageOps.invert(img)
         img_y = PIL.ImageOps.invert(img_y)
-        if (np.random.uniform() < 0.5):
+        if np.random.uniform() < 0.5:
             img = img.transpose(Image.FLIP_LEFT_RIGHT)
             img_y = img_y.transpose(Image.FLIP_LEFT_RIGHT)
-        elif (np.random.uniform() < 0.5):
+        elif np.random.uniform() < 0.5:
             img = img.transpose(Image.FLIP_TOP_BOTTOM)
             img_y = img_y.transpose(Image.FLIP_TOP_BOTTOM)
         rn = np.random.uniform(0, 270)
@@ -64,9 +67,9 @@ class MakeData(Dataset):
 
     def __getitem__(self, index):
         img = Image.open(os.path.join(self.img_path_x, self.X_train[index]))
-        img = img.convert('L')
+        img = img.convert("L")
         img_y = Image.open(os.path.join(self.img_path_y, self.y_train[index]))
-        img_y = img_y.convert('L')
+        img_y = img_y.convert("L")
 
         if self.tr is not None:
             img, img_y = self.transformation(img, img_y)
@@ -93,15 +96,15 @@ class MakeDataSynt(Dataset):
         tmp_df_y_nh = []
 
         for it in os.listdir(img_path):
-            if '_' not in it and '.svg' not in it:
+            if "_" not in it and ".svg" not in it:
                 tmp_df_x.append(it)
         tmp_df_x.sort()
 
         for it in tmp_df_x:
-            tmp_df_y_h.append(it[:-4] + '_h_gt.png')
+            tmp_df_y_h.append(it[:-4] + "_h_gt.png")
 
         for it in tmp_df_x:
-            tmp_df_y_nh.append(it[:-4] + '_nh_gt.png')
+            tmp_df_y_nh.append(it[:-4] + "_nh_gt.png")
 
         self.img_path_x = img_path
         self.img_path_y_h = img_y_path
@@ -113,9 +116,11 @@ class MakeDataSynt(Dataset):
         self.y_train_h = tmp_df_y_h
         self.y_train_nh = tmp_df_y_nh
 
-        self.trans = transforms.Compose([
-            transforms.ToTensor(),
-        ])
+        self.trans = transforms.Compose(
+            [
+                transforms.ToTensor(),
+            ]
+        )
 
     def randomCrop(self, img, mask, mask_1, width, height):
         assert img.size[0] >= height
@@ -133,11 +138,11 @@ class MakeDataSynt(Dataset):
         img = PIL.ImageOps.invert(img)
         img_y = PIL.ImageOps.invert(img_y)
         img_y_nh = PIL.ImageOps.invert(img_y_nh)
-        if (np.random.uniform() < 0.5):
+        if np.random.uniform() < 0.5:
             img = img.transpose(Image.FLIP_LEFT_RIGHT)
             img_y = img_y.transpose(Image.FLIP_LEFT_RIGHT)
             img_y_nh = img_y_nh.transpose(Image.FLIP_LEFT_RIGHT)
-        elif (np.random.uniform() < 0.5):
+        elif np.random.uniform() < 0.5:
             img = img.transpose(Image.FLIP_TOP_BOTTOM)
             img_y = img_y.transpose(Image.FLIP_TOP_BOTTOM)
             img_y_nh = img_y_nh.transpose(Image.FLIP_TOP_BOTTOM)
@@ -157,12 +162,12 @@ class MakeDataSynt(Dataset):
 
     def __getitem__(self, index):
         img = Image.open(os.path.join(self.img_path_x, self.X_train[index]))
-        img = img.convert('RGB')
+        img = img.convert("RGB")
         img_y_h = Image.open(os.path.join(self.img_path_y_h, self.y_train_h[index]))
-        img_y_h = img_y_h.convert('L')
+        img_y_h = img_y_h.convert("L")
 
         img_y_nh = Image.open(os.path.join(self.img_path_y_nh, self.y_train_nh[index]))
-        img_y_nh = img_y_nh.convert('L')
+        img_y_nh = img_y_nh.convert("L")
         if self.tr is not None:
             img, img_y_h, img_y_nh = self.transformation(img, img_y_h, img_y_nh)
             img = self.transform(img)
@@ -184,17 +189,20 @@ class MakeDataSynt(Dataset):
         if self.tr is not None:
             return img, label_h, label_nh
         else:
-            img_t = torch.ones(img.shape[0], img.shape[1] + (32 - img.shape[1] % 32),
-                               img.shape[2] + (32 - img.shape[2] % 32))
-            img_t[:, :img.shape[1], :img.shape[2]] = img
+            img_t = torch.ones(
+                img.shape[0], img.shape[1] + (32 - img.shape[1] % 32), img.shape[2] + (32 - img.shape[2] % 32)
+            )
+            img_t[:, : img.shape[1], : img.shape[2]] = img
 
-            label_h_t = torch.ones(label_h.shape[0] + (32 - label_h.shape[0] % 32),
-                                   label_h.shape[1] + (32 - label_h.shape[1] % 32))
-            label_h_t[:label_h.shape[0], :label_h.shape[1]] = label_h
+            label_h_t = torch.ones(
+                label_h.shape[0] + (32 - label_h.shape[0] % 32), label_h.shape[1] + (32 - label_h.shape[1] % 32)
+            )
+            label_h_t[: label_h.shape[0], : label_h.shape[1]] = label_h
 
-            label_nh_t = torch.ones(label_nh.shape[0] + (32 - label_nh.shape[0] % 32),
-                                    label_nh.shape[1] + (32 - label_nh.shape[1] % 32))
-            label_nh_t[:label_nh.shape[0], :label_nh.shape[1]] = label_nh
+            label_nh_t = torch.ones(
+                label_nh.shape[0] + (32 - label_nh.shape[0] % 32), label_nh.shape[1] + (32 - label_nh.shape[1] % 32)
+            )
+            label_nh_t[: label_nh.shape[0], : label_nh.shape[1]] = label_nh
 
             return img_t, label_h_t, label_nh_t
 
@@ -206,7 +214,7 @@ class MakeDataVectorField(Dataset):
     def __init__(self, data_path):
         df = []
         for name in os.listdir(data_path):
-            if name.endswith('.npy'):
+            if name.endswith(".npy"):
                 df.append(name)
 
         df.sort()
@@ -218,7 +226,7 @@ class MakeDataVectorField(Dataset):
 
     def __getitem__(self, index):
 
-        with open(self.data_path + self.data_files[index], 'rb') as inp:
+        with open(self.data_path + self.data_files[index], "rb") as inp:
             img_field = np.load(inp)
 
         img_field = torch.from_numpy(img_field)

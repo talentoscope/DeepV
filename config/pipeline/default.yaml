@@ -1,0 +1,12 @@
+# Pipeline configuration
+primitive_type: line  # line or curve
+curve_count: 10
+model_output_count: 10
+overlap: 0
+diff_render_it: 400
+rendering_type: hard  # hard or simple
+init_random: false
+
+# Merging parameters
+max_angle_to_connect: 10
+max_distance_to_connect: 3

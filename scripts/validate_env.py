@@ -3,8 +3,9 @@
 Checks Python version, presence of critical packages, and CUDA availability.
 Run locally to get fast feedback before running heavier jobs.
 """
-import sys
+
 import importlib
+import sys
 
 
 def check_python():
@@ -37,20 +38,20 @@ def check_torch():
 def main():
     check_python()
     pkgs = [
-        'numpy',
-        'torch',
-        'torchvision',
-        'cairocffi',
-        'tensorboardx',
+        "numpy",
+        "torch",
+        "torchvision",
+        "cairocffi",
+        "tensorboardx",
     ]
-    missing = check_packages([p for p in pkgs if p != 'torch'])
-    if 'torch' in pkgs:
+    missing = check_packages([p for p in pkgs if p != "torch"])
+    if "torch" in pkgs:
         check_torch()
 
     if missing:
-        print('\nMissing packages:', ', '.join(missing))
-        print('Install with: pip install -r requirements.txt')
+        print("\nMissing packages:", ", ".join(missing))
+        print("Install with: pip install -r requirements.txt")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

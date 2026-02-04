@@ -1,5 +1,5 @@
-from util_files.data.vectordata.prepatched import PrepatchedSVG
 from util_files.data.preprocessing import PreprocessedBase, PreprocessedPacked
+from util_files.data.vectordata.prepatched import PrepatchedSVG
 
 
 class PreprocessedSVG(PrepatchedSVG, PreprocessedBase):

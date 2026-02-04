@@ -13,9 +13,9 @@ class PreprocessedBase:
         self._ys = np.arange(1, patch_height + 1, dtype=np.float32)[..., None].repeat(patch_width, 1) / patch_height
 
     def __getitem__(self, idx):
-        r''' Child should do
-            return self.preprocess_sample(DatasetClass.__getitem__(self, idx))
-        '''
+        r"""Child should do
+        return self.preprocess_sample(DatasetClass.__getitem__(self, idx))
+        """
         raise NotImplementedError
 
     def preprocess_image(self, image):
@@ -29,21 +29,25 @@ class PreprocessedBase:
 
     def preprocess_sample(self, sample):
         # TODO: this method is nongeneral -- either generalize or exclude from the general pipeline
-        return self.preprocess_image(sample['raster'].astype(np.float32)), \
-               self.preprocess_primitives(
-                   sample['vector'][graphics_primitives.PrimitiveType.PT_LINE].astype(np.float32))
+        return self.preprocess_image(sample["raster"].astype(np.float32)), self.preprocess_primitives(
+            sample["vector"][graphics_primitives.PrimitiveType.PT_LINE].astype(np.float32)
+        )
 
     @property
     def target_shape(self):
-        return [self.max_primitives[graphics_primitives.PrimitiveType.PT_LINE],
-                graphics_primitives.repr_len_by_type[graphics_primitives.PrimitiveType.PT_LINE] + 1]
+        return [
+            self.max_primitives[graphics_primitives.PrimitiveType.PT_LINE],
+            graphics_primitives.repr_len_by_type[graphics_primitives.PrimitiveType.PT_LINE] + 1,
+        ]
 
 
 class PreprocessedPacked(PreprocessedBase):
     def preprocess_sample(self, sample):
-        raster = self.preprocess_image(sample['raster'].astype(np.float32))
-        vector = (self.preprocess_primitives(sample['vector'][prim_type].astype(np.float32))
-                  for prim_type in self.primitive_types)
+        raster = self.preprocess_image(sample["raster"].astype(np.float32))
+        vector = (
+            self.preprocess_primitives(sample["vector"][prim_type].astype(np.float32))
+            for prim_type in self.primitive_types
+        )
         vector = list(map(self.pack_primitives, vector))
         vector = np.concatenate(vector)
         return raster, vector
@@ -52,7 +56,7 @@ class PreprocessedPacked(PreprocessedBase):
         batch_dims = primitives.ndim - 1
         parameters_n = primitives.shape[-1]
         pad = [[0, 0]] * batch_dims + [[self.max_parameters_per_primitive - parameters_n, 0]]
-        return np.pad(primitives, pad, mode='constant')
+        return np.pad(primitives, pad, mode="constant")
 
     @property
     def target_shape(self):
