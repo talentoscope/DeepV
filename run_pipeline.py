@@ -223,7 +223,7 @@ def parse_args():
         help="init model with random [default: False].",
     )
     parser.add_argument("--rendering_type", type=str, default="hard", help="hard -oleg,simple Alexey")
-    parser.add_argument("--data_dir", type=str, default="/data/abc_png_svg/", help="dir to folder for input")
+    parser.add_argument("--data_dir", type=str, default="/data/synthetic/", help="dir to folder for input")
     parser.add_argument(
         "--image_name",
         type=str,

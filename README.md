@@ -13,7 +13,7 @@ Each folder has Readme with more details. Here is the brief content of each fold
 * vectorization - NN models, script to train
 * refinement - refinement module for curves and lines
 * merging - merging module for curves and lines
-* dataset - scripts to download ABC, PFP, cleaning datasets, scripts to modify data into patches, and memory-mapped them.
+* dataset - scripts to download datasets, scripts to modify data into patches, and memory-mapped them.
 * notebooks - a playground to show some function in action
 * utils - loss functions, rendering, metrics
 * scripts - scripts to run training and evaluation
@@ -32,18 +32,32 @@ chamferdist==1.0.0
 ## Compare 
 
 To compare with us without running code, you can download our results on the full pipeline on the test set
-for [pfp](https://drive.google.com/file/d/1FGm-JQsvOa5sbi_f_-MMl1XC5Z8JGe0F/view?usp=sharing) and for 
-[abc](https://drive.google.com/file/d/1lR5lea3sY4Bhp9QL4MmmPs0kqZ5voPGu/view?usp=sharing).
+from the project website or contact the authors.
 
 
 ## Dataset
-Scripts to download dataset are in folder dataset/.
-* For ABC ,real datasets download [here](https://disk.yandex.ru/d/IwBcG2tpxMbDwg) or use scriptdownload_dataset.sh
-* For PFP, use precision_floorplan_download.py  
-Read ReadMe there for more instructions.
-* Real dataset for cleaning download [here](https://disk.yandex.ru/d/L2VZLq48lcQnhQ) or use script download_dataset.sh
-* Synthetic datset  generation script for cleaning can be found in cleaning/scripts.
-* 
+
+**Note**: This repository provides synthetic dataset generation for testing and benchmarking. For production use with real datasets, acquire appropriate datasets from relevant sources.
+
+### Synthetic Dataset Generation
+
+Generate synthetic datasets for development and testing:
+
+```bash
+# Generate synthetic test datasets
+python scripts/create_test_datasets.py
+```
+
+This creates test datasets in `data/` directory with PNG and DXF files for benchmarking.
+
+### Real Datasets
+
+For production use, acquire real technical drawing datasets from appropriate sources. The pipeline supports:
+- PNG + DXF format pairs
+- SVG vector graphics
+- PDF technical drawings
+
+See `DATASETS_README.md` for detailed dataset management information. 
 ## Notebooks 
 
 To show how some of the usability of the functions, there are several notebooks in the notebooks folder.
@@ -71,25 +85,25 @@ DeepV includes a comprehensive benchmarking pipeline for evaluating vectorizatio
 ### Quick Benchmarking
 
 ```bash
-# Run evaluation on ABC dataset
+# Run evaluation on synthetic dataset
 python scripts/benchmark_pipeline.py \
   --data-root /path/to/datasets \
   --deepv-model-path /path/to/trained/model \
-  --datasets abc
+  --datasets synthetic
 
 # Run comprehensive benchmark across multiple datasets
 python scripts/benchmark_pipeline.py \
   --data-root /path/to/datasets \
   --deepv-model-path /path/to/trained/model \
-  --datasets abc archcad cad_vg_drawing \
+  --datasets dataset1 dataset2 dataset3 \
   --output-dir benchmark_results
 ```
 
-### Supported Datasets
-- **ABC Dataset**: 3D CAD model vectorization
-- **ArchCAD Dataset**: Architectural CAD drawings
-- **CAD-VG-Drawing Dataset**: Vector graphics CAD drawings
-- **Precision Floorplan Dataset**: High-precision architectural floorplans
+### Supported Dataset Formats
+- PNG + DXF format pairs (image + ground truth)
+- SVG vector graphics
+- PDF technical drawings
+- Any custom dataset following standard directory structure
 
 ### Evaluation Metrics
 - **Vector Metrics**: F1 Score, IoU, Hausdorff Distance, Chamfer Distance

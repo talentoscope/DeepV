@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 .idea/.gitignore
 .idea/misc.xml
+
+# Dataset files (large files, should not be committed)
+data/

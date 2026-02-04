@@ -30,52 +30,27 @@ class DatasetLoader:
     def __init__(self, data_root: str):
         self.data_root = Path(data_root)
 
-    def load_abc_dataset(self, split: str = 'test') -> List[Tuple[str, Dict]]:
-        """Load ABC dataset samples."""
-        abc_dir = self.data_root / "abc" / split
+    def load_dataset(self, dataset_name: str, split: str = 'test') -> List[Tuple[str, Dict]]:
+        """
+        Load dataset samples from a generic dataset directory.
+
+        Args:
+            dataset_name: Name of the dataset directory
+            split: Data split ('train', 'val', 'test')
+
+        Returns:
+            List of (file_path, ground_truth) tuples
+        """
+        dataset_dir = self.data_root / dataset_name / split
         samples = []
 
-        if abc_dir.exists():
-            for svg_file in abc_dir.glob("*.svg"):
-                # TODO: Implement SVG parsing to vector format
-                # For now, return placeholder
-                samples.append((str(svg_file), {'paths': [], 'primitives': []}))
-
-        return samples
-
-    def load_archcad_dataset(self, split: str = 'test') -> List[Tuple[str, Dict]]:
-        """Load ArchCAD dataset samples."""
-        archcad_dir = self.data_root / "archcad" / split
-        samples = []
-
-        if archcad_dir.exists():
-            for image_file in archcad_dir.glob("*.png"):
-                # TODO: Load ground truth annotations
-                samples.append((str(image_file), {'paths': [], 'primitives': []}))
-
-        return samples
-
-    def load_cad_vg_drawing_dataset(self, split: str = 'test') -> List[Tuple[str, Dict]]:
-        """Load CAD-VG-Drawing dataset samples."""
-        cad_dir = self.data_root / "cad_vg_drawing" / split
-        samples = []
-
-        if cad_dir.exists():
-            for image_file in cad_dir.glob("*.png"):
-                # TODO: Load ground truth annotations
-                samples.append((str(image_file), {'paths': [], 'primitives': []}))
-
-        return samples
-
-    def load_precision_floorplan_dataset(self, split: str = 'test') -> List[Tuple[str, Dict]]:
-        """Load Precision Floorplan dataset samples."""
-        floorplan_dir = self.data_root / "precision_floorplan" / split
-        samples = []
-
-        if floorplan_dir.exists():
-            for pdf_file in floorplan_dir.glob("*.pdf"):
-                # TODO: Convert PDF to vector format
-                samples.append((str(pdf_file), {'paths': [], 'primitives': []}))
+        if dataset_dir.exists():
+            # Look for common file formats
+            for ext in ['*.png', '*.svg', '*.dxf', '*.pdf']:
+                for file_path in dataset_dir.glob(ext):
+                    # TODO: Implement proper ground truth loading based on file type
+                    # For now, return placeholder
+                    samples.append((str(file_path), {'paths': [], 'primitives': []}))
 
         return samples
 
@@ -126,7 +101,7 @@ class BenchmarkRunner:
 
         # Default configuration
         return {
-            'datasets': ['abc', 'archcad', 'cad_vg_drawing'],
+            'datasets': ['synthetic'],  # Generic dataset name
             'models': ['deepv_current', 'vectran_baseline', 'im2vec_baseline'],
             'metrics': ['f1_score', 'iou_score', 'hausdorff_score', 'cd_score'],
             'raster_resolution': [256, 256]
@@ -167,9 +142,8 @@ class BenchmarkRunner:
         # Load datasets
         datasets = {}
         for dataset_name in self.benchmark_config['datasets']:
-            loader_method = getattr(self.dataset_loader, f"load_{dataset_name}_dataset")
             try:
-                dataset_samples = loader_method('test')
+                dataset_samples = self.dataset_loader.load_dataset(dataset_name, 'test')
                 if dataset_samples:
                     datasets[dataset_name] = dataset_samples
                     print(f"Loaded {len(dataset_samples)} samples from {dataset_name}")
@@ -378,8 +352,8 @@ def main():
     parser.add_argument("--output-dir", default="benchmark_results",
                        help="Output directory for benchmark results")
     parser.add_argument("--datasets", nargs='+',
-                       default=['abc', 'archcad', 'cad_vg_drawing'],
-                       choices=['abc', 'archcad', 'cad_vg_drawing', 'precision_floorplan'],
+                       default=['synthetic'],
+                       choices=['synthetic'],
                        help="Datasets to benchmark on")
     parser.add_argument("--models", nargs='+',
                        default=['deepv_current'],

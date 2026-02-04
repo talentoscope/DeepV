@@ -14,10 +14,6 @@ table.
 
 <b>Answer:</b> Here on Github or you could email me.
 
-<b> Vertical lines:</b> Why is in your results for abc, some vertical lines dashed.
+<b> Vertical lines:</b> Why are some vertical lines dashed in results?
 
-<b>Answer:</b> Frankly don't no. All metrics was calculated on this results. If you could find the mistake and correct it
-metrics would be better that we reported in the paper.
-The theory is that there is a problem in data augmentation where vertical lines are
-unlikly to appear in training of NN  or mayube some other mistake in code.
-If you can the problem and report it. We would be happy to correct that part of code.
+<b>Answer:</b> This may occur due to data augmentation issues where vertical lines are underrepresented in training data, or other implementation details. All metrics are calculated on the actual results. If you identify and fix the issue, please report it so we can improve the code.

@@ -72,7 +72,7 @@ def parse_args():
         "--dataset",
         type=str,
         required=True,
-        choices=["Precision Floor Plan", "Golden", "ABC", "ABC_gradual", "cartoon"],
+        choices=["synthetic", "custom"],
     )
     parser.add_argument("--job_id", type=int, required=True)
     parser.add_argument("--init_random", action="store_true", help="init optimization randomly")

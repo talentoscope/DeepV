@@ -21,7 +21,7 @@ Short, actionable guidance to get an AI coding agent productive quickly in this 
 python run_pipeline.py \
   --model_path /logs/models/vectorization/lines/model_lines.weights \
   --json_path /code/vectorization/models/specs/<spec>.json \
-  --data_dir /data/abc_png_svg/ \
+  --data_dir /data/synthetic/ \
   --primitive_type line \
   --model_output_count 10 \
   --overlap 0

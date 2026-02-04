@@ -48,7 +48,7 @@ class DatasetEvaluator:
         Initialize dataset evaluator.
 
         Args:
-            dataset_name: Name of the dataset (e.g., 'abc', 'archcad', 'cad_vg_drawing')
+            dataset_name: Name of the dataset
             model_name: Name of the model being evaluated
             output_dir: Directory to save evaluation results
             raster_resolution: Resolution for rasterization-based metrics
@@ -439,22 +439,13 @@ class BenchmarkEvaluator:
         print(f"Benchmark report generated: {report_file}")
 
 
-def create_dataset_evaluators():
-    """Factory function to create evaluators for supported datasets."""
-    evaluators = {
-        'abc': lambda model_name: DatasetEvaluator('abc', model_name),
-        'archcad': lambda model_name: DatasetEvaluator('archcad', model_name),
-        'cad_vg_drawing': lambda model_name: DatasetEvaluator('cad_vg_drawing', model_name),
-        'precision_floorplan': lambda model_name: DatasetEvaluator('precision_floorplan', model_name),
-    }
-    return evaluators
+
 
 
 def main():
     """Main evaluation script."""
     parser = argparse.ArgumentParser(description="DeepV Model Evaluation Suite")
     parser.add_argument("--dataset", required=True,
-                       choices=['abc', 'archcad', 'cad_vg_drawing', 'precision_floorplan'],
                        help="Dataset to evaluate on")
     parser.add_argument("--model-name", required=True,
                        help="Name of the model being evaluated")

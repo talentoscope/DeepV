@@ -13,19 +13,19 @@ This directory contains the comprehensive benchmarking pipeline for evaluating D
 ### Basic Usage
 
 ```bash
-# Run benchmark on ABC dataset with DeepV model
+# Run benchmark on custom dataset with DeepV model
 python scripts/benchmark_pipeline.py \
   --data-root /path/to/datasets \
   --deepv-model-path /path/to/deepv/model \
   --output-dir benchmark_results \
-  --datasets abc
+  --datasets your_dataset
 
 # Run comprehensive benchmark across multiple datasets
 python scripts/benchmark_pipeline.py \
   --data-root /path/to/datasets \
   --deepv-model-path /path/to/deepv/model \
-  --datasets abc archcad cad_vg_drawing \
-  --models deepv_current vectran_baseline im2vec_baseline
+  --datasets dataset1 dataset2 dataset3 \
+  --models deepv_current baseline_model1 baseline_model2
 ```
 
 ### Generate Synthetic Dataset
@@ -41,8 +41,8 @@ python scripts/benchmark_pipeline.py \
 
 The `benchmark_config.json` file defines:
 
-- **Datasets**: ABC, ArchCAD, CAD-VG-Drawing, Precision Floorplan
-- **Models**: DeepV current implementation + baseline models (VecTran, Im2Vec, DiffVG)
+- **Datasets**: Custom datasets (PNG + DXF pairs)
+- **Models**: DeepV current implementation + baseline models
 - **Metrics**: F1, IoU, Hausdorff distance, Chamfer distance, PSNR, MSE
 - **Evaluation Settings**: Raster resolution, timeouts, parallel processing
 
@@ -52,32 +52,32 @@ The `benchmark_config.json` file defines:
 benchmark_results/
 ├── benchmark_results.json          # Raw results data
 ├── benchmark_summary.md           # Comprehensive report
-├── abc/
-│   └── deepv_current/
+├── dataset1/
+│   └── model_name/
 │       ├── results/               # Per-sample results
 │       ├── visualizations/        # Evaluation plots
 │       └── reports/              # Dataset-specific reports
-└── archcad/
-    └── deepv_current/
+└── dataset2/
+    └── model_name/
         ├── results/
         ├── visualizations/
         └── reports/
 ```
 
-## Supported Datasets
+## Supported Dataset Formats
 
-### ABC Dataset
-- **Format**: SVG vector graphics
+### PNG + DXF Format
+- **Input**: PNG raster images
+- **Ground Truth**: DXF CAD files
+- **Evaluation**: Vector reconstruction metrics (F1, IoU, Hausdorff, Chamfer)
+
+### SVG Format
+- **Input**: SVG vector graphics
 - **Ground Truth**: Vector paths and primitives
 - **Evaluation**: Full vector-based metrics
 
-### ArchCAD Dataset
-- **Format**: PNG raster images
-- **Ground Truth**: DXF CAD files
-- **Evaluation**: Vector reconstruction metrics
-
-### CAD-VG-Drawing Dataset
-- **Format**: PNG raster images
+### Custom Formats
+- Support for additional formats can be added to the evaluation suite
 - **Ground Truth**: SVG vector graphics
 - **Evaluation**: Vector accuracy metrics
 

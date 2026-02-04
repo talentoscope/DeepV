@@ -504,7 +504,7 @@ def merge_close(model_output, min_confidence, width_percentile=90):
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument(
-        "--dataset", type=str, required=True, choices=["Precision Floor Plan", "Golden", "ABC", "cartoon"]
+        "--dataset", type=str, required=True, choices=["synthetic", "custom"]
     )
     parser.add_argument("--job_id", type=int, required=True)
     parser.add_argument("--optimization_iters_n", type=int, default=100, help="iteration count")
