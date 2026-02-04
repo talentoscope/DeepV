@@ -1,0 +1,44 @@
+{
+  "dataset": "mock_dataset",
+  "model": "mock_model",
+  "samples": [
+    {
+      "sample_id": "0000",
+      "image_path": "mock_sample_1.png",
+      "metrics": {
+        "f1_score": null,
+        "iou_score": null,
+        "precision_score": null,
+        "recall_score": null,
+        "hausdorff_score": null,
+        "cd_score": null,
+        "psnr_score": null,
+        "mse_score": null
+      }
+    },
+    {
+      "sample_id": "0001",
+      "image_path": "mock_sample_2.png",
+      "metrics": {
+        "f1_score": null,
+        "iou_score": null,
+        "precision_score": null,
+        "recall_score": null,
+        "hausdorff_score": null,
+        "cd_score": null,
+        "psnr_score": null,
+        "mse_score": null
+      }
+    }
+  ],
+  "summary": {
+    "f1_score_mean": null,
+    "iou_score_mean": null,
+    "precision_score_mean": null,
+    "recall_score_mean": null,
+    "hausdorff_score_mean": null,
+    "cd_score_mean": null,
+    "psnr_score_mean": null,
+    "mse_score_mean": null
+  }
+}

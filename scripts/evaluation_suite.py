@@ -353,7 +353,8 @@ class BenchmarkEvaluator:
     def benchmark_models(self,
                         models: Dict[str, Any],
                         datasets: Dict[str, Any],
-                        prediction_funcs: Optional[Dict[str, callable]] = None) -> Dict[str, Dict[str, Dict[str, float]]]:
+                        prediction_funcs: Optional[Dict[str, callable]] = None,
+                        prediction_func: Optional[callable] = None) -> Dict[str, Dict[str, Dict[str, float]]]:
         """
         Benchmark multiple models across multiple datasets.
 
@@ -361,6 +362,7 @@ class BenchmarkEvaluator:
             models: Dict mapping model names to model objects
             datasets: Dict mapping dataset names to data loaders
             prediction_funcs: Optional prediction functions for each model
+            prediction_func: Optional single prediction function for all models (used for testing)
 
         Returns:
             Nested dict with results[model][dataset][metric] = value
@@ -379,11 +381,12 @@ class BenchmarkEvaluator:
                     output_dir=self.output_dir
                 )
 
-                prediction_func = prediction_funcs.get(model_name) if prediction_funcs else None
+                # Use prediction_func if provided, otherwise use prediction_funcs dict
+                pred_func = prediction_func if prediction_func else (prediction_funcs.get(model_name) if prediction_funcs else None)
                 summary = evaluator.evaluate_dataset(
                     data_loader=data_loader,
                     model=model,
-                    prediction_func=prediction_func
+                    prediction_func=pred_func
                 )
 
                 self.results[model_name][dataset_name] = summary
