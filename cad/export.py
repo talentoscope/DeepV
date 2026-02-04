@@ -13,12 +13,14 @@ except ImportError:
     np = None
 
 
-def export_to_dxf(lines, filename: str, width: int = 256, height: int = 256) -> bool:
+def export_to_dxf(primitives, filename: str, width: int = 256, height: int = 256) -> bool:
     """
-    Export line primitives to DXF format.
+    Export primitives to DXF format.
 
     Args:
-        lines: Array-like of shape (N, 5) where each row is [x1, y1, x2, y2, width]
+        primitives: Dictionary with primitive types as keys, or array of lines
+                   If dict: {'lines': array(N,5), 'curves': array(N,7), 'arcs': array(N,6)}
+                   If array: legacy format array(N,5) for lines only
         filename: Output DXF filename
         width: Image width for coordinate scaling
         height: Image height for coordinate scaling
@@ -36,22 +38,65 @@ def export_to_dxf(lines, filename: str, width: int = 256, height: int = 256) -> 
         print("NumPy not available")
         return False
 
+    # Handle legacy format (array of lines)
+    if not isinstance(primitives, dict):
+        primitives = {'lines': np.asarray(primitives)}
+
     # Create a new DXF document
     doc = ezdxf.new()
     msp = doc.modelspace()
 
-    # Convert to numpy array if needed
-    lines_np = np.asarray(lines)
+    # Export lines
+    if 'lines' in primitives and len(primitives['lines']) > 0:
+        lines_np = np.asarray(primitives['lines'])
+        for line in lines_np:
+            x1, y1, x2, y2, line_width = line[:5]  # Handle variable length
+            # Convert to DXF coordinates (flip Y axis)
+            dxf_x1, dxf_y1 = float(x1), float(height - y1)
+            dxf_x2, dxf_y2 = float(x2), float(height - y2)
+            # Add line to DXF
+            msp.add_line((dxf_x1, dxf_y1), (dxf_x2, dxf_y2))
 
-    for line in lines_np:
-        x1, y1, x2, y2, line_width = line
+    # Export quadratic Bézier curves
+    if 'curves' in primitives and len(primitives['curves']) > 0:
+        curves_np = np.asarray(primitives['curves'])
+        for curve in curves_np:
+            if len(curve) >= 7:  # x1,y1,x2,y2,x3,y3,width
+                x1, y1, x2, y2, x3, y3 = curve[:6]
+                # Convert to DXF coordinates (flip Y axis)
+                points = [(float(x1), float(height - y1)),
+                         (float(x2), float(height - y2)),
+                         (float(x3), float(height - y3))]
+                # Add spline to DXF
+                msp.add_spline(points, degree=2)
 
-        # Convert to DXF coordinates (flip Y axis)
-        dxf_x1, dxf_y1 = float(x1), float(height - y1)
-        dxf_x2, dxf_y2 = float(x2), float(height - y2)
+    # Export cubic Bézier curves
+    if 'cubic_curves' in primitives and len(primitives['cubic_curves']) > 0:
+        curves_np = np.asarray(primitives['cubic_curves'])
+        for curve in curves_np:
+            if len(curve) >= 9:  # x1,y1,x2,y2,x3,y3,x4,y4,width
+                x1, y1, x2, y2, x3, y3, x4, y4 = curve[:8]
+                # Convert to DXF coordinates (flip Y axis)
+                points = [(float(x1), float(height - y1)),
+                         (float(x2), float(height - y2)),
+                         (float(x3), float(height - y3)),
+                         (float(x4), float(height - y4))]
+                # Add spline to DXF
+                msp.add_spline(points, degree=3)
 
-        # Add line to DXF
-        msp.add_line((dxf_x1, dxf_y1), (dxf_x2, dxf_y2))
+    # Export arcs
+    if 'arcs' in primitives and len(primitives['arcs']) > 0:
+        arcs_np = np.asarray(primitives['arcs'])
+        for arc in arcs_np:
+            if len(arc) >= 6:  # cx,cy,radius,angle1,angle2,width
+                cx, cy, radius, angle1, angle2 = arc[:5]
+                # Convert angles to degrees and handle coordinate system
+                start_angle = float(np.degrees(angle1))
+                end_angle = float(np.degrees(angle2))
+                # Flip Y axis for center
+                dxf_cx, dxf_cy = float(cx), float(height - cy)
+                # Add arc to DXF
+                msp.add_arc((dxf_cx, dxf_cy), float(radius), start_angle, end_angle)
 
     # Save the DXF file
     try:
@@ -63,12 +108,14 @@ def export_to_dxf(lines, filename: str, width: int = 256, height: int = 256) -> 
         return False
 
 
-def export_to_svg(lines, filename: str, width: int = 256, height: int = 256) -> bool:
+def export_to_svg(primitives, filename: str, width: int = 256, height: int = 256) -> bool:
     """
-    Export line primitives to SVG format.
+    Export primitives to SVG format.
 
     Args:
-        lines: Array-like of shape (N, 5) where each row is [x1, y1, x2, y2, width]
+        primitives: Dictionary with primitive types as keys, or array of lines
+                   If dict: {'lines': array(N,5), 'curves': array(N,7), 'arcs': array(N,6)}
+                   If array: legacy format array(N,5) for lines only
         filename: Output SVG filename
         width: Image width
         height: Image height
@@ -80,17 +127,62 @@ def export_to_svg(lines, filename: str, width: int = 256, height: int = 256) -> 
         print("NumPy not available")
         return False
 
-    # Convert to numpy array if needed
-    lines_np = np.asarray(lines)
+    # Handle legacy format (array of lines)
+    if not isinstance(primitives, dict):
+        primitives = {'lines': np.asarray(primitives)}
 
-    svg_lines = []
-    for line in lines_np:
-        x1, y1, x2, y2, line_width = line
-        svg_lines.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="black" stroke-width="{line_width}"/>')
+    svg_elements = []
+
+    # Export lines
+    if 'lines' in primitives and len(primitives['lines']) > 0:
+        lines_np = np.asarray(primitives['lines'])
+        for line in lines_np:
+            x1, y1, x2, y2, line_width = line[:5]
+            svg_elements.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="black" stroke-width="{line_width}"/>')
+
+    # Export quadratic Bézier curves
+    if 'curves' in primitives and len(primitives['curves']) > 0:
+        curves_np = np.asarray(primitives['curves'])
+        for curve in curves_np:
+            if len(curve) >= 7:  # x1,y1,x2,y2,x3,y3,width
+                x1, y1, x2, y2, x3, y3, width = curve[:7]
+                # SVG quadratic Bézier: M x1 y1 Q x2 y2 x3 y3
+                path_data = f"M {x1} {y1} Q {x2} {y2} {x3} {y3}"
+                svg_elements.append(f'<path d="{path_data}" stroke="black" stroke-width="{width}" fill="none"/>')
+
+    # Export cubic Bézier curves
+    if 'cubic_curves' in primitives and len(primitives['cubic_curves']) > 0:
+        curves_np = np.asarray(primitives['cubic_curves'])
+        for curve in curves_np:
+            if len(curve) >= 9:  # x1,y1,x2,y2,x3,y3,x4,y4,width
+                x1, y1, x2, y2, x3, y3, x4, y4, width = curve[:9]
+                # SVG cubic Bézier: M x1 y1 C x2 y2 x3 y3 x4 y4
+                path_data = f"M {x1} {y1} C {x2} {y2} {x3} {y3} {x4} {y4}"
+                svg_elements.append(f'<path d="{path_data}" stroke="black" stroke-width="{width}" fill="none"/>')
+
+    # Export arcs
+    if 'arcs' in primitives and len(primitives['arcs']) > 0:
+        arcs_np = np.asarray(primitives['arcs'])
+        for arc in arcs_np:
+            if len(arc) >= 6:  # cx,cy,radius,angle1,angle2,width
+                cx, cy, radius, angle1, angle2, width = arc[:6]
+                # Convert angles to degrees
+                start_angle = float(np.degrees(angle1))
+                end_angle = float(np.degrees(angle2))
+                # Calculate arc flags (large arc flag, sweep flag)
+                angle_diff = (end_angle - start_angle) % 360
+                large_arc = 1 if angle_diff > 180 else 0
+                sweep = 1  # clockwise
+                # Calculate end point
+                end_x = cx + radius * np.cos(np.radians(end_angle))
+                end_y = cy + radius * np.sin(np.radians(end_angle))
+                # SVG arc: A rx ry x-axis-rotation large-arc-flag sweep-flag x y
+                path_data = f"M {cx + radius * np.cos(np.radians(start_angle))} {cy + radius * np.sin(np.radians(start_angle))} A {radius} {radius} 0 {large_arc} {sweep} {end_x} {end_y}"
+                svg_elements.append(f'<path d="{path_data}" stroke="black" stroke-width="{width}" fill="none"/>')
 
     svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
 <svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
-{chr(10).join(svg_lines)}
+{chr(10).join(svg_elements)}
 </svg>'''
 
     try:
@@ -109,7 +201,7 @@ def create_cad_from_primitives(primitives: Dict[str, Any], output_dir: str = "ou
 
     Args:
         primitives: Dictionary containing different primitive types
-            Expected keys: 'lines', 'curves', etc.
+            Expected keys: 'lines', 'curves', 'cubic_curves', 'arcs', etc.
         output_dir: Output directory for CAD files
 
     Returns:
@@ -119,20 +211,18 @@ def create_cad_from_primitives(primitives: Dict[str, Any], output_dir: str = "ou
 
     results = {}
 
-    # Export lines to DXF and SVG
-    if 'lines' in primitives and len(primitives['lines']) > 0:
+    # Export all primitives to DXF and SVG
+    if primitives and any(len(v) > 0 for v in primitives.values() if hasattr(v, '__len__')):
         dxf_path = os.path.join(output_dir, "primitives.dxf")
         svg_path = os.path.join(output_dir, "primitives.svg")
 
-        dxf_success = export_to_dxf(primitives['lines'], dxf_path)
-        svg_success = export_to_svg(primitives['lines'], svg_path)
+        dxf_success = export_to_dxf(primitives, dxf_path)
+        svg_success = export_to_svg(primitives, svg_path)
 
         results['dxf'] = {'path': dxf_path, 'success': dxf_success}
         results['svg'] = {'path': svg_path, 'success': svg_success}
-
-    # Future: Add support for curves, arcs, etc.
-    if 'curves' in primitives:
-        print("Curve export not yet implemented")
+    else:
+        print("No primitives to export")
 
     return results
 

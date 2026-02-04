@@ -19,6 +19,9 @@ from util_files.rendering.cairo import render as original_render
 from util_files.rendering.cairo import (
     render_with_skeleton as original_render_with_skeleton,
 )
+from util_files.data.graphics_primitives import (
+    PT_LINE, PT_QBEZIER, PT_CBEZIER, PT_ARC, repr_len_by_type
+)
 
 h, w = 64, 64
 padding = 3
@@ -332,6 +335,122 @@ def render_lines_with_type(lines_batch, rendering_type="hard", supersampling=4, 
         return render_lines_bezier_splatting(lines_batch, supersampling=supersampling, uint=uint)
     else:
         return render_lines_pt(lines_batch, uint=uint)
+
+
+def render_primitives_with_type(primitives_batch, rendering_type="bezier_splatting", supersampling=4, uint=False):
+    """
+    Render multiple primitive types using the specified rendering type.
+
+    Args:
+        primitives_batch: List of dictionaries, each containing primitive types as keys
+                          and tensors of primitive parameters as values
+        rendering_type: "bezier_splatting" (recommended) or "hard"
+        supersampling: Supersampling factor for anti-aliasing
+        uint: Whether to return uint8 images
+
+    Returns:
+        Rendered images as tensor or numpy array
+    """
+    if rendering_type == "bezier_splatting":
+        return render_primitives_bezier_splatting(primitives_batch, supersampling=supersampling, uint=uint)
+    else:
+        # For hard rendering, convert to lines-only format for now
+        # TODO: Implement hard rendering for all primitive types
+        return render_primitives_hard(primitives_batch, uint=uint)
+
+
+def render_primitives_bezier_splatting(primitives_batch, supersampling=4, uint=False):
+    """Render primitives using Bézier Splatting for faster differentiable rendering."""
+    batch_size = len(primitives_batch)
+
+    # Create Bézier Splatting renderer
+    renderer = BezierSplatting(canvas_size=(padded_h, padded_w), supersampling=supersampling)
+
+    rasters = []
+    for i in range(batch_size):
+        batch_primitives = primitives_batch[i]  # Dict of {primitive_type: tensor}
+
+        # Convert primitives to BezierSplatting format
+        bs_primitives = {}
+        for pt, primitives_tensor in batch_primitives.items():
+            if pt == PT_LINE.value:  # Lines: (N, 5) -> (N, 5) with padding added
+                if primitives_tensor.shape[0] > 0:
+                    # Add padding to coordinates
+                    padded_primitives = primitives_tensor.clone()
+                    padded_primitives[:, :2] += padding  # start points
+                    padded_primitives[:, 2:4] += padding  # end points
+                    bs_primitives[1] = padded_primitives  # PT_LINE = 1
+
+            elif pt == PT_QBEZIER.value:  # Quadratic Bézier: (N, 7) -> (N, 7) with padding added
+                if primitives_tensor.shape[0] > 0:
+                    # Add padding to coordinates (x1,y1,x2,y2,x3,y3,width)
+                    padded_primitives = primitives_tensor.clone()
+                    padded_primitives[:, :6] += padding  # all coordinate pairs
+                    bs_primitives[5] = padded_primitives  # PT_QBEZIER = 5
+
+            elif pt == PT_CBEZIER.value:  # Cubic Bézier: (N, 9) -> (N, 9) with padding added
+                if primitives_tensor.shape[0] > 0:
+                    # Add padding to coordinates (x1,y1,x2,y2,x3,y3,x4,y4,width)
+                    padded_primitives = primitives_tensor.clone()
+                    padded_primitives[:, :8] += padding  # all coordinate pairs
+                    bs_primitives[2] = padded_primitives  # PT_CBEZIER = 2
+
+            elif pt == PT_ARC.value:  # Arc: (N, 6) -> (N, 6) with padding added
+                if primitives_tensor.shape[0] > 0:
+                    # Add padding to center coordinates (cx,cy,radius,angle1,angle2,width)
+                    padded_primitives = primitives_tensor.clone()
+                    padded_primitives[:, :2] += padding  # center coordinates
+                    bs_primitives[3] = padded_primitives  # PT_ARC = 3
+
+            # Skip unknown primitive types
+
+        # Render batch of primitives
+        if bs_primitives:
+            canvas = renderer.render_batch(bs_primitives)
+        else:
+            # No supported primitives, return empty canvas
+            canvas = torch.zeros((padded_h, padded_w), device=next(iter(batch_primitives.values())).device)
+
+        rasters.append(canvas)
+
+    rasters = torch.stack(rasters, dim=0)  # (batch_size, padded_h, padded_w)
+
+    if uint:
+        return np.uint8(torch.clamp((1 - rasters) * 255, 0, 255).detach().cpu().numpy())
+    else:
+        return rasters
+
+
+def render_primitives_hard(primitives_batch, uint=False):
+    """Render primitives using hard (analytical) rendering."""
+    # For now, only support lines in hard rendering
+    # Convert primitives to lines-only format
+    lines_batch = []
+    for batch_primitives in primitives_batch:
+        batch_lines = []
+        for pt, primitives_tensor in batch_primitives.items():
+            if pt == PT_LINE.value and primitives_tensor.shape[0] > 0:
+                batch_lines.append(primitives_tensor)
+        if batch_lines:
+            lines_batch.append(torch.cat(batch_lines, dim=0))
+        else:
+            # No lines, create empty tensor
+            lines_batch.append(torch.empty(0, 5, device=next(iter(batch_primitives.values())).device))
+
+    # Stack into batch
+    max_lines = max(len(lines) for lines in lines_batch)
+    padded_lines_batch = []
+    for lines in lines_batch:
+        if len(lines) < max_lines:
+            padding_tensor = torch.zeros(max_lines - len(lines), 5, device=lines.device)
+            padded_lines = torch.cat([lines, padding_tensor], dim=0)
+        else:
+            padded_lines = lines
+        padded_lines_batch.append(padded_lines)
+
+    lines_tensor = torch.stack(padded_lines_batch, dim=0)
+
+    return render_lines_pt(lines_tensor, uint=uint)
 
 
 def render_lines_bezier_splatting(lines_batch, supersampling=4, uint=False):

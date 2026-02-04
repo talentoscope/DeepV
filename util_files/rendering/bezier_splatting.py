@@ -250,6 +250,181 @@ class BezierSplatting:
 
         return winding
 
+    def render_cubic_beziers(
+        self, curves: torch.Tensor, widths: torch.Tensor, opacity: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
+        """
+        Render cubic Bézier curves using splatting.
+
+        Args:
+            curves: (N, 4, 2) tensor of cubic Bézier curves
+                    Each curve is defined by 4 control points: start, control1, control2, end
+            widths: (N,) tensor of curve widths
+            opacity: (N,) tensor of curve opacities
+
+        Returns:
+            (H, W) tensor of rendered image
+        """
+        if opacity is None:
+            opacity = torch.ones_like(widths)
+
+        device = curves.device
+        self.to_device(device)
+
+        batch_size = curves.shape[0]
+        canvas = torch.zeros(self.ss_canvas_size, dtype=torch.float32, device=device)
+
+        for i in range(batch_size):
+            curve = curves[i]  # (4, 2)
+            width = widths[i]
+            alpha = opacity[i]
+
+            # Render single curve
+            curve_canvas = self._render_single_cubic_bezier(curve, width, alpha)
+            canvas = canvas + curve_canvas
+
+        # Clamp to valid range
+        canvas = torch.clamp(canvas, 0.0, 1.0)
+
+        # Downsample to final resolution
+        if self.supersampling > 1:
+            canvas = self._downsample(canvas)
+
+        return canvas
+
+    def _render_single_cubic_bezier(
+        self, curve: torch.Tensor, width: torch.Tensor, opacity: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Render a single cubic Bézier curve.
+
+        Args:
+            curve: (4, 2) tensor of control points
+            width: scalar tensor of curve width
+            opacity: scalar tensor of curve opacity
+
+        Returns:
+            Supersampled canvas with the rendered curve
+        """
+        # For cubic Bézier: B(t) = (1-t)³P₀ + 3(1-t)²tP₁ + 3(1-t)t²P₂ + t³P₃
+        p0, p1, p2, p3 = curve[0], curve[1], curve[2], curve[3]
+
+        # Adaptive sampling: sample more points where curvature is high
+        t_values = torch.linspace(0, 1, 50, device=curve.device)
+
+        # Evaluate curve points
+        t = t_values.unsqueeze(-1)
+        points = (1 - t) ** 3 * p0 + 3 * (1 - t) ** 2 * t * p1 + 3 * (1 - t) * t**2 * p2 + t**3 * p3
+
+        # Compute tangents for width calculation
+        # Derivative: B'(t) = 3(1-t)²(P₁-P₀) + 6(1-t)t(P₂-P₁) + 3t²(P₃-P₂)
+        tangents = (
+            3 * (1 - t) ** 2 * (p1 - p0) +
+            6 * (1 - t) * t * (p2 - p1) +
+            3 * t**2 * (p3 - p2)
+        )
+        tangent_norms = torch.norm(tangents, dim=-1, keepdim=True)
+        tangent_norms = torch.clamp(tangent_norms, min=1e-6)
+        tangents = tangents / tangent_norms
+
+        # Compute normal vectors (perpendicular to tangents)
+        normals = torch.stack([-tangents[:, 1], tangents[:, 0]], dim=-1)
+
+        # Create ribbon (two parallel lines)
+        half_width = width / 2
+        left_points = points - normals * half_width
+        right_points = points + normals * half_width
+
+        # Render as filled polygon using splatting
+        return self._splat_polygon(torch.cat([left_points, right_points.flip(0)], dim=0), opacity)
+
+    def render_arcs(
+        self, arcs: torch.Tensor, widths: torch.Tensor, opacity: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
+        """
+        Render circular arcs using splatting.
+
+        Args:
+            arcs: (N, 6) tensor of arcs: center_x, center_y, radius, angle1, angle2, width
+            widths: (N,) tensor of arc widths (alternative to arcs[:, 5])
+            opacity: (N,) tensor of arc opacities
+
+        Returns:
+            (H, W) tensor of rendered image
+        """
+        if widths is None:
+            widths = arcs[:, 5]  # Extract width from arcs data
+
+        if opacity is None:
+            opacity = torch.ones_like(widths)
+
+        device = arcs.device
+        self.to_device(device)
+
+        batch_size = arcs.shape[0]
+        canvas = torch.zeros(self.ss_canvas_size, dtype=torch.float32, device=device)
+
+        for i in range(batch_size):
+            arc_params = arcs[i]  # (6,) - cx, cy, r, a1, a2, width
+            width = widths[i]
+            alpha = opacity[i]
+
+            # Render single arc
+            arc_canvas = self._render_single_arc(arc_params[:5], width, alpha)
+            canvas = canvas + arc_canvas
+
+        # Clamp to valid range
+        canvas = torch.clamp(canvas, 0.0, 1.0)
+
+        # Downsample to final resolution
+        if self.supersampling > 1:
+            canvas = self._downsample(canvas)
+
+        return canvas
+
+    def _render_single_arc(
+        self, arc_params: torch.Tensor, width: torch.Tensor, opacity: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Render a single circular arc.
+
+        Args:
+            arc_params: (5,) tensor: center_x, center_y, radius, angle1, angle2
+            width: scalar tensor of arc width
+            opacity: scalar tensor of arc opacity
+
+        Returns:
+            Supersampled canvas with the rendered arc
+        """
+        cx, cy, radius, angle1, angle2 = arc_params
+
+        # Ensure angle2 > angle1 and handle wraparound
+        if angle2 < angle1:
+            angle2 = angle2 + 2 * math.pi
+
+        # Sample points along the arc
+        num_samples = max(20, int(50 * (angle2 - angle1) / (2 * math.pi)))  # Adaptive sampling
+        angles = torch.linspace(angle1, angle2, num_samples, device=arc_params.device)
+
+        # Compute arc points
+        points_x = cx + radius * torch.cos(angles)
+        points_y = cy + radius * torch.sin(angles)
+        points = torch.stack([points_x, points_y], dim=-1)
+
+        # Compute tangents (direction along the arc)
+        tangents = torch.stack([-torch.sin(angles), torch.cos(angles)], dim=-1)
+
+        # Compute normal vectors (perpendicular to tangents)
+        normals = torch.stack([-tangents[:, 1], tangents[:, 0]], dim=-1)
+
+        # Create ribbon (two parallel lines)
+        half_width = width / 2
+        left_points = points - normals * half_width
+        right_points = points + normals * half_width
+
+        # Render as filled polygon using splatting
+        return self._splat_polygon(torch.cat([left_points, right_points.flip(0)], dim=0), opacity)
+
     def _downsample(self, canvas: torch.Tensor) -> torch.Tensor:
         """Downsample supersampled canvas to final resolution."""
         # Average pooling
@@ -304,8 +479,8 @@ class BezierSplatting:
                 canvas = canvas + lines_canvas
 
         # Render curves (quadratic Bézier)
-        if 2 in primitives:  # PT_QBEZIER = 2
-            curves_data = primitives[2]  # (N, 6) - x1,y1,x2,y2,x3,y3,width
+        if 5 in primitives:  # PT_QBEZIER = 5
+            curves_data = primitives[5]  # (N, 6) - x1,y1,x2,y2,x3,y3,width
             if curves_data.shape[0] > 0:
                 # Convert to (N, 3, 2) format
                 curves = curves_data[:, :6].view(-1, 3, 2)
@@ -325,6 +500,48 @@ class BezierSplatting:
                         .squeeze(0)
                     )
                 canvas = canvas + curves_canvas
+
+        # Render cubic Bézier curves
+        if 2 in primitives:  # PT_CBEZIER = 2
+            curves_data = primitives[2]  # (N, 8) - x1,y1,x2,y2,x3,y3,x4,y4,width
+            if curves_data.shape[0] > 0:
+                # Convert to (N, 4, 2) format
+                curves = curves_data[:, :8].view(-1, 4, 2)
+                widths = curves_data[:, 8]
+
+                curves_canvas = self.render_cubic_beziers(curves, widths)
+                # Upsample to supersampled resolution for combination
+                if self.supersampling > 1:
+                    curves_canvas = (
+                        F.interpolate(
+                            curves_canvas.unsqueeze(0).unsqueeze(0),
+                            size=self.ss_canvas_size,
+                            mode="bilinear",
+                            align_corners=False,
+                        )
+                        .squeeze(0)
+                        .squeeze(0)
+                    )
+                canvas = canvas + curves_canvas
+
+        # Render arcs
+        if 3 in primitives:  # PT_ARC = 3
+            arcs_data = primitives[3]  # (N, 6) - cx,cy,radius,angle1,angle2,width
+            if arcs_data.shape[0] > 0:
+                arcs_canvas = self.render_arcs(arcs_data, None)  # width is included in arcs_data
+                # Upsample to supersampled resolution for combination
+                if self.supersampling > 1:
+                    arcs_canvas = (
+                        F.interpolate(
+                            arcs_canvas.unsqueeze(0).unsqueeze(0),
+                            size=self.ss_canvas_size,
+                            mode="bilinear",
+                            align_corners=False,
+                        )
+                        .squeeze(0)
+                        .squeeze(0)
+                    )
+                canvas = canvas + arcs_canvas
 
         # Clamp and downsample
         canvas = torch.clamp(canvas, 0.0, 1.0)
