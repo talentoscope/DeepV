@@ -13,6 +13,7 @@ Each folder has Readme with more details. Here is the brief content of each fold
 * vectorization - NN models, script to train
 * refinement - refinement module for curves and lines
 * merging - merging module for curves and lines
+* dataset - modular dataset download system (data/raw/dataset_name format)
 * notebooks - a playground to show some function in action
 * utils - loss functions, rendering, metrics
 * scripts - scripts to run training and evaluation
