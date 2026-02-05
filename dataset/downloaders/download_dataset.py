@@ -42,96 +42,16 @@ def download_with_progress(url: str, output_path: Path, chunk_size: int = 8192):
 
 
 def download_floorplancad(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download FloorPlanCAD from Google Drive.
-    
-    Args:
-        output_dir: Base output directory
-        test_mode: If True, download only a small subset for testing
-    
-    Returns:
-        Metadata dict with download info
-    """
-    try:
-        import gdown
-    except ImportError:
-        raise ImportError("Install gdown: pip install gdown")
-
-    dataset_dir = output_dir / "raw" / "floorplancad"
-    dataset_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"Downloading FloorPlanCAD to {dataset_dir}...")
-
-    # Google Drive file IDs from https://floorplancad.github.io/
-    drive_files = {
-        "train1.zip": "1HcyKt6qWeXog-tRfvEjdO3O3TN91PXGL",
-        "train2.zip": "1kSS7OB_EEu7VJzb0W8DK9_nu1EvshioV",
-        "test.zip": "1jxpYgxnLUbXEzMOsjaMPQFSuvmvHimiZ",
-    }
-
-    if test_mode:
-        # Download only test set for testing
-        print("Test mode: downloading test set only...")
-        drive_files = {"test.zip": drive_files["test.zip"]}
-
-    downloaded_files = []
-    for name, file_id in drive_files.items():
-        url = f"https://drive.google.com/uc?id={file_id}"
-        output_path = dataset_dir / name
-        print(f"Downloading {name}...")
-        try:
-            gdown.download(url, str(output_path), quiet=False)
-            downloaded_files.append(output_path)
-        except Exception as e:
-            print(f"[WARN] Failed to download {name}: {e}")
-            continue
-
-    # Extract downloaded files (zip or tar)
-    for archive_path in downloaded_files:
-        if archive_path.exists():
-            print(f"Extracting {archive_path.name}...")
-            try:
-                if zipfile.is_zipfile(archive_path):
-                    with zipfile.ZipFile(archive_path, 'r') as zip_ref:
-                        zip_ref.extractall(dataset_dir)
-                elif tarfile.is_tarfile(archive_path):
-                    with tarfile.open(archive_path, 'r') as tar_ref:
-                        tar_ref.extractall(dataset_dir)
-                else:
-                    print(f"[WARN] Unknown archive format for {archive_path.name}")
-                    continue
-                archive_path.unlink()  # Remove archive after extraction
-            except Exception as e:
-                print(f"[WARN] Failed to extract {archive_path.name}: {e}")
-
-    print(f"[OK] Downloaded FloorPlanCAD to {dataset_dir}")
-
-    metadata = {
-        "name": "FloorPlanCAD",
-        "size": "15,663 CAD drawings",
-        "formats": ["SVG", "PNG"],
-        "source": "https://floorplancad.github.io/",
-        "license": "CC BY-NC 4.0",
-        "download_date": str(Path(dataset_dir).stat().st_mtime),
-        "test_mode": test_mode,
-    }
-
-    with open(dataset_dir / "metadata.json", "w") as f:
-        json.dump(metadata, f, indent=2)
-
-    return metadata
-
-
-def download_archcad(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download ArchCAD from Hugging Face."""
+    """Download FloorPlanCAD from Hugging Face."""
     try:
         from huggingface_hub import snapshot_download
     except ImportError:
         raise ImportError("Install huggingface_hub: pip install huggingface_hub")
 
-    dataset_dir = output_dir / "raw" / "archcad"
+    dataset_dir = output_dir / "raw" / "floorplancad"
     dataset_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Downloading ArchCAD to {dataset_dir}...")
+    print(f"Downloading FloorPlanCAD to {dataset_dir}...")
 
     if test_mode:
         allow_patterns = ["*.json", "data/train-00000-of-*.parquet"]
@@ -142,19 +62,19 @@ def download_archcad(output_dir: Path, test_mode: bool = False) -> Dict:
 
     try:
         snapshot_download(
-            repo_id="jackluoluo/ArchCAD",
+            repo_id="Voxel51/FloorPlanCAD",
             repo_type="dataset",
             local_dir=str(dataset_dir),
             allow_patterns=allow_patterns,
             max_workers=max_workers,
         )
-        print(f"[OK] Downloaded ArchCAD to {dataset_dir}")
+        print(f"[OK] Downloaded FloorPlanCAD to {dataset_dir}")
 
         metadata = {
-            "name": "ArchCAD-400K",
-            "size": "40k samples on HF (413k chunks from 5,538 drawings)",
-            "formats": ["SVG", "JSON", "Parquet"],
-            "source": "https://huggingface.co/datasets/jackluoluo/ArchCAD",
+            "name": "FloorPlanCAD",
+            "size": "15,663 CAD drawings",
+            "formats": ["SVG", "PNG", "Parquet"],
+            "source": "https://huggingface.co/datasets/Voxel51/FloorPlanCAD",
             "license": "CC BY-NC 4.0",
             "download_date": str(Path(dataset_dir).stat().st_mtime),
             "test_mode": test_mode,
@@ -166,7 +86,7 @@ def download_archcad(output_dir: Path, test_mode: bool = False) -> Dict:
         return metadata
 
     except Exception as e:
-        print(f"[ERR] Failed to download ArchCAD: {e}")
+        print(f"[ERR] Failed to download FloorPlanCAD: {e}")
         raise
 
 
@@ -394,54 +314,53 @@ def download_impact(output_dir: Path, test_mode: bool = False) -> Dict:
 
 
 def download_msd(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download Modified Swiss Dwellings from Kaggle."""
+    """Download Modified Swiss Dwellings from 4TU.ResearchData."""
     dataset_dir = output_dir / "raw" / "msd"
     dataset_dir.mkdir(parents=True, exist_ok=True)
 
     if test_mode:
-        print("Test mode: MSD requires Kaggle authentication.")
-        print("To download: kaggle datasets download -d caspervanengelenburg/modified-swiss-dwellings")
+        print("Test mode: MSD download from 4TU.ResearchData.")
+        print("Direct download link: https://data.4tu.nl/file/e1d89cb5-6872-48fc-be63-aadd687ee6f9/1ba5885d-19d7-4c0a-b73a-085e772ea1bc")
         metadata = {
             "name": "Modified Swiss Dwellings (MSD)",
             "size": "5,372 floor plans (17.4 GB)",
             "formats": ["Raster", "Vector", "Graphs", "CSV"],
-            "source": "https://www.kaggle.com/datasets/caspervanengelenburg/modified-swiss-dwellings",
+            "source": "https://data.4tu.nl/datasets/e1d89cb5-6872-48fc-be63-aadd687ee6f9/1",
             "license": "CC BY-SA 4.0",
             "test_mode": True,
-            "note": "Requires Kaggle authentication. Configure kaggle.json first.",
+            "note": "Direct download from 4TU.ResearchData (no authentication required).",
         }
         with open(dataset_dir / "metadata.json", "w") as f:
             json.dump(metadata, f, indent=2)
         print(f"[OK] Created metadata for MSD at {dataset_dir}")
         return metadata
 
-    print(f"Downloading MSD from Kaggle to {dataset_dir}...")
-    print("Warning: This is a large download (~17 GB)")
+    print(f"Downloading MSD from 4TU.ResearchData to {dataset_dir}...")
+    print("Warning: This is a large download (~5.4 GB)")
 
     try:
-        # Import kaggle only when performing a real download to avoid requiring
-        # credentials during test/dry-run. Import may attempt to authenticate
-        # and raise if kaggle.json is missing, so handle that gracefully.
-        from kaggle.api.kaggle_api_extended import KaggleApi
-        api = KaggleApi()
-        try:
-            api.authenticate()
-        except Exception as e:
-            raise RuntimeError("Kaggle authentication failed. Ensure kaggle.json is configured.") from e
+        # Direct download from 4TU.ResearchData
+        url = "https://data.4tu.nl/file/e1d89cb5-6872-48fc-be63-aadd687ee6f9/1ba5885d-19d7-4c0a-b73a-085e772ea1bc"
+        zip_path = dataset_dir / "modified-swiss-dwellings-v1.zip"
 
-        api.dataset_download_files(
-            'caspervanengelenburg/modified-swiss-dwellings',
-            path=str(dataset_dir),
-            unzip=True
-        )
-        
-        print(f"[OK] Downloaded MSD to {dataset_dir}")
+        # Download the zip file
+        download_with_progress(url, zip_path)
+
+        # Extract the zip file
+        print("Extracting MSD dataset...")
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(dataset_dir)
+
+        # Clean up zip file
+        zip_path.unlink()
+
+        print(f"[OK] Downloaded and extracted MSD to {dataset_dir}")
 
         metadata = {
             "name": "Modified Swiss Dwellings (MSD)",
             "size": "5,372 floor plans (17.4 GB)",
             "formats": ["Raster", "Vector", "Graphs", "CSV"],
-            "source": "https://www.kaggle.com/datasets/caspervanengelenburg/modified-swiss-dwellings",
+            "source": "https://data.4tu.nl/datasets/e1d89cb5-6872-48fc-be63-aadd687ee6f9/1",
             "license": "CC BY-SA 4.0",
             "download_date": str(Path(dataset_dir).stat().st_mtime),
             "test_mode": test_mode,
@@ -458,11 +377,11 @@ def download_msd(output_dir: Path, test_mode: bool = False) -> Dict:
 
 
 def download_sketchgraphs(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download SketchGraphs dataset (metadata/samples)."""
+    """Download SketchGraphs dataset (filtered sequences)."""
     dataset_dir = output_dir / "raw" / "sketchgraphs"
     dataset_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Downloading SketchGraphs metadata to {dataset_dir}...")
+    print(f"Downloading SketchGraphs to {dataset_dir}...")
     
     if test_mode:
         print("Test mode: Cloning repository metadata only")
@@ -478,19 +397,41 @@ def download_sketchgraphs(output_dir: Path, test_mode: bool = False) -> Dict:
                 capture_output=True
             )
         
-        print(f"[OK] Downloaded SketchGraphs metadata to {dataset_dir}")
-        print("\nNote: Full dataset (15M sketches) requires downloading from:")
-        print("  https://github.com/PrincetonLIPS/SketchGraphs#downloading-the-dataset")
+        # Download the filtered training set (smaller file for testing)
+        train_url = "https://sketchgraphs.cs.princeton.edu/sequence/sg_t16_train.npy"
+        train_path = dataset_dir / "sg_t16_train.npy"
+        
+        if not test_mode and not train_path.exists():
+            print("Downloading SketchGraphs filtered training set...")
+            download_with_progress(train_url, train_path)
+        
+        # Also download validation and test sets if not in test mode
+        if not test_mode:
+            val_url = "https://sketchgraphs.cs.princeton.edu/sequence/sg_t16_validation.npy"
+            test_url = "https://sketchgraphs.cs.princeton.edu/sequence/sg_t16_test.npy"
+            
+            val_path = dataset_dir / "sg_t16_validation.npy"
+            test_path = dataset_dir / "sg_t16_test.npy"
+            
+            if not val_path.exists():
+                print("Downloading SketchGraphs validation set...")
+                download_with_progress(val_url, val_path)
+            
+            if not test_path.exists():
+                print("Downloading SketchGraphs test set...")
+                download_with_progress(test_url, test_path)
+        
+        print(f"[OK] Downloaded SketchGraphs to {dataset_dir}")
 
         metadata = {
             "name": "SketchGraphs",
-            "size": "15M CAD sketches",
-            "formats": ["Constraint graphs (JSON)", "Serialized"],
+            "size": "15M CAD sketches (filtered sequences)",
+            "formats": ["Filtered sequences (.npy)", "Constraint graphs"],
             "source": "https://github.com/PrincetonLIPS/SketchGraphs",
             "license": "Open/Research (per Onshape Terms)",
             "download_date": str(Path(dataset_dir).stat().st_mtime),
             "test_mode": test_mode,
-            "note": "Repository cloned. Full dataset requires separate download (see README).",
+            "note": "Filtered sequence datasets downloaded. Use sketchgraphs library to process.",
         }
 
         with open(dataset_dir / "metadata.json", "w") as f:
@@ -500,7 +441,7 @@ def download_sketchgraphs(output_dir: Path, test_mode: bool = False) -> Dict:
 
     except Exception as e:
         print(f"[ERR] Failed to download SketchGraphs: {e}")
-        print("Note: Requires git installed. Full dataset requires manual download.")
+        print("Note: Requires git installed and internet connection.")
         raise
 
 
@@ -636,49 +577,6 @@ def download_deeppatent2(output_dir: Path, test_mode: bool = False) -> Dict:
     return metadata
 
 
-def download_abc(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download ABC dataset repository."""
-    dataset_dir = output_dir / "raw" / "abc"
-    dataset_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"Downloading ABC dataset metadata to {dataset_dir}...")
-    
-    try:
-        repo_dir = dataset_dir / "repository"
-        if not repo_dir.exists():
-            print("Cloning ABC dataset repository...")
-            subprocess.run(
-                ["git", "clone", "https://github.com/deep-geometry/abc-dataset.git", str(repo_dir)],
-                check=True,
-                capture_output=True
-            )
-        
-        print(f"[OK] Downloaded ABC repository to {dataset_dir}")
-        print("\nNote: Full dataset (~1M CAD models) requires downloading from:")
-        print("  https://deep-geometry.github.io/abc-dataset/")
-
-        metadata = {
-            "name": "ABC Dataset",
-            "size": "~10k vector mechanical drawings (from 1M+ CAD)",
-            "formats": ["Vector projections", "Boundaries", "Raster derivable"],
-            "source": "https://github.com/deep-geometry/abc-dataset",
-            "license": "CC BY 4.0",
-            "download_date": str(Path(dataset_dir).stat().st_mtime),
-            "test_mode": test_mode,
-            "note": "Repository cloned. Full dataset requires separate download.",
-        }
-
-        with open(dataset_dir / "metadata.json", "w") as f:
-            json.dump(metadata, f, indent=2)
-
-        return metadata
-
-    except Exception as e:
-        print(f"[ERR] Failed to download ABC: {e}")
-        print("Note: Requires git installed.")
-        raise
-
-
 def download_drivaernet(output_dir: Path, test_mode: bool = False) -> Dict:
     """Download DrivAerNet++ repository."""
     dataset_dir = output_dir / "raw" / "drivaernet"
@@ -760,29 +658,63 @@ def download_engsymbols(output_dir: Path, test_mode: bool = False) -> Dict:
         raise
 
 
-def download_rplan(output_dir: Path, test_mode: bool = False) -> Dict:
-    """RPLAN requires access request."""
-    dataset_dir = output_dir / "raw" / "rplan"
+def download_resplan(output_dir: Path, test_mode: bool = False) -> Dict:
+    """Download ResPlan dataset from GitHub."""
+    import requests
+    
+    dataset_dir = output_dir / "raw" / "resplan"
     dataset_dir.mkdir(parents=True, exist_ok=True)
 
-    print("RPLAN requires access request from:")
-    print("  http://staff.ustc.edu.cn/~fuxm/projects/DeepLayout/index.html")
-    
-    metadata = {
-        "name": "RPLAN",
-        "size": "80k+ floorplans",
-        "formats": ["Raster", "Graphs", "Vector derivable"],
-        "source": "http://staff.ustc.edu.cn/~fuxm/projects/DeepLayout/index.html",
-        "license": "Free (access request required)",
-        "test_mode": test_mode,
-        "note": "Requires access request via form on project website.",
-    }
-    
-    with open(dataset_dir / "metadata.json", "w") as f:
-        json.dump(metadata, f, indent=2)
-    
-    print(f"[OK] Created metadata for RPLAN at {dataset_dir}")
-    return metadata
+    print(f"Downloading ResPlan to {dataset_dir}...")
+
+    try:
+        # Try to download ResPlan.zip from GitHub
+        # The repository mentions ResPlan.zip in the description
+        zip_url = "https://github.com/m-agour/ResPlan/raw/main/ResPlan.zip"
+        zip_path = dataset_dir / "ResPlan.zip"
+        
+        if not zip_path.exists():
+            print("Downloading ResPlan.zip...")
+            response = requests.get(zip_url, stream=True)
+            response.raise_for_status()
+            
+            with open(zip_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            
+            print(f"[OK] Downloaded ResPlan.zip to {zip_path}")
+
+        # Extract the zip file
+        import zipfile
+        extract_dir = dataset_dir / "extracted"
+        if not extract_dir.exists():
+            print("Extracting ResPlan.zip...")
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(extract_dir)
+            print(f"[OK] Extracted to {extract_dir}")
+
+        print(f"[OK] Downloaded and extracted ResPlan to {dataset_dir}")
+
+        metadata = {
+            "name": "ResPlan",
+            "size": "17,000 residential floorplans",
+            "formats": ["JSON", "PNG", "NetworkX graphs", "PKL"],
+            "source": "https://github.com/m-agour/ResPlan",
+            "license": "MIT",
+            "download_date": str(Path(dataset_dir).stat().st_mtime),
+            "test_mode": test_mode,
+        }
+
+        with open(dataset_dir / "metadata.json", "w") as f:
+            json.dump(metadata, f, indent=2)
+
+        return metadata
+
+    except Exception as e:
+        print(f"[ERR] Failed to download ResPlan: {e}")
+        print("Note: You may need to download manually from:")
+        print("  https://github.com/m-agour/ResPlan")
+        raise
 
 
 def download_cadvgdrawing(output_dir: Path, test_mode: bool = False) -> Dict:
@@ -970,13 +902,6 @@ DATASETS = {
         "size": "~2-5 GB",
         "license": "CC BY-NC 4.0",
     },
-    "archcad": {
-        "name": "ArchCAD-400K",
-        "description": "40k architectural CAD samples",
-        "downloader": download_archcad,
-        "size": "~5-10 GB",
-        "license": "CC BY-NC 4.0",
-    },
     "cubicasa5k": {
         "name": "CubiCasa5K",
         "description": "5,000 high-res scanned floorplans",
@@ -1027,13 +952,6 @@ DATASETS = {
         "size": ">100 GB",
         "license": "CC BY-NC 2.0",
     },
-    "abc": {
-        "name": "ABC Dataset",
-        "description": "10k vector mechanical drawings",
-        "downloader": download_abc,
-        "size": "~Large (repo only)",
-        "license": "CC BY 4.0",
-    },
     "drivaernet": {
         "name": "DrivAerNet++",
         "description": "8,150+ car meshes/simulations",
@@ -1048,14 +966,6 @@ DATASETS = {
         "size": "~Small",
         "license": "Research",
         "note": "UNSUITABLE for DeepV - contains 100x100 pixel binary images for CNN classification, not vector geometric primitives",
-    },
-    "rplan": {
-        "name": "RPLAN",
-        "description": "80k+ floorplans with vector boundaries/rooms/doors/windows",
-        "downloader": download_rplan,
-        "size": "~Large",
-        "license": "Free (request)",
-        "note": "Highly suitable for DeepV - contains vector geometric primitives",
     },
     # Additional datasets from DATA_SOURCES.md
     "cadvgdrawing": {
@@ -1157,10 +1067,10 @@ DATASETS = {
     "resplan": {
         "name": "ResPlan",
         "description": "17,000 residential floorplans",
-        "downloader": None,
+        "downloader": download_resplan,
         "size": "~Medium",
-        "license": "CC BY 4.0",
-        "note": "Request access via arXiv: https://arxiv.org/abs/2508.14006",
+        "license": "MIT",
+        "note": "Contains vector geometries and graphs for architectural tasks",
     },
 }
 

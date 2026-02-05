@@ -6,10 +6,24 @@ the repository's `data/vector/{name}` and `data/raster/{name}` layout.
 from .base import Processor
 from .floorplancad import FloorPlanCADProcessor
 from .deeppatent2 import DeepPatent2Processor
+from .resplan import ResPlanProcessor
+from .msd import MSDProcessor
+from .sketchgraphs import SketchGraphsProcessor
+from .cubicasa import CubiCasa5KProcessor
+from .cadvgdrawing import CADVGDrawingProcessor
+from .fplanpoly import FPLANPOLYProcessor
+from .quickdraw import QuickDrawProcessor
 
 _REGISTRY = {
     'floorplancad': FloorPlanCADProcessor,
     'deeppatent2': DeepPatent2Processor,
+    'resplan': ResPlanProcessor,
+    'msd': MSDProcessor,
+    'quickdraw': QuickDrawProcessor,
+    'sketchgraphs': SketchGraphsProcessor,
+    'cubicasa5k': CubiCasa5KProcessor,
+    'cadvgdrawing': CADVGDrawingProcessor,
+    'fplanpoly': FPLANPOLYProcessor,
 }
 
 
