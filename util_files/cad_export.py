@@ -6,7 +6,7 @@ like DXF (Drawing Exchange Format) for use in CAD software.
 """
 
 import os
-from typing import List, Tuple, Optional
+
 
 # Lazy imports to avoid conflicts
 def _get_torch():
@@ -15,6 +15,7 @@ def _get_torch():
         return torch
     except ImportError:
         return None
+
 
 def _get_numpy():
     try:
@@ -180,7 +181,7 @@ def validate_cad_export(filename: str) -> bool:
                 content = f.read()
                 # Check for basic DXF structure
                 return 'SECTION' in content and 'ENDSEC' in content
-        except:
+        except Exception:
             return False
 
     # For SVG files, check for basic XML structure
@@ -189,7 +190,7 @@ def validate_cad_export(filename: str) -> bool:
             with open(filename, 'r') as f:
                 content = f.read()
                 return '<svg' in content and '</svg>' in content
-        except:
+        except Exception:
             return False
 
     return True
@@ -206,7 +207,7 @@ if __name__ == "__main__":
     sample_lines = np_module.array([
         [10.0, 20.0, 100.0, 20.0, 2.0],  # horizontal line
         [50.0, 10.0, 50.0, 100.0, 1.5],  # vertical line
-        [10.0, 10.0, 100.0, 100.0, 1.0], # diagonal line
+        [10.0, 10.0, 100.0, 100.0, 1.0],  # diagonal line
     ])
 
     # Export to CAD formats

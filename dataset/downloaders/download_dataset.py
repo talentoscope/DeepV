@@ -7,10 +7,8 @@ and adjusted to live under `dataset.downloaders`.
 
 import argparse
 import json
-import os
 import subprocess
 import sys
-import tarfile
 import zipfile
 from pathlib import Path
 from typing import Dict, Optional
@@ -320,7 +318,9 @@ def download_msd(output_dir: Path, test_mode: bool = False) -> Dict:
 
     if test_mode:
         print("Test mode: MSD download from 4TU.ResearchData.")
-        print("Direct download link: https://data.4tu.nl/file/e1d89cb5-6872-48fc-be63-aadd687ee6f9/1ba5885d-19d7-4c0a-b73a-085e772ea1bc")
+        print(
+            "Direct download link: https://data.4tu.nl/file/e1d89cb5-6872-48fc-be63-aadd687ee6f9/1ba5885d-19d7-4c0a-b73a-085e772ea1bc"
+        )
         metadata = {
             "name": "Modified Swiss Dwellings (MSD)",
             "size": "5,372 floor plans (17.4 GB)",
@@ -348,7 +348,7 @@ def download_msd(output_dir: Path, test_mode: bool = False) -> Dict:
 
         # Extract the zip file
         print("Extracting MSD dataset...")
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_ref.extractall(dataset_dir)
 
         # Clean up zip file
@@ -382,10 +382,10 @@ def download_sketchgraphs(output_dir: Path, test_mode: bool = False) -> Dict:
     dataset_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Downloading SketchGraphs to {dataset_dir}...")
-    
+
     if test_mode:
         print("Test mode: Cloning repository metadata only")
-    
+
     try:
         # Clone the repository for documentation and scripts
         repo_dir = dataset_dir / "repository"
@@ -394,33 +394,33 @@ def download_sketchgraphs(output_dir: Path, test_mode: bool = False) -> Dict:
             subprocess.run(
                 ["git", "clone", "https://github.com/PrincetonLIPS/SketchGraphs.git", str(repo_dir)],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
-        
+
         # Download the filtered training set (smaller file for testing)
         train_url = "https://sketchgraphs.cs.princeton.edu/sequence/sg_t16_train.npy"
         train_path = dataset_dir / "sg_t16_train.npy"
-        
+
         if not test_mode and not train_path.exists():
             print("Downloading SketchGraphs filtered training set...")
             download_with_progress(train_url, train_path)
-        
+
         # Also download validation and test sets if not in test mode
         if not test_mode:
             val_url = "https://sketchgraphs.cs.princeton.edu/sequence/sg_t16_validation.npy"
             test_url = "https://sketchgraphs.cs.princeton.edu/sequence/sg_t16_test.npy"
-            
+
             val_path = dataset_dir / "sg_t16_validation.npy"
             test_path = dataset_dir / "sg_t16_test.npy"
-            
+
             if not val_path.exists():
                 print("Downloading SketchGraphs validation set...")
                 download_with_progress(val_url, val_path)
-            
+
             if not test_path.exists():
                 print("Downloading SketchGraphs test set...")
                 download_with_progress(test_url, test_path)
-        
+
         print(f"[OK] Downloaded SketchGraphs to {dataset_dir}")
 
         metadata = {
@@ -452,9 +452,11 @@ def download_deeppatent2(output_dir: Path, test_mode: bool = False) -> Dict:
 
     if test_mode:
         print("Test mode: DeepPatent2 is very large (>100 GB)")
-        print("OneDrive link (2020 data): https://olddominion-my.sharepoint.com/personal/j1wu_odu_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020%2FOriginal%5F2020%2Etar%2Egz&viewid=7828cbdf%2D98fd%2D45c8%2D9fbf%2D337e03d13638&parent=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020")
+        print(
+            "OneDrive link (2020 data): https://olddominion-my.sharepoint.com/personal/j1wu_odu_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020%2FOriginal%5F2020%2Etar%2Egz&viewid=7828cbdf%2D98fd%2D45c8%2D9fbf%2D337e03d13638&parent=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020"
+        )
         print("OSF link: https://osf.io/kv4xa/ (2007 subset)")
-        
+
         metadata = {
             "name": "DeepPatent2",
             "size": ">2.7M technical drawings (2M patents)",
@@ -464,10 +466,10 @@ def download_deeppatent2(output_dir: Path, test_mode: bool = False) -> Dict:
             "test_mode": True,
             "note": "Test mode: Manual download required. See OneDrive link for Original_2020.tar.gz file.",
         }
-        
+
         with open(dataset_dir / "metadata.json", "w") as f:
             json.dump(metadata, f, indent=2)
-        
+
         print(f"[OK] Created metadata for DeepPatent2 at {dataset_dir}")
         return metadata
 
@@ -484,18 +486,19 @@ def download_deeppatent2(output_dir: Path, test_mode: bool = False) -> Dict:
         print("Opening download page in your default browser...")
         print("Please authenticate and download the file manually.")
         print()
-        
+
         # Open the download URL in the default browser
         download_url = "https://olddominion-my.sharepoint.com/personal/j1wu_odu_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020%2FOriginal%5F2020%2Etar%2Egz&viewid=7828cbdf%2D98fd%2D45c8%2D9fbf%2D337e03d13638&parent=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020"
-        
+
         try:
             import webbrowser
+
             webbrowser.open(download_url)
             print(f"Browser opened to: {download_url}")
         except Exception as e:
             print(f"Could not open browser automatically: {e}")
             print(f"Please manually open: {download_url}")
-        
+
         print()
         print("INSTRUCTIONS:")
         print("1. Authenticate with Microsoft if prompted")
@@ -504,13 +507,14 @@ def download_deeppatent2(output_dir: Path, test_mode: bool = False) -> Dict:
         print(f"   {dataset_dir}")
         print("4. After download completes, the script will detect and extract it")
         print()
-        
+
         # Wait for user to download and place the file
         print("Waiting for you to download and place the file...")
         print("(Press Ctrl+C to cancel and run again later)")
-        
+
         try:
             import time
+
             while not expected_file.exists():
                 print(f"Checking for {expected_file.name}... (waiting 10 seconds)")
                 time.sleep(10)
@@ -521,19 +525,19 @@ def download_deeppatent2(output_dir: Path, test_mode: bool = False) -> Dict:
 
     print(f"Found downloaded file: {expected_file}")
     print("Extracting...")
-    
+
     # Extract the tar.gz file with progress indication
     import tarfile
     from tqdm import tqdm
     import os
-    
+
     extracted_count = 0
     skipped_count = 0
-    
+
     # Extract files iteratively with progress updates
-    with tarfile.open(expected_file, 'r:gz') as tar_ref:
+    with tarfile.open(expected_file, "r:gz") as tar_ref:
         print("Extracting files from archive...")
-        
+
         # Use tqdm without total for large archives
         with tqdm(desc="Extracting", unit="file", unit_scale=True) as pbar:
             for member in tar_ref:
@@ -544,21 +548,23 @@ def download_deeppatent2(output_dir: Path, test_mode: bool = False) -> Dict:
                     skipped_count += 1
                     pbar.update(1)
                     continue
-                
+
                 # Extract the file
                 tar_ref.extract(member, dataset_dir)
                 extracted_count += 1
                 pbar.update(1)
-                
+
                 # Periodic status update every 1000 files
                 if (extracted_count + skipped_count) % 1000 == 0:
                     print(f"Processed {extracted_count + skipped_count} files so far...")
-        
-        print(f"Extraction complete: {extracted_count} files extracted, {skipped_count} files skipped (already existed)")
-    
+
+        print(
+            f"Extraction complete: {extracted_count} files extracted, {skipped_count} files skipped (already existed)"
+        )
+
     # Remove the compressed file
     expected_file.unlink()
-    
+
     metadata = {
         "name": "DeepPatent2",
         "size": "2020 dataset (extracted from Original_2020.tar.gz)",
@@ -567,12 +573,12 @@ def download_deeppatent2(output_dir: Path, test_mode: bool = False) -> Dict:
         "license": "CC BY-NC 2.0",
         "download_date": str(Path(dataset_dir).stat().st_mtime),
         "test_mode": test_mode,
-        "download_method": "manual_browser"
+        "download_method": "manual_browser",
     }
-    
+
     with open(dataset_dir / "metadata.json", "w") as f:
         json.dump(metadata, f, indent=2)
-    
+
     print(f"[OK] Downloaded and extracted DeepPatent2 2020 data to {dataset_dir}")
     return metadata
 
@@ -583,7 +589,7 @@ def download_drivaernet(output_dir: Path, test_mode: bool = False) -> Dict:
     dataset_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Downloading DrivAerNet++ metadata to {dataset_dir}...")
-    
+
     try:
         repo_dir = dataset_dir / "repository"
         if not repo_dir.exists():
@@ -591,9 +597,9 @@ def download_drivaernet(output_dir: Path, test_mode: bool = False) -> Dict:
             subprocess.run(
                 ["git", "clone", "https://github.com/Mohamedelrefaie/DrivAerNet.git", str(repo_dir)],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
-        
+
         print(f"[OK] Downloaded DrivAerNet++ repository to {dataset_dir}")
 
         metadata = {
@@ -624,7 +630,7 @@ def download_engsymbols(output_dir: Path, test_mode: bool = False) -> Dict:
     dataset_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Downloading Engineering Symbols to {dataset_dir}...")
-    
+
     try:
         repo_dir = dataset_dir / "repository"
         if not repo_dir.exists():
@@ -632,9 +638,9 @@ def download_engsymbols(output_dir: Path, test_mode: bool = False) -> Dict:
             subprocess.run(
                 ["git", "clone", "https://github.com/heyad/Eng_Diagrams.git", str(repo_dir)],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
-        
+
         print(f"[OK] Downloaded Engineering Symbols to {dataset_dir}")
 
         metadata = {
@@ -661,7 +667,7 @@ def download_engsymbols(output_dir: Path, test_mode: bool = False) -> Dict:
 def download_resplan(output_dir: Path, test_mode: bool = False) -> Dict:
     """Download ResPlan dataset from GitHub."""
     import requests
-    
+
     dataset_dir = output_dir / "raw" / "resplan"
     dataset_dir.mkdir(parents=True, exist_ok=True)
 
@@ -672,24 +678,25 @@ def download_resplan(output_dir: Path, test_mode: bool = False) -> Dict:
         # The repository mentions ResPlan.zip in the description
         zip_url = "https://github.com/m-agour/ResPlan/raw/main/ResPlan.zip"
         zip_path = dataset_dir / "ResPlan.zip"
-        
+
         if not zip_path.exists():
             print("Downloading ResPlan.zip...")
             response = requests.get(zip_url, stream=True)
             response.raise_for_status()
-            
+
             with open(zip_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
-            
+
             print(f"[OK] Downloaded ResPlan.zip to {zip_path}")
 
         # Extract the zip file
         import zipfile
+
         extract_dir = dataset_dir / "extracted"
         if not extract_dir.exists():
             print("Extracting ResPlan.zip...")
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
                 zip_ref.extractall(extract_dir)
             print(f"[OK] Extracted to {extract_dir}")
 
@@ -744,7 +751,7 @@ def download_cadvgdrawing(output_dir: Path, test_mode: bool = False) -> Dict:
                 "name": "CAD-VGDrawing (Drawing2CAD)",
                 "size": "~157k-161k SVG-to-CAD pairs",
                 "formats": ["SVG"],
-                "source": f"https://drive.google.com/drive/folders/1t9uO2iFh1eVDXRCKUEonKPBu8WGYA8wU",
+                "source": "https://drive.google.com/drive/folders/1t9uO2iFh1eVDXRCKUEonKPBu8WGYA8wU",
                 "license": "MIT",
                 "test_mode": True,
                 "note": "Partial download detected and metadata finalized in test mode.",
@@ -770,7 +777,7 @@ def download_cadvgdrawing(output_dir: Path, test_mode: bool = False) -> Dict:
             "name": "CAD-VGDrawing (Drawing2CAD)",
             "size": "~157k-161k SVG-to-CAD pairs",
             "formats": ["SVG"],
-            "source": f"https://drive.google.com/drive/folders/1t9uO2iFh1eVDXRCKUEonKPBu8WGYA8wU",
+            "source": "https://drive.google.com/drive/folders/1t9uO2iFh1eVDXRCKUEonKPBu8WGYA8wU",
             "license": "MIT",
             "test_mode": True,
             "note": "Test mode: partial download attempted. Use --no-test for full download.",
@@ -784,7 +791,7 @@ def download_cadvgdrawing(output_dir: Path, test_mode: bool = False) -> Dict:
     try:
         # Download svg_raw.zip directly
         zip_path = dataset_dir / "svg_raw.zip"
-        
+
         # Check if zip already exists and svg_raw is extracted
         svg_raw_dir = dataset_dir / "svg_raw"
         if zip_path.exists() and svg_raw_dir.exists() and any(svg_raw_dir.iterdir()):
@@ -796,11 +803,12 @@ def download_cadvgdrawing(output_dir: Path, test_mode: bool = False) -> Dict:
         # Extract the zip if not already extracted
         if not svg_raw_dir.exists() or not any(svg_raw_dir.iterdir()):
             print(f"Extracting {zip_path} to {svg_raw_dir}...")
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
                 file_list = zip_ref.namelist()
                 total_files = len(file_list)
-                
+
                 from tqdm import tqdm
+
                 with tqdm(total=total_files, desc="Extracting", unit="file") as pbar:
                     for file in file_list:
                         zip_ref.extract(file, svg_raw_dir)
@@ -814,7 +822,7 @@ def download_cadvgdrawing(output_dir: Path, test_mode: bool = False) -> Dict:
             "name": "CAD-VGDrawing (Drawing2CAD)",
             "size": "~157k-161k SVG-to-CAD pairs",
             "formats": ["SVG"],
-            "source": f"https://drive.google.com/drive/folders/1t9uO2iFh1eVDXRCKUEonKPBu8WGYA8wU",
+            "source": "https://drive.google.com/drive/folders/1t9uO2iFh1eVDXRCKUEonKPBu8WGYA8wU",
             "license": "MIT",
             "download_date": str(Path(dataset_dir).stat().st_mtime),
             "test_mode": test_mode,
@@ -841,7 +849,9 @@ def download_fplanpoly(output_dir: Path, test_mode: bool = False) -> Dict:
     print(f"Downloading FPLAN-POLY to {dataset_dir}...")
 
     # Archived URL from web.archive.org
-    fplanpoly_url = "https://web.archive.org/web/20130621114030/http://www.cvc.uab.es/~marcal/FPLAN-POLY/img/FPLAN-POLY.zip"
+    fplanpoly_url = (
+        "https://web.archive.org/web/20130621114030/http://www.cvc.uab.es/~marcal/FPLAN-POLY/img/FPLAN-POLY.zip"
+    )
 
     if test_mode:
         print("Test mode: creating metadata only")
@@ -1079,17 +1089,17 @@ def list_datasets():
     """List all available datasets."""
     print("\nAvailable datasets:")
     print("=" * 80)
-    
+
     # Separate auto-downloadable and manual datasets
     auto = {}
     manual = {}
-    
+
     for key, info in DATASETS.items():
         if info.get("downloader") is None:
             manual[key] = info
         else:
             auto[key] = info
-    
+
     # Auto-downloadable datasets
     if auto:
         print("\n[AUTO-DOWNLOAD] These datasets can be downloaded automatically:\n")
@@ -1097,7 +1107,7 @@ def list_datasets():
             print(f"{key:15} - {info['name']}")
             print(f"{'':15}   {info['description']}")
             print(f"{'':15}   Size: {info['size']} | License: {info['license']}\n")
-    
+
     # Manual download datasets
     if manual:
         print("\n[MANUAL DOWNLOAD] These datasets require manual download or special access:\n")
@@ -1107,7 +1117,7 @@ def list_datasets():
             print(f"{'':15}   Size: {info['size']} | License: {info['license']}")
             if "note" in info:
                 print(f"{'':15}   Note: {info['note']}\n")
-    
+
     print("\n" + "=" * 80)
     print("\nUsage: python download_dataset.py --dataset <name> --output-dir ./data")
     print("       python download_dataset.py --dataset <name> --output-dir ./data --test")
@@ -1115,8 +1125,8 @@ def list_datasets():
 
 
 # File pruning helpers
-RASTER_EXT = {'.png', '.jpg', '.jpeg', '.tif', '.tiff', '.bmp', '.gif'}
-VECTOR_EXT = {'.svg', '.dxf', '.dwg', '.eps', '.ps'}
+RASTER_EXT = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".gif"}
+VECTOR_EXT = {".svg", ".dxf", ".dwg", ".eps", ".ps"}
 
 
 def _prune_dataset_files(dataset_dir: Path, max_items: int = 10000) -> dict:
@@ -1127,24 +1137,24 @@ def _prune_dataset_files(dataset_dir: Path, max_items: int = 10000) -> dict:
     from shutil import move
 
     if not dataset_dir.exists():
-        return {'found': 0, 'kept': 0, 'moved': 0, 'overflow_dir': None}
+        return {"found": 0, "kept": 0, "moved": 0, "overflow_dir": None}
 
     candidates = []
-    for p in dataset_dir.rglob('*'):
+    for p in dataset_dir.rglob("*"):
         if p.is_file():
             if p.suffix.lower() in RASTER_EXT or p.suffix.lower() in VECTOR_EXT:
                 candidates.append(p)
 
     total = len(candidates)
     if total <= max_items:
-        return {'found': total, 'kept': total, 'moved': 0, 'overflow_dir': None}
+        return {"found": total, "kept": total, "moved": 0, "overflow_dir": None}
 
     # Sort deterministically and keep the first max_items
     candidates.sort(key=lambda p: p.as_posix())
     to_keep = set(candidates[:max_items])
     to_move = candidates[max_items:]
 
-    overflow_dir = dataset_dir / '_overflow'
+    overflow_dir = dataset_dir / "_overflow"
     overflow_dir.mkdir(parents=True, exist_ok=True)
 
     moved = 0
@@ -1166,18 +1176,25 @@ def _prune_dataset_files(dataset_dir: Path, max_items: int = 10000) -> dict:
             continue
 
     print(f"[INFO] Pruned dataset {dataset_dir.name}: found={total}, kept={max_items}, moved={moved} to {overflow_dir}")
-    return {'found': total, 'kept': max_items, 'moved': moved, 'overflow_dir': overflow_dir}
+    return {"found": total, "kept": max_items, "moved": moved, "overflow_dir": overflow_dir}
 
 
-def download_dataset(dataset_name: str, output_dir: Path, test_mode: bool = False, verify: bool = False, max_items: int = 10000, prune: bool = True) -> Optional[Dict]:
+def download_dataset(
+    dataset_name: str,
+    output_dir: Path,
+    test_mode: bool = False,
+    verify: bool = False,
+    max_items: int = 10000,
+    prune: bool = True,
+) -> Optional[Dict]:
     """Download a specific dataset.
-    
+
     Args:
         dataset_name: Name of the dataset to download
         output_dir: Output directory for downloads
         test_mode: If True, download minimal subset for testing
         verify: If True, verify download integrity
-    
+
     Returns:
         Metadata dict if successful, None otherwise
     """
@@ -1187,7 +1204,7 @@ def download_dataset(dataset_name: str, output_dir: Path, test_mode: bool = Fals
         return None
 
     dataset_info = DATASETS[dataset_name]
-    
+
     # Check if this dataset requires manual download
     if dataset_info.get("downloader") is None:
         print(f"\n{'='*80}")
@@ -1201,7 +1218,7 @@ def download_dataset(dataset_name: str, output_dir: Path, test_mode: bool = Fals
             print(f"Instructions: {dataset_info['note']}")
         print()
         return None
-    
+
     print(f"\n{'='*80}")
     print(f"Downloading: {dataset_info['name']}")
     print(f"Description: {dataset_info['description']}")

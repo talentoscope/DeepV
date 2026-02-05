@@ -1,8 +1,7 @@
 from pathlib import Path
 import shutil
 from .base import Processor
-from typing import Dict, List, Any
-import os
+from typing import Dict
 
 
 class FPLANPOLYProcessor(Processor):

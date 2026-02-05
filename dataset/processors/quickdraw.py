@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 from .base import Processor
 
@@ -184,7 +184,10 @@ class QuickDrawProcessor(Processor):
                         for x, y in zip(x_coords[1:], y_coords[1:]):
                             path_data += f" L {x - min_x + padding},{y - min_y + padding}"
 
-                        paths.append(f'<path d="{path_data}" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>')
+                        paths.append(
+                            f'<path d="{path_data}" fill="none" stroke="black" '
+                            'stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+                        )
 
             if not paths:
                 return ""

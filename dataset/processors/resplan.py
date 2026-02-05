@@ -1,17 +1,15 @@
 """Processor for ResPlan Dataset (residential floorplans)."""
 
-import json
 import pickle
 from pathlib import Path
 from typing import Dict, List, Any
-import base64
 
 from .base import Processor
 
 
 class ResPlanProcessor(Processor):
     """Process ResPlan dataset residential floorplans into vector/raster format.
-    
+
     Extracts vector primitives from pickled Shapely geometries containing
     walls, doors, windows, balconies, and room spaces.
     """
@@ -20,7 +18,7 @@ class ResPlanProcessor(Processor):
         """Process ResPlan dataset files."""
         vector_dir = output_base / "vector" / "resplan"
         raster_dir = output_base / "raster" / "resplan"
-        
+
         if not dry_run:
             vector_dir.mkdir(parents=True, exist_ok=True)
             raster_dir.mkdir(parents=True, exist_ok=True)
@@ -32,26 +30,26 @@ class ResPlanProcessor(Processor):
         pkl_file = input_dir / "extracted" / "ResPlan.pkl"
         if not pkl_file.exists():
             pkl_file = input_dir / "ResPlan.pkl"
-        
+
         if pkl_file.exists():
             try:
-                with open(pkl_file, 'rb') as f:
+                with open(pkl_file, "rb") as f:
                     data = pickle.load(f)
-                
+
                 print(f"Loaded {len(data)} floorplans from pickle file")
-                
+
                 for i, plan in enumerate(data[:10] if dry_run else data):  # Limit for dry run
                     plan_id = f"plan_{i:05d}"
-                    
+
                     # Create SVG from geometry data
                     svg_content = self._create_svg_from_resplan(plan, plan_id)
-                    
+
                     if svg_content and not dry_run:
                         svg_path = vector_dir / f"{plan_id}.svg"
-                        with open(svg_path, 'w') as f:
+                        with open(svg_path, "w") as f:
                             f.write(svg_content)
                         svg_count += 1
-                    
+
             except Exception as e:
                 print(f"Error processing pickle file: {e}")
         else:
@@ -70,84 +68,89 @@ class ResPlanProcessor(Processor):
         """Create SVG from ResPlan Shapely geometry data."""
         try:
             from shapely.geometry import Polygon, MultiPolygon
-            import shapely.wkt
-            
+
             svg_elements = []
             width, height = 1000, 800
-            
+
             # Room types to visualize with different colors
             room_types = {
-                'wall': ('black', 2),
-                'door': ('brown', 1), 
-                'window': ('cyan', 1),
-                'balcony': ('orange', 1),
-                'bathroom': ('blue', 0.5),
-                'bedroom': ('green', 0.5),
-                'kitchen': ('red', 0.5),
-                'living': ('yellow', 0.5),
-                'inner': ('gray', 0.5),
+                "wall": ("black", 2),
+                "door": ("brown", 1),
+                "window": ("cyan", 1),
+                "balcony": ("orange", 1),
+                "bathroom": ("blue", 0.5),
+                "bedroom": ("green", 0.5),
+                "kitchen": ("red", 0.5),
+                "living": ("yellow", 0.5),
+                "inner": ("gray", 0.5),
             }
-            
-            bounds_min_x, bounds_min_y = float('inf'), float('inf')
-            bounds_max_x, bounds_max_y = float('-inf'), float('-inf')
-            
+
+            bounds_min_x, bounds_min_y = float("inf"), float("inf")
+            bounds_max_x, bounds_max_y = float("-inf"), float("-inf")
+
             # First pass: collect all bounds
             for room_type in room_types.keys():
                 if room_type in plan:
                     geom = plan[room_type]
-                    if hasattr(geom, 'bounds'):
+                    if hasattr(geom, "bounds"):
                         minx, miny, maxx, maxy = geom.bounds
                         bounds_min_x = min(bounds_min_x, minx)
                         bounds_min_y = min(bounds_min_y, miny)
                         bounds_max_x = max(bounds_max_x, maxx)
                         bounds_max_y = max(bounds_max_y, maxy)
-            
-            if bounds_min_x == float('inf'):
+
+            if bounds_min_x == float("inf"):
                 return None
-                
+
             # Calculate scale to fit in SVG
             scale = min(900 / (bounds_max_x - bounds_min_x), 700 / (bounds_max_y - bounds_min_y))
             offset_x = -bounds_min_x * scale + 50
             offset_y = -bounds_min_y * scale + 50
-            
+
             # Second pass: create SVG elements
             for room_type, (color, stroke_width) in room_types.items():
                 if room_type in plan:
                     geom = plan[room_type]
-                    
+
                     if geom.is_empty:
                         continue
-                    
+
                     # Convert geometry to SVG paths
                     if isinstance(geom, (Polygon, MultiPolygon)):
                         paths = self._geometry_to_svg_paths(geom, scale, offset_x, offset_y)
                         for path_data in paths:
-                            if room_type in ['wall', 'door', 'window']:
+                            if room_type in ["wall", "door", "window"]:
                                 # Lines/strokes for structural elements
-                                svg_elements.append(f'<path d="{path_data}" fill="none" stroke="{color}" stroke-width="{stroke_width}"/>')
+                                svg_elements.append(
+                                    f'<path d="{path_data}" fill="none" '
+                                    f'stroke="{color}" stroke-width="{stroke_width}"/>'
+                                )
                             else:
                                 # Filled areas for rooms
-                                svg_elements.append(f'<path d="{path_data}" fill="{color}" fill-opacity="0.3" stroke="{color}" stroke-width="0.5"/>')
-            
+                                svg_elements.append(
+                                    f'<path d="{path_data}" fill="{color}" fill-opacity="0.3" '
+                                    f'stroke="{color}" stroke-width="0.5"/>'
+                                )
+
             if not svg_elements:
                 return None
-                
-            svg = f'''<?xml version="1.0" encoding="UTF-8"?>
+
+            svg = f"""<?xml version="1.0" encoding="UTF-8"?>
 <svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
   <rect width="100%" height="100%" fill="white"/>
   {"".join(svg_elements)}
-</svg>'''
-            
+</svg>"""
+
             return svg
-            
+
         except Exception as e:
             print(f"Error creating SVG for {plan_id}: {e}")
             return None
-    
+
     def _geometry_to_svg_paths(self, geom, scale: float, offset_x: float, offset_y: float) -> List[str]:
         """Convert Shapely geometry to SVG path data."""
         paths = []
-        
+
         def coords_to_path(coords):
             if len(coords) < 2:
                 return ""
@@ -156,17 +159,17 @@ class ResPlanProcessor(Processor):
                 path += f" L {x*scale + offset_x},{y*scale + offset_y}"
             path += " Z"
             return path
-        
-        if hasattr(geom, 'geoms'):  # MultiPolygon
+
+        if hasattr(geom, "geoms"):  # MultiPolygon
             for poly in geom.geoms:
-                if hasattr(poly, 'exterior'):
+                if hasattr(poly, "exterior"):
                     coords = list(poly.exterior.coords)
                     if coords:
                         paths.append(coords_to_path(coords))
         else:  # Single Polygon
-            if hasattr(geom, 'exterior'):
+            if hasattr(geom, "exterior"):
                 coords = list(geom.exterior.coords)
                 if coords:
                     paths.append(coords_to_path(coords))
-        
+
         return paths

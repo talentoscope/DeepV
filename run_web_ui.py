@@ -23,9 +23,4 @@ if __name__ == "__main__":
     print("For full vectorization, use the main pipeline scripts.")
 
     interface = create_interface()
-    interface.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
-        share=False,
-        show_error=True
-    )
+    interface.launch(server_name="0.0.0.0", server_port=7860, share=False, show_error=True)

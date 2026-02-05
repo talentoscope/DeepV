@@ -2,7 +2,8 @@ import torch
 
 
 class CudaPrefetcher:
-    """based on github.com/NVIDIA/apex/blob/f5cd5ae937f168c763985f627bbf850648ea5f3f/examples/imagenet/main_amp.py#L256"""
+    """based on github.com/NVIDIA/apex/blob/f5cd5ae937f168c763985f627bbf850648ea5f3f
+    examples/imagenet/main_amp.py#L256"""
 
     def __init__(self, loader, device):
         self._loader = loader

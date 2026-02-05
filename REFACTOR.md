@@ -24,6 +24,7 @@ This document tracks the comprehensive refactoring and modernization work being 
 
 **Web & Demo Files:**
 - [x] `run_web_ui_demo.py` - Removed unused matplotlib import, fixed spacing, continuation lines
+- [x] `web_ui/app.py` - Fixed unused imports, bare except clauses, long lines, blank lines, and missing newline
 
 **Cleaning Module:**
 - [x] `cleaning/scripts/main_cleaning.py` - Fixed comment style, added missing torchvision import
@@ -62,8 +63,8 @@ This document tracks the comprehensive refactoring and modernization work being 
 - [x] `refinement/our_refinement/refinement_for_curves.py` - **Partial progress**: Fixed class redefinitions, removed unused variables, corrected f-string issues, addressed some long lines (reduced from ~20+ errors to 9 remaining)
 
 ### 📊 Metrics
-- **Files Processed**: 31 core Python files
-- **Issues Resolved**: 151+ flake8 violations across multiple error types
+- **Files Processed**: 32 core Python files
+- **Issues Resolved**: 160+ flake8 violations across multiple error types
 - **Import System**: Eliminated star imports, standardized ordering
 - **Code Quality**: All processed files pass strict PEP 8 linting
 
@@ -186,9 +187,9 @@ This section provides a comprehensive listing of all Python files in the DeepV c
 - [x] `run_pipeline.py` - Main pipeline runner (argparse)
 - [x] `run_pipeline_hydra.py` - Hydra-based pipeline runner
 
-#### Web & Demo (1/2 files)
+#### Web & Demo (2/2 files)
 - [x] `run_web_ui_demo.py` - Web demo interface
-- [ ] `run_web_ui.py` - Full web UI (pending)
+- [x] `run_web_ui.py` - Full web UI (added missing newline)
 
 #### Cleaning Module (1/10 files)
 - [x] `cleaning/scripts/main_cleaning.py` - Main cleaning script
@@ -218,7 +219,7 @@ This section provides a comprehensive listing of all Python files in the DeepV c
 - [x] `scripts/benchmark_performance.py` - Performance benchmarking
 - [x] `scripts/benchmark_pipeline.py` - Pipeline benchmarking
 - [x] `scripts/download_and_verify_floorplancad.py` - FloorPlanCAD download/verification
-- [x] `scripts/evaluation_suite.py` - Comprehensive evaluation suite
+- [x] `scripts/evaluation_suite.py` - Comprehensive evaluation suite (removed unused imports os, torch, PT_QBEZIER, vector_image_from_patches; fixed unused variables in f-string; applied black formatting)
 - [x] `scripts/lint_code.py` - Code linting utilities
 - [x] `scripts/list_floorplancad_files.py` - FloorPlanCAD file listing
 - [x] `scripts/profile_performance.py` - Performance profiling
@@ -247,20 +248,20 @@ This section provides a comprehensive listing of all Python files in the DeepV c
 - [ ] `vectorization/modules/transformer.py`
 - [ ] `vectorization/scripts/train_vectorization.py`
 
-#### Dataset Module (4/13 files)
-- [ ] `dataset/downloaders/download_dataset.py`
+#### Dataset Module (13/13 files)
+- [x] `dataset/downloaders/download_dataset.py` - Dataset downloader (removed unused top-level imports os, tarfile; fixed f-strings without placeholders; applied black formatting)
 - [x] `dataset/processors/base.py` - Base processor protocol
 - [x] `dataset/processors/cadvgdrawing.py` - CAD-VGDrawing processor (removed unused imports: typing.List, typing.Any, os)
 - [x] `dataset/processors/cubicasa.py` - CubiCasa5K processor (added missing imports numpy, cv2, PIL.Image; removed unused imports and variables; fixed long lines and file ending)
 - [x] `dataset/processors/deeppatent2.py` - DeepPatent2 processor (removed unused import xml.etree.ElementTree; applied black formatting to fix continuation line indents)
-- [ ] `dataset/processors/floorplancad.py`
-- [ ] `dataset/processors/fplanpoly.py`
-- [ ] `dataset/processors/msd.py`
-- [ ] `dataset/processors/quickdraw.py`
-- [ ] `dataset/processors/resplan.py`
-- [ ] `dataset/processors/sketchgraphs.py`
-- [ ] `dataset/run_processor.py`
-- [ ] `dataset_downloaders.py`
+- [x] `dataset/processors/floorplancad.py` - FloorPlanCAD processor (already compliant with PEP 8 standards)
+- [x] `dataset/processors/fplanpoly.py` - FPLAN-POLY processor (removed unused imports: typing.List, typing.Any, os; added file ending newline)
+- [x] `dataset/processors/msd.py` - Modified Swiss Dwellings processor (removed unused imports: typing.List, typing.Any, base64, networkx; fixed long lines by breaking f-strings and multi-line strings; added file ending newline)
+- [x] `dataset/processors/quickdraw.py` - QuickDraw processor (removed unused import typing.List; fixed long line by breaking f-string; added file ending newline)
+- [x] `dataset/processors/resplan.py` - ResPlan processor (removed unused imports: json, base64, shapely.wkt; applied black formatting to fix whitespace issues; broke long f-strings)
+- [x] `dataset/processors/sketchgraphs.py` - SketchGraphs processor (removed unused imports: typing.List, base64, sketchgraphs.data.sequence.NodeOp, sketchgraphs.data.sketch.Sketch; added file ending newline)
+- [x] `dataset/run_processor.py` - Dataset processor runner (broke long lines in docstring and argument help strings)
+- [x] `dataset_downloaders.py` - Dataset downloaders (already compliant with PEP 8 standards)
 
 #### Tests (0/20 files)
 - [ ] `tests/benchmark_merging.py`
@@ -281,7 +282,7 @@ This section provides a comprehensive listing of all Python files in the DeepV c
 - [ ] `tests/test_smoke.py`
 - [ ] `tests/test_vectorization.py`
 
-#### Util Files (14/60+ files)
+#### Util Files (19/60+ files)
 - [x] `util_files/config_manager.py` - Configuration management utilities (removed unused imports, fixed long lines)
 - [x] `util_files/dataloading.py` - Data loading utilities (applied black formatting, fixed 20+ E501 violations)
 - [x] `util_files/evaluation_utils.py` - Evaluation utilities (fixed 3 E501 line length violations)
@@ -296,6 +297,17 @@ This section provides a comprehensive listing of all Python files in the DeepV c
 - [x] `util_files/file_utils.py` - File I/O utilities (already compliant)
 - [x] `util_files/os.py` - OS utilities (removed - shadowed stdlib os module, replaced by file_utils.py)
 - [x] `util_files/visualization.py` - Visualization utilities (replaced lambda assignments with def functions, broke long comment lines)
+- [x] `util_files/cad_export.py` - CAD export utilities (removed unused imports List, Tuple, Optional; fixed blank lines, bare except clauses, inline comments; added file ending newline)
+- [x] `util_files/color_utils.py` - Color utilities (already compliant with PEP 8 standards)
+- [x] `util_files/early_stopping.py` - Early stopping utilities (already compliant with PEP 8 standards)
+- [x] `util_files/data/transforms/raster_transforms.py` - Raster transforms (removed unused imports RandomApply, kanungo_degrade_wrapper)
+- [x] `util_files/metrics/vector_metrics.py` - Vector metrics (removed unused import PT_LINE; fixed ambiguous variable name 'l'; replaced lambda assignments with def functions; applied black formatting)
+- [x] `util_files/rendering/cairo.py` - Cairo rendering utilities (replaced lambda assignments with def functions; applied black formatting)
+- [x] `util_files/data/line_drawings_dataset.py` - Line drawings dataset (removed unused imports random, List, GraphicsPrimitive; fixed inline comment style; broke long docstring line)
+- [x] `util_files/data/prefetcher.py` - CUDA prefetcher (broke long docstring URL)
+- [x] `util_files/data/preprocessed.py` - Preprocessed data utilities (removed unused DataLoader import; fixed block comment style from ## to #; broke long comment line)
+- [x] `util_files/data/graphics/graphics.py` - Graphics utilities (removed unused variable assignments; initialized full_img to fix undefined name; replaced lambda with def function)
+- [ ] Plus 34+ additional files in subdirectories (data/, optimization/, rendering/, simplification/, etc.)
 - [ ] Plus 40+ additional files in subdirectories (data/, optimization/, rendering/, simplification/, etc.)
 
 #### Web UI (0/1 files)
@@ -309,10 +321,10 @@ This section provides a comprehensive listing of all Python files in the DeepV c
 
 ### 📊 Progress Summary
 - **Total Python Files**: 120+ (excluding data/raw/sketchgraphs third-party code)
-- **Completed Files**: 34 (28.3%)
+- **Completed Files**: 54 (45.0%)
 - **In Progress**: 0 (0%)
-- **Remaining Files**: 86+ (71.7%)
-- **Priority Modules**: Core pipeline ✅, Merging ✅, Refinement ✅, Scripts ✅, Dataset/Utilities 🔄
+- **Remaining Files**: 66+ (55.0%)
+- **Priority Modules**: Core pipeline ✅, Merging ✅, Refinement ✅, Scripts ✅, Dataset/Utilities 🔄, Web UI ✅
 
 ### 🎯 Next Priority Files
 1. Complete remaining dataset processors (11 more files in dataset/processors/)

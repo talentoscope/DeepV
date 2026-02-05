@@ -44,7 +44,7 @@ class VectorImage:
         paths, path_attribute_dicts, svg_attributes = svgpathtools.svg2paths2(file)
 
         # get canvas sizes
-        x = y = view_x = view_y = width = height = view_width = view_height = None
+        view_x = view_y = view_width = view_height = None
 
         if "x" in svg_attributes or "y" in svg_attributes:
             origin = [units.Pixels(0), units.Pixels(0)]
@@ -100,6 +100,7 @@ class VectorImage:
     @classmethod
     def from_grid(cls, images, stack_rows_first=True, margin_width=None, margin_color=None):
         if stack_rows_first:
+            full_img = None
             for row in images:
                 row_img = row[0].copy()
                 for other_img in row[1:]:
@@ -127,9 +128,7 @@ class VectorImage:
                     ]
                     row_img.width = row_img.width + other_img.width
                     row_img.view_width = row_img.view_width + other_img.view_width
-                try:
-                    full_img
-                except UnboundLocalError:
+                if full_img is None:
                     full_img = row_img
                     continue
                 left = 0
@@ -460,9 +459,10 @@ class VectorImage:
             ]
         )
 
-        split_path_to_patches = lambda path: path.split_to_patches(
-            origin=origin, patch_size=patch_size, patches_n=patches_n
-        )
+        def split_path_to_patches(path):
+            return path.split_to_patches(
+                origin=origin, patch_size=patch_size, patches_n=patches_n
+            )
 
         def distribute_path_in_patches(iS, jS, paths):
             for idx in range(len(iS)):

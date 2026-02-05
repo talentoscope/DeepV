@@ -3,7 +3,7 @@ import pickle
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 
 import util_files.data.graphics_primitives as graphics_primitives
 from util_files.data.syndata.preprocessed import PreprocessedSyntheticHandcrafted
@@ -30,11 +30,12 @@ class SynParameters:
 
     directions_probas = _normalize_probas(directions_probas)
 
-    ## def get_offset_angles():
-    ##     rotations = [0, 90, 180, 270]
-    ##     max_rot_deviation = 10
-    ##     rotations += [base_rot + dev_rot * dev_sign for dev_rot in range(1, max_rot_deviation + 1, 1) for base_rot in (0, 90, 180, 270) for dev_sign in (1, -1)]
-    ##     return rotations
+    # def get_offset_angles():
+    #     rotations = [0, 90, 180, 270]
+    #     max_rot_deviation = 10
+    #     rotations += [base_rot + dev_rot * dev_sign for dev_rot in range(1, max_rot_deviation + 1, 1)
+    #                   for base_rot in (0, 90, 180, 270) for dev_sign in (1, -1)]
+    #     return rotations
     def get_offset_angles():
         return range(0, 360, 4)
 

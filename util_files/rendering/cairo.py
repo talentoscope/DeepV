@@ -14,6 +14,7 @@ try:
         PT_QBEZIER,
         PT_QBEZIER_B,
     )
+
     HAS_GRAPHICS_PRIMITIVES = True
 except ImportError:
     # Fallback if svgpathtools import fails
@@ -44,8 +45,11 @@ def render(data, dimensions, data_representation="paths", linecaps="square", lin
         ctx.set_line_cap(linecaps)
 
         # ignore r,g,b -- draw in alpha
-        set_color_to_bg = lambda: ctx.set_source_rgba(0, 0, 0, 1)  # white
-        set_color_to_fg = lambda: ctx.set_source_rgba(0, 0, 0, 0)  # black
+        def set_color_to_bg():
+            ctx.set_source_rgba(0, 0, 0, 1)  # white
+
+        def set_color_to_fg():
+            ctx.set_source_rgba(0, 0, 0, 0)  # black
 
         # fill bg
         set_color_to_bg()
@@ -102,8 +106,11 @@ def render_with_skeleton(
         ctx.set_line_cap(linecaps)
 
         # ignore r,g,b -- draw in alpha
-        set_color_to_bg = lambda: ctx.set_source_rgb(1, 1, 1)  # white
-        set_color_to_fg = lambda: ctx.set_source_rgb(0, 0, 0)  # black
+        def set_color_to_bg():
+            ctx.set_source_rgb(1, 1, 1)  # white
+
+        def set_color_to_fg():
+            ctx.set_source_rgb(0, 0, 0)  # black
 
         # fill bg
         set_color_to_bg()
@@ -192,7 +199,6 @@ def draw_qbezier_vahe(ctx, bezier):
 def draw_point_vahe(ctx, point):
     ctx.arc(*point[:2], point[2] / 2, 0, np.pi * 2)
     ctx.fill()
-
 
 
 if HAS_GRAPHICS_PRIMITIVES:

@@ -1,8 +1,7 @@
 """Processor for SketchGraphs Dataset."""
 
 from pathlib import Path
-from typing import Dict, List, Any
-import base64
+from typing import Dict, Any
 
 from .base import Processor
 
@@ -58,9 +57,6 @@ class SketchGraphsProcessor(Processor):
 
                     try:
                         # Convert sequence to sketch
-                        from sketchgraphs.data.sequence import NodeOp
-                        from sketchgraphs.data.sketch import Sketch
-
                         # Reconstruct the sketch from the sequence
                         # This is a simplified approach - in practice, you'd need to
                         # properly decode the sequence using the sketchgraphs library

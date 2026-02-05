@@ -2,8 +2,7 @@
 
 import pickle
 from pathlib import Path
-from typing import Dict, List, Any
-import base64
+from typing import Dict, Any
 
 from .base import Processor
 
@@ -93,7 +92,6 @@ class MSDProcessor(Processor):
     def _create_svg_from_msd_graph(self, graph, plan_id: str) -> str:
         """Create SVG from MSD NetworkX graph containing room geometries."""
         try:
-            import networkx as nx
 
             svg_elements = []
             width, height = 1000, 800
@@ -155,24 +153,36 @@ class MSDProcessor(Processor):
                             scaled_coords.append(f"{scaled_x},{scaled_y}")
 
                         if scaled_coords:
-                            path_data = f"M {scaled_coords[0]} " + " ".join(f"L {coord}" for coord in scaled_coords[1:]) + " Z"
-                            svg_elements.append(f'<path d="{path_data}" fill="{color}" stroke="black" stroke-width="1" opacity="0.7"/>')
+                            path_data = (
+                                f"M {scaled_coords[0]} " +
+                                " ".join(f"L {coord}" for coord in scaled_coords[1:]) +
+                                " Z"
+                            )
+                            svg_elements.append(
+                                f'<path d="{path_data}" fill="{color}" '
+                                'stroke="black" stroke-width="1" opacity="0.7"/>'
+                            )
 
                             # Add room type label
                             centroid = geom.centroid
                             label_x = (centroid.x - bounds_min_x) * scale + 50
                             label_y = height - ((centroid.y - bounds_min_y) * scale + 50)
-                            svg_elements.append(f'<text x="{label_x}" y="{label_y}" text-anchor="middle" font-size="10" fill="black">{room_type[:3]}</text>')
+                            svg_elements.append(
+                                f'<text x="{label_x}" y="{label_y}" text-anchor="middle" '
+                                f'font-size="10" fill="black">{room_type[:3]}</text>'
+                            )
 
             if not svg_elements:
                 return None
 
-            svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
-<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100%" height="100%" fill="white"/>
-  {"".join(svg_elements)}
-  <text x="10" y="20" font-size="12" fill="black">MSD Plan {plan_id}</text>
-</svg>'''
+            svg_content = (
+                '<?xml version="1.0" encoding="UTF-8"?>\n'
+                f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">\n'
+                '  <rect width="100%" height="100%" fill="white"/>\n'
+                f'  {"".join(svg_elements)}\n'
+                f'  <text x="10" y="20" font-size="12" fill="black">MSD Plan {plan_id}</text>\n'
+                '</svg>'
+            )
 
             return svg_content
 

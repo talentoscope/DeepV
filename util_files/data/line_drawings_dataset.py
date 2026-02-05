@@ -1,11 +1,10 @@
-import random
-from typing import Dict, List
+from typing import Dict
 
 import numpy as np
 from torch.utils.data import Dataset
 
 from util_files.color_utils import gray_float_to_8bit, img_8bit_to_float, rgb_to_gray
-from util_files.data.graphics_primitives import GraphicsPrimitive, repr_len_by_type
+from util_files.data.graphics_primitives import repr_len_by_type
 from util_files.rendering.cairo import render
 
 
@@ -55,11 +54,12 @@ class LineDrawingsDataset(Dataset):
         self.sort_primitives = sort_primitives
         self.pad_empty_primitives = pad_empty_primitives
 
-    def _get_vector_item(self, idx: None) -> Dict[str, np.ndarray]:  ## ~~List[GraphicsPrimitive]]:~~
+    def _get_vector_item(self, idx: None) -> Dict[str, np.ndarray]:  # ~~List[GraphicsPrimitive]]:~~
         r"""Yields a collection of primitives from a dataset.
 
         :param idx: unused
-        :returns primitives: a dictionary filled with a list of ~~primitives~~ Vahe representations of primitives for each of self.primitive_types
+        :returns primitives: a dictionary filled with a list of ~~primitives~~
+            Vahe representations of primitives for each of self.primitive_types
         """
         raise NotImplementedError
 

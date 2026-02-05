@@ -7,7 +7,6 @@ Allows users to upload images and see real-time vectorization results.
 
 import os
 import tempfile
-from pathlib import Path
 
 import gradio as gr
 import numpy as np
@@ -20,9 +19,6 @@ try:
 except ImportError:
     export_to_dxf = None
     export_to_svg = None
-
-# Import DeepV components
-from util_files.rendering.bezier_splatting import BezierSplatting
 from refinement.our_refinement.utils.lines_refinement_functions import render_primitives_with_type
 
 
@@ -57,12 +53,17 @@ def demo_vectorize_image(input_image, rendering_type="bezier_splatting", primiti
         svg_content = _create_svg_from_primitives(primitives, width, height)
         dxf_content = _create_dxf_from_primitives(primitives, width, height)
 
-        return processed_image, svg_content, dxf_content, f"Demo completed with {rendering_type} rendering and {primitive_type} primitives!"
+        return (
+            processed_image,
+            svg_content,
+            dxf_content,
+            f"Demo completed with {rendering_type} rendering and {primitive_type} primitives!",
+        )
 
     except Exception as e:
         error_msg = f"Error during demo: {str(e)}"
         print(error_msg)
-        error_image = Image.new('L', (256, 256), color=128)
+        error_image = Image.new("L", (256, 256), color=128)
         return error_image, "<svg></svg>", "", error_msg
 
 
@@ -71,7 +72,7 @@ def _preprocess_input_image(input_image):
     if isinstance(input_image, np.ndarray):
         input_image = Image.fromarray(input_image)
 
-    gray_image = input_image.convert('L')
+    gray_image = input_image.convert("L")
     return np.array(gray_image) < 128  # Simple thresholding
 
 
@@ -80,11 +81,11 @@ def _generate_synthetic_primitives(primitive_type, width, height):
     primitives = {}
 
     if primitive_type == "line":
-        primitives['lines'] = _generate_demo_lines(width, height)
+        primitives["lines"] = _generate_demo_lines(width, height)
     elif primitive_type == "curve":
-        primitives['curves'] = _generate_demo_curves(width, height)
+        primitives["curves"] = _generate_demo_curves(width, height)
     elif primitive_type == "arc":
-        primitives['arcs'] = _generate_demo_arcs(width, height)
+        primitives["arcs"] = _generate_demo_arcs(width, height)
 
     return primitives
 
@@ -128,7 +129,7 @@ def _generate_demo_arcs(width, height):
         cy = np.random.randint(20, height - 20)
         radius = np.random.randint(10, 30)
         angle1 = np.random.uniform(0, 2 * np.pi)
-        angle2 = angle1 + np.random.uniform(np.pi/4, np.pi)  # arc of 45-180 degrees
+        angle2 = angle1 + np.random.uniform(np.pi / 4, np.pi)  # arc of 45-180 degrees
         width_val = np.random.uniform(1.0, 3.0)
         arcs.append([cx, cy, radius, angle1, angle2, width_val])
     return torch.tensor(arcs, dtype=torch.float32)
@@ -139,7 +140,7 @@ def _create_svg_from_primitives(primitives, width, height):
     if export_to_svg is None:
         return "SVG export module not available"
 
-    with tempfile.NamedTemporaryFile(mode='w+', suffix='.svg', delete=False) as tmp_file:
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".svg", delete=False) as tmp_file:
         tmp_path = tmp_file.name
 
     try:
@@ -147,12 +148,12 @@ def _create_svg_from_primitives(primitives, width, height):
         if not success:
             return "SVG export failed"
 
-        with open(tmp_path, 'r') as f:
+        with open(tmp_path, "r") as f:
             return f.read()
     finally:
         try:
             os.unlink(tmp_path)
-        except:
+        except OSError:
             pass
 
 
@@ -161,7 +162,7 @@ def _create_dxf_from_primitives(primitives, width, height):
     if export_to_dxf is None:
         return "DXF export module not available"
 
-    with tempfile.NamedTemporaryFile(mode='w+', suffix='.dxf', delete=False) as tmp_file:
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".dxf", delete=False) as tmp_file:
         tmp_path = tmp_file.name
 
     try:
@@ -169,24 +170,21 @@ def _create_dxf_from_primitives(primitives, width, height):
         if not success:
             return "DXF export failed"
 
-        with open(tmp_path, 'r') as f:
+        with open(tmp_path, "r") as f:
             return f.read()
     finally:
         try:
             os.unlink(tmp_path)
-        except:
+        except OSError:
             pass
-
-
-
 
 
 def create_interface():
     """Create the Gradio interface."""
 
     with gr.Blocks(title="DeepV - Technical Drawing Vectorization", theme=gr.themes.Soft()) as interface:
-
-        gr.Markdown("""
+        gr.Markdown(
+            """
         # 🖼️ DeepV - Technical Drawing Vectorization Demo
 
         **Demo Interface** - This is a simplified demonstration of DeepV's rendering capabilities.
@@ -199,75 +197,52 @@ def create_interface():
         - Real-time rendering preview
         - SVG and DXF export for CAD software
         - Support for line primitives
-        """)
+        """
+        )
 
         with gr.Row():
             with gr.Column(scale=1):
-                input_image = gr.Image(
-                    label="Upload Technical Drawing",
-                    type="pil",
-                    height=300
-                )
+                input_image = gr.Image(label="Upload Technical Drawing", type="pil", height=300)
 
                 with gr.Row():
                     rendering_type = gr.Radio(
                         choices=["hard", "bezier_splatting"],
                         value="bezier_splatting",
                         label="Rendering Method",
-                        info="Analytical rendering vs fast Bézier splatting"
+                        info="Analytical rendering vs fast Bézier splatting",
                     )
 
                     primitive_type = gr.Radio(
                         choices=["line", "curve", "arc"],
                         value="line",
                         label="Primitive Type",
-                        info="Type of geometric primitives to render"
+                        info="Type of geometric primitives to render",
                     )
 
-                submit_btn = gr.Button(
-                    "🚀 Render Demo",
-                    variant="primary",
-                    size="lg"
-                )
+                submit_btn = gr.Button("🚀 Render Demo", variant="primary", size="lg")
 
             with gr.Column(scale=1):
-                output_image = gr.Image(
-                    label="Rendered Result",
-                    height=300
-                )
+                output_image = gr.Image(label="Rendered Result", height=300)
 
-                status_text = gr.Textbox(
-                    label="Status",
-                    interactive=False,
-                    value="Ready for demo!"
-                )
+                status_text = gr.Textbox(label="Status", interactive=False, value="Ready for demo!")
 
         with gr.Row():
             with gr.Column():
-                svg_output = gr.Code(
-                    label="SVG Output (Web/CAD)",
-                    language="xml",
-                    lines=10,
-                    show_label=True
-                )
+                svg_output = gr.Code(label="SVG Output (Web/CAD)", language="xml", lines=10, show_label=True)
 
             with gr.Column():
-                dxf_output = gr.Code(
-                    label="DXF Output (CAD Software)",
-                    language="plaintext",
-                    lines=10,
-                    show_label=True
-                )
+                dxf_output = gr.Code(label="DXF Output (CAD Software)", language="plaintext", lines=10, show_label=True)
 
         # Connect the interface
         submit_btn.click(
             fn=demo_vectorize_image,
             inputs=[input_image, rendering_type, primitive_type],
-            outputs=[output_image, svg_output, dxf_output, status_text]
+            outputs=[output_image, svg_output, dxf_output, status_text],
         )
 
         # Add some info
-        gr.Markdown("""
+        gr.Markdown(
+            """
         ### About the Rendering Methods
 
         - **Hard (Analytical)**: Traditional analytical line rendering with exact geometry
@@ -275,16 +250,12 @@ def create_interface():
 
         ### Note
         This is a demo interface showing rendering capabilities. Full vectorization requires trained ML models.
-        """)
+        """
+        )
 
     return interface
 
 
 if __name__ == "__main__":
     interface = create_interface()
-    interface.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
-        share=False,
-        show_error=True
-    )
+    interface.launch(server_name="0.0.0.0", server_port=7860, share=False, show_error=True)
