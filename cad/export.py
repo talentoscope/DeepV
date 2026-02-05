@@ -46,57 +46,11 @@ def export_to_dxf(primitives, filename: str, width: int = 256, height: int = 256
     doc = ezdxf.new()
     msp = doc.modelspace()
 
-    # Export lines
-    if 'lines' in primitives and len(primitives['lines']) > 0:
-        lines_np = np.asarray(primitives['lines'])
-        for line in lines_np:
-            x1, y1, x2, y2, line_width = line[:5]  # Handle variable length
-            # Convert to DXF coordinates (flip Y axis)
-            dxf_x1, dxf_y1 = float(x1), float(height - y1)
-            dxf_x2, dxf_y2 = float(x2), float(height - y2)
-            # Add line to DXF
-            msp.add_line((dxf_x1, dxf_y1), (dxf_x2, dxf_y2))
-
-    # Export quadratic Bézier curves
-    if 'curves' in primitives and len(primitives['curves']) > 0:
-        curves_np = np.asarray(primitives['curves'])
-        for curve in curves_np:
-            if len(curve) >= 7:  # x1,y1,x2,y2,x3,y3,width
-                x1, y1, x2, y2, x3, y3 = curve[:6]
-                # Convert to DXF coordinates (flip Y axis)
-                points = [(float(x1), float(height - y1)),
-                         (float(x2), float(height - y2)),
-                         (float(x3), float(height - y3))]
-                # Add spline to DXF
-                msp.add_spline(points, degree=2)
-
-    # Export cubic Bézier curves
-    if 'cubic_curves' in primitives and len(primitives['cubic_curves']) > 0:
-        curves_np = np.asarray(primitives['cubic_curves'])
-        for curve in curves_np:
-            if len(curve) >= 9:  # x1,y1,x2,y2,x3,y3,x4,y4,width
-                x1, y1, x2, y2, x3, y3, x4, y4 = curve[:8]
-                # Convert to DXF coordinates (flip Y axis)
-                points = [(float(x1), float(height - y1)),
-                         (float(x2), float(height - y2)),
-                         (float(x3), float(height - y3)),
-                         (float(x4), float(height - y4))]
-                # Add spline to DXF
-                msp.add_spline(points, degree=3)
-
-    # Export arcs
-    if 'arcs' in primitives and len(primitives['arcs']) > 0:
-        arcs_np = np.asarray(primitives['arcs'])
-        for arc in arcs_np:
-            if len(arc) >= 6:  # cx,cy,radius,angle1,angle2,width
-                cx, cy, radius, angle1, angle2 = arc[:5]
-                # Convert angles to degrees and handle coordinate system
-                start_angle = float(np.degrees(angle1))
-                end_angle = float(np.degrees(angle2))
-                # Flip Y axis for center
-                dxf_cx, dxf_cy = float(cx), float(height - cy)
-                # Add arc to DXF
-                msp.add_arc((dxf_cx, dxf_cy), float(radius), start_angle, end_angle)
+    # Export different primitive types
+    _export_lines_to_dxf(msp, primitives)
+    _export_curves_to_dxf(msp, primitives)
+    _export_cubic_curves_to_dxf(msp, primitives)
+    _export_arcs_to_dxf(msp, primitives)
 
     # Save the DXF file
     try:
@@ -106,6 +60,74 @@ def export_to_dxf(primitives, filename: str, width: int = 256, height: int = 256
     except Exception as e:
         print(f"Error saving DXF: {e}")
         return False
+
+
+def _export_lines_to_dxf(msp, primitives):
+    """Export line primitives to DXF modelspace."""
+    if 'lines' not in primitives or len(primitives['lines']) == 0:
+        return
+
+    lines_np = np.asarray(primitives['lines'])
+    for line in lines_np:
+        x1, y1, x2, y2, line_width = line[:5]  # Handle variable length
+        # Convert to DXF coordinates (flip Y axis)
+        dxf_x1, dxf_y1 = float(x1), float(height - y1)
+        dxf_x2, dxf_y2 = float(x2), float(height - y2)
+        # Add line to DXF
+        msp.add_line((dxf_x1, dxf_y1), (dxf_x2, dxf_y2))
+
+
+def _export_curves_to_dxf(msp, primitives):
+    """Export quadratic Bézier curves to DXF modelspace."""
+    if 'curves' not in primitives or len(primitives['curves']) == 0:
+        return
+
+    curves_np = np.asarray(primitives['curves'])
+    for curve in curves_np:
+        if len(curve) >= 7:  # x1,y1,x2,y2,x3,y3,width
+            x1, y1, x2, y2, x3, y3 = curve[:6]
+            # Convert to DXF coordinates (flip Y axis)
+            points = [(float(x1), float(height - y1)),
+                     (float(x2), float(height - y2)),
+                     (float(x3), float(height - y3))]
+            # Add spline to DXF
+            msp.add_spline(points, degree=2)
+
+
+def _export_cubic_curves_to_dxf(msp, primitives):
+    """Export cubic Bézier curves to DXF modelspace."""
+    if 'cubic_curves' not in primitives or len(primitives['cubic_curves']) == 0:
+        return
+
+    curves_np = np.asarray(primitives['cubic_curves'])
+    for curve in curves_np:
+        if len(curve) >= 9:  # x1,y1,x2,y2,x3,y3,x4,y4,width
+            x1, y1, x2, y2, x3, y3, x4, y4 = curve[:8]
+            # Convert to DXF coordinates (flip Y axis)
+            points = [(float(x1), float(height - y1)),
+                     (float(x2), float(height - y2)),
+                     (float(x3), float(height - y3)),
+                     (float(x4), float(height - y4))]
+            # Add spline to DXF
+            msp.add_spline(points, degree=3)
+
+
+def _export_arcs_to_dxf(msp, primitives):
+    """Export arc primitives to DXF modelspace."""
+    if 'arcs' not in primitives or len(primitives['arcs']) == 0:
+        return
+
+    arcs_np = np.asarray(primitives['arcs'])
+    for arc in arcs_np:
+        if len(arc) >= 6:  # cx,cy,radius,angle1,angle2,width
+            cx, cy, radius, angle1, angle2 = arc[:5]
+            # Convert angles to degrees and handle coordinate system
+            start_angle = float(np.degrees(angle1))
+            end_angle = float(np.degrees(angle2))
+            # Flip Y axis for center
+            dxf_cx, dxf_cy = float(cx), float(height - cy)
+            # Add arc to DXF
+            msp.add_arc((dxf_cx, dxf_cy), float(radius), start_angle, end_angle)
 
 
 def export_to_svg(primitives, filename: str, width: int = 256, height: int = 256) -> bool:

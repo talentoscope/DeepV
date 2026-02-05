@@ -141,27 +141,42 @@ class LineTensor(PrimitiveTensor):
         return canonical_x, canonical_y
 
     def constrain_parameters(self, patch_width, patch_height, division_epsilon=division_epsilon):
-        # 1. Constrain width and length to be non less than `min_linear` which is nonzero
-        #    to prevent 'dying' of the lines (any position of a zero-sized line is optimal)
+        """Constrain line parameters to valid ranges and canvas boundaries."""
+        self._constrain_min_sizes()
+        self._normalize_theta()
+        self._handle_dwarf_lines()
+        self._constrain_positions(patch_width, patch_height)
+        self._constrain_lengths(patch_width, patch_height, division_epsilon)
+
+    def _constrain_min_sizes(self):
+        """Constrain width and length to prevent zero-sized lines."""
         self._width.data.clamp_(min=min_linear_size)
         self._length.data.clamp_(min=min_linear_size)
 
-        # 2. Keep theta in [0, 2pi)
-        t = self._theta.data
-        t.remainder_(np.pi * 2)
+    def _normalize_theta(self):
+        """Keep theta in [0, 2π) range."""
+        self._theta.data.remainder_(np.pi * 2)
 
-        # 3. Swap width and length for short and wide 'dwarf' lines
+    def _handle_dwarf_lines(self):
+        """Swap width and length for short and wide 'dwarf' lines."""
         w = self._width.data
         l = self._length.data
+        t = self._theta.data
+
         dwarf_lines = w > l * dwarfness_ratio
         w[dwarf_lines], l[dwarf_lines] = l[dwarf_lines], w[dwarf_lines]
         t[dwarf_lines] += np.pi / 2
 
-        # 3.1. Swap moments etc for dwarf lines
+        # Swap optimizer moments for dwarf lines
+        self._swap_optimizer_moments(dwarf_lines)
+
+    def _swap_optimizer_moments(self, dwarf_lines):
+        """Swap Adam optimizer moments for dwarf lines."""
         optimizer = self.optimizer
         w = self._width
         l = self._length
-        if isinstance(optimizer, torch.optim.Adam) and "exp_avg" in optimizer.state[l]:
+
+        if isinstance(optimizer, torch.optim.Adam) and "exp_avg" in optimizer.state.get(l, {}):
             optimizer.state[l]["exp_avg"].data[dwarf_lines], optimizer.state[w]["exp_avg"].data[dwarf_lines] = (
                 optimizer.state[w]["exp_avg"].data[dwarf_lines],
                 optimizer.state[l]["exp_avg"].data[dwarf_lines],
@@ -171,9 +186,8 @@ class LineTensor(PrimitiveTensor):
                 optimizer.state[l]["exp_avg_sq"].data[dwarf_lines],
             )
 
-        # 4. Limit positions of the lines to the canvas
-        #    Nonzero padding is used to prevent nonstability for the lines trying to fit super-narrow raster
-        #    (i.e, with small shading value) at the very edge of the canvas
+    def _constrain_positions(self, patch_width, patch_height):
+        """Limit line positions to canvas boundaries with padding."""
         self._midpoint.data[:, 0].clamp_(
             min=-coordinates_constrain_padding, max=patch_width + coordinates_constrain_padding
         )
@@ -181,11 +195,15 @@ class LineTensor(PrimitiveTensor):
             min=-coordinates_constrain_padding, max=patch_height + coordinates_constrain_padding
         )
 
-        # 5. Limit the length of the line w.r.t the edges of the canvas
+    def _constrain_lengths(self, patch_width, patch_height, division_epsilon):
+        """Limit line lengths based on canvas boundaries."""
         m = self._midpoint.data
         l = self._length.data
+        t = self._theta.data
+
         epsiloned_2cos = t[:, 0].cos().abs() / 2 + division_epsilon
         epsiloned_2sin = t[:, 0].sin().abs() / 2 + division_epsilon
+
         maxl = torch.min(
             torch.stack(
                 [
@@ -198,6 +216,7 @@ class LineTensor(PrimitiveTensor):
             ),
             dim=0,
         )[0]
+
         constrained_l = torch.min(l, maxl.unsqueeze(1)).clamp(min=min_linear_size)
         l.copy_(constrained_l)
 

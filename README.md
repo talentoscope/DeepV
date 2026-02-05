@@ -1,59 +1,165 @@
-## Deep Vectorization of Technical Drawings [[Web page](http://adase.group/3ddl/projects/vectorization/)] [[Paper](https://arxiv.org/abs/2003.05471)] [[Video](https://www.youtube.com/watch?v=lnQNzHJOLvE)] [[Slides](https://drive.google.com/file/d/1ZrykQeA2PE4_8yf1JwuEBk9sS4OP8KeM/view?usp=sharing)]
-Official Pytorch repository for ECCV 2020 paper [Deep Vectorization of Technical Drawings](https://link.springer.com/chapter/10.1007/978-3-030-58601-0_35)
+# Deep Vectorization of Technical Drawings
 
-![alt text](https://drive.google.com/uc?export=view&id=191r0QAaNhOUIaHPOlPWH5H4Jg7qxCMRA)
+[![Paper](https://img.shields.io/badge/arXiv-2003.05471-b31b1b.svg)](https://arxiv.org/abs/2003.05471)
+[![Video](https://img.shields.io/badge/YouTube-Demo-red)](https://www.youtube.com/watch?v=lnQNzHJOLvE)
+[![Slides](https://img.shields.io/badge/Google%20Slides-Presentation-blue)](https://drive.google.com/file/d1ZrykQeA2PE4_8yf1JwuEBk9sS4OP8KeM/view?usp=sharing)
+
+Official PyTorch repository for the ECCV 2020 paper: **Deep Vectorization of Technical Drawings**
+
+![DeepV Pipeline](https://drive.google.com/uc?export=view&id=191r0QAaNhOUIaHPOlPWH5H4Jg7qxCMRA)
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Repository Structure](#repository-structure)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Benchmarking & Evaluation](#benchmarking--evaluation)
+- [Models](#models)
+- [Notebooks](#notebooks)
+- [Docker](#docker)
+- [Contributing](#contributing)
+- [Citation](#citation)
+
+## Overview
+
+DeepV is a deep learning framework for converting raster technical drawings into structured vector representations. The pipeline consists of four main modules:
+
+1. **Cleaning**: Noise removal and artifact reduction using UNet-based models
+2. **Vectorization**: Neural network prediction of geometric primitives from image patches
+3. **Refinement**: Differentiable optimization to improve primitive accuracy
+4. **Merging**: Consolidation of primitives and CAD export (DXF/SVG)
+
+### Key Features
+
+- **Extended Primitives**: Lines, quadratic/cubic Béziers, arcs, splines
+- **Variable Length**: Up to 20 primitives per patch via autoregressive transformer
+- **CAD Export**: Direct export to DXF and SVG formats
+- **Interactive UI**: Gradio-based web interface with real-time rendering
+- **Distributed Training**: Multi-GPU support with PyTorch distributed
+- **Modern Tooling**: Hydra configuration, pytest testing, pre-commit hooks
 
 ## Repository Structure
 
-To make the repository user-friendly, we decided to stick with - module-like structure.
-The main modules are cleaning, vectorization, refinement, and merging(each module has an according to folder).
-Each folder has Readme with more details. Here is the brief content of each folder.
+The repository follows a modular structure for easy development and testing:
 
-* cleaning - model, script to train and run, script to generate synthetic data 
-* vectorization - NN models, script to train
-* refinement - refinement module for curves and lines
-* merging - merging module for curves and lines
-* dataset - modular dataset download system (data/raw/dataset_name format)
-* notebooks - a playground to show some function in action
-* utils - loss functions, rendering, metrics
-* scripts - scripts to run training and evaluation
+```
+DeepV/
+├── cleaning/           # UNet-based noise removal and preprocessing
+├── vectorization/      # Neural network models for primitive prediction
+├── refinement/         # Differentiable optimization of primitives
+├── merging/           # Primitive consolidation and CAD export
+├── dataset/           # Dataset downloaders and processors
+├── notebooks/         # Jupyter notebooks for demos and experiments
+├── util_files/        # Shared utilities and rendering functions
+├── web_ui/            # Gradio-based interactive interface
+├── scripts/           # Training, evaluation, and benchmarking scripts
+├── config/            # Hydra configuration files
+├── cad/               # CAD export functionality (DXF/SVG)
+└── tests/             # Unit and integration tests
+```
 
-## Requirments
-Linux system  
-Python 3
+Each module contains its own README with detailed usage instructions.
 
-See requirments.txt and additional packages
+## Installation
 
-cairo==1.14.12  
-pycairo==1.19.1  
-chamferdist==1.0.0
+### Prerequisites
 
+- Python 3.10+
+- PyTorch with CUDA support (recommended)
+- Linux/Windows/macOS (WSL recommended on Windows)
 
-## Compare 
+### Quick Install
 
-To compare with us without running code, you can download our results on the full pipeline on the test set
-from the project website or contact the authors.
+```bash
+# Clone the repository
+git clone https://github.com/your-repo/DeepV.git
+cd DeepV
 
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-## Notebooks
+# Install dependencies
+pip install -r requirements.txt
 
-To show how some of the usability of the functions, there are several notebooks in the notebooks folder.
-1) Rendering notebook
-2) Dataset loading, model loading, model training, loss function loading
-3) Notebook that illustrates  how to work with pretrained model and how to do refinement on lines(without merging)
-4) Notebook that illustrates how to work with pretrained model and how to do refinement on curves(without merging)
+# (Optional) Install development dependencies
+pip install -r requirements-dev.txt
+```
+
+### System Dependencies
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install libcairo2-dev pkg-config python3-dev
+
+# macOS
+brew install cairo pkg-config
+
+# Windows (via conda)
+conda install cairo
+```
+
+## Benchmarking & Evaluation
+
+DeepV includes comprehensive benchmarking against state-of-the-art baselines:
+
+### Quick Benchmark
+
+```bash
+# Evaluate on synthetic dataset
+python scripts/benchmark_pipeline.py \
+  --data-root /path/to/datasets \
+  --deepv-model-path /path/to/model \
+  --datasets synthetic
+
+# Compare against baselines
+python scripts/benchmark_pipeline.py \
+  --data-root /path/to/datasets \
+  --models deepv baseline1 baseline2 \
+  --datasets floorplancad archcad
+```
+
+### Supported Metrics
+
+- **Vector Metrics**: F1 Score, IoU, Hausdorff Distance, Chamfer Distance
+- **Raster Metrics**: PSNR, MSE, SSIM
+- **CAD Metrics**: Parametric accuracy, topological correctness
+
+See `scripts/README_benchmarking.md` for detailed usage.
 
 ## Models
 
-Download pretrained models for [curve](https://disk.yandex.ru/d/yOZzCSrd-QSACA)
-and for [line](https://disk.yandex.ru/d/FKJuMvNJuy-K9g) .
+### Pre-trained Models
 
-## How to run
-1. Download models.
-2. Either use Dockerfile to create docker image with needed environment or just install requirements
-3. Run scripts/run_pipeline.sh with correct paths for trained model, data dir and output dir. Don't forget to chose primitive type and primitive count in one patch.
+| Model | Primitives | Download | Size |
+|-------|------------|----------|------|
+| Lines | Lines only | [Download](https://disk.yandex.ru/d/FKJuMvNJuy-K9g) | ~500MB |
+| Curves | Lines + Béziers | [Download](https://disk.yandex.ru/d/yOZzCSrd-QSACA) | ~750MB |
 
-P.s. currently cleaning model not included there.
+### Model Architecture
+
+- **Encoder**: ResNet-18 backbone with feature extraction
+- **Decoder**: Autoregressive transformer (up to 20 primitives/patch)
+- **Loss**: Supervised loss with geometric constraints
+- **Training**: Distributed training with mixed precision
+
+## Notebooks
+
+Interactive Jupyter notebooks demonstrating key functionality:
+
+1. **Rendering Examples** (`notebooks/Rendering_example.ipynb`)
+   - Cairo-based rendering of primitives
+   - Bézier splatting vs analytical rendering comparison
+
+2. **Model Training** (`notebooks/Data_loading_and_model_training.ipynb`)
+   - Dataset loading and preprocessing
+   - Model training pipeline
+   - Loss function visualization
+
+3. **Pretrained Evaluation** (`notebooks/pretrain_model_loading_and_evaluation_for_lines.ipynb`)
+   - Loading and evaluating pretrained models
+   - Inference pipeline walkthrough
 
 ## Benchmarking and Evaluation
 
@@ -87,15 +193,39 @@ python scripts/benchmark_pipeline.py \
 - **Raster Metrics**: PSNR, MSE, SSIM
 - **Comprehensive Reports**: Automated comparison against baselines
 
-See `scripts/README_benchmarking.md` for detailed usage instructions.
+See `scripts/README_benchmarking.md` for detailed usage.
 
-Quick developer checks
----------------------
+## Docker
 
-Quick developer checks
----------------------
+### Build Image
 
-This repository is maintained as a personal project. There is no CI configured — run all checks and tests locally before pushing.
+```bash
+docker build -t deepv:latest .
+```
+
+### Run Container
+
+```bash
+# Linux/macOS
+docker run --rm -it --shm-size 128G -p 4045:4045 \
+  --mount type=bind,source=/path/to/DeepV,target=/code \
+  --mount type=bind,source=/path/to/data,target=/data \
+  --mount type=bind,source=/path/to/logs,target=/logs \
+  --name deepv-container deepv:latest /bin/bash
+
+# Windows (PowerShell)
+docker run --rm -it --shm-size 128G -p 4045:4045 `
+  --mount type=bind,source="C:/path/to/DeepV",target=/code `
+  --mount type=bind,source="C:/path/to/data",target=/data `
+  --mount type=bind,source="C:/path/to/logs",target=/logs `
+  --name deepv-container deepv:latest /bin/bash
+```
+
+### Activate Environment
+
+```bash
+. /opt/.venv/vect-env/bin/activate/
+```
 
 Before running heavy training or the full pipeline, run the environment validator and the test suite locally:
 
@@ -153,26 +283,34 @@ Activating the packaged environment inside container:
 . /opt/.venv/vect-env/bin/activate/
 ```
 
-Note on `util_files` helpers
-----------------------------
+## Contributing
 
-This repository previously included `util_files/os.py` which shadowed the Python standard library `os` module. It has been renamed to `util_files/file_utils.py` to avoid conflicts. When editing or importing utilities, prefer:
+We welcome contributions! Please see our [contributing guide](CONTRIBUTING.md) for details on:
 
-- `from util_files import file_utils as fu` (explicit alias), or
-- `from util_files.file_utils import require_empty`
+- Development setup and workflow
+- Code quality standards
+- Testing requirements
+- Pull request process
 
+### Quick Developer Setup
 
-Anaconda with packages are installed in follder opt/ . Environement with packages that needed are installed in environment vect-env.
-. To activate it run in container
 ```bash
-. /opt/.venv/vect-env/bin/activate/
+# Validate environment
+python scripts/validate_env.py
+
+# Run tests
+pytest -q
+
+# Format code
+black .
+isort .
 ```
 
-## How to train
-Look at vectorization /srcipts/train_vectorizatrion 
+## Citation
 
-### Citing
-```
+If you use this code in your research, please cite our paper:
+
+```bibtex
 @InProceedings{egiazarian2020deep,
   title="Deep Vectorization of Technical Drawings",
   author="Egiazarian, Vage and Voynov, Oleg and Artemov, Alexey and Volkhonskiy, Denis and Safin, Aleksandr and Taktasheva, Maria and Zorin, Denis and Burnaev, Evgeny",
@@ -184,3 +322,42 @@ Look at vectorization /srcipts/train_vectorizatrion
   isbn="978-3-030-58601-0"
 }
 ```
+
+---
+
+## Requirements
+
+**System Requirements:**
+- Linux system
+- Python 3.8+
+- CUDA-compatible GPU (recommended)
+
+**Key Dependencies:**
+- PyTorch 2.0+
+- torchvision
+- cairo==1.14.12
+- pycairo==1.19.1
+- chamferdist==1.0.0
+- ezdxf (for CAD export)
+- gradio (for web UI)
+
+See `requirements.txt` for complete list.
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Import Errors**: Ensure all dependencies are installed and virtual environment is activated
+2. **CUDA Issues**: Check PyTorch CUDA compatibility with your GPU drivers
+3. **Memory Errors**: Reduce batch size or use smaller patch sizes
+4. **Rendering Issues**: Install system cairo library (`libcairo2-dev` on Ubuntu)
+
+### Getting Help
+
+- **Issues**: [GitHub Issues](https://github.com/your-repo/DeepV/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-repo/DeepV/discussions)
+- **Documentation**: See module-specific READMEs and docstrings
+
+---
+
+*DeepV is actively maintained. For questions about specific modules, see the README in each subdirectory.*

@@ -150,60 +150,97 @@ def vector_estimation(patches_rgb, model, device, it, options):
     return patches_vector
 
 
-def main(options):
-    if len(options.gpu) == 0:
-        device = torch.device("cpu")
-        prefetch_data = False
-    elif len(options.gpu) == 1:
-        device = torch.device("cuda:{}".format(options.gpu[0]))
-        prefetch_data = True
-    else:
-        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
-        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(options.gpu)
-        device = torch.device("cuda:{}".format(options.gpu[0]))
-        prefetch_data = True
-        parallel = True
+class PipelineRunner:
+    """Handles the execution of the DeepV vectorization pipeline."""
 
-    ##reading images
-    images = read_data(options, image_type="L")
+    def __init__(self, options):
+        self.options = options
+        self.device = self._setup_device()
+        self.model = None
 
-    ##loading model
-    model = load_model(options.json_path).to(device)
-    checkpoint = serialize(torch.load(options.model_path))
-    model.load_state_dict(checkpoint["model_state_dict"])
-    ## iterating through images and calculating
-    for it, image in enumerate(images):
-        image_tensor = image.unsqueeze(0).to(device)
-        options.sample_name = options.image_name[it]
-        # splitting image
-        patches_rgb, patches_offsets, input_rgb = split_to_patches(
-            image_tensor.cpu().numpy()[0] * 255, 64, options.overlap
-        )
-        patches_vector = vector_estimation(patches_rgb, model, device, it, options)
-
-        if options.primitive_type == "curve":
-            intermediate_output = {
-                "options": options,
-                "patches_offsets": patches_offsets,
-                "patches_vector": patches_vector,
-                "cleaned_image_shape": (image_tensor.shape[1], image_tensor.shape[2]),
-                "patches_rgb": patches_rgb,
-            }
-            primitives_after_optimization, patch__optim_offsets, repatch_scale, optim_vector_image = curve_refinement(
-                options, intermediate_output, optimization_iters_n=options.diff_render_it
-            )
-            merging_result = curve_merging(options, vector_image_from_optimization=optim_vector_image)
-        elif options.primitive_type == "line":
-            vector_after_opt = render_optimization_hard(
-                patches_rgb, patches_vector, device, options, options.image_name[it]
-            )
-            merging_result, rendered_merged_image = postprocess(
-                vector_after_opt, patches_offsets, input_rgb, image, 0, options
-            )
+    def _setup_device(self):
+        """Set up the appropriate compute device."""
+        if len(self.options.gpu) == 0:
+            return torch.device("cpu")
+        elif len(self.options.gpu) == 1:
+            return torch.device(f"cuda:{self.options.gpu[0]}")
         else:
-            raise (options.primitive_type + "not implemented, please choose between line or curve")
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+            os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(self.options.gpu)
+            return torch.device(f"cuda:{self.options.gpu[0]}")
 
+    def _load_model(self):
+        """Load and initialize the ML model."""
+        self.model = load_model(self.options.json_path).to(self.device)
+        checkpoint = serialize(torch.load(self.options.model_path))
+        self.model.load_state_dict(checkpoint["model_state_dict"])
+
+    def _process_images(self):
+        """Process all images through the pipeline."""
+        images = read_data(self.options, image_type="L")
+
+        for it, image in enumerate(images):
+            self._process_single_image(image, it)
+
+    def _process_single_image(self, image, image_index):
+        """Process a single image through the vectorization pipeline."""
+        image_tensor = image.unsqueeze(0).to(self.device)
+        self.options.sample_name = self.options.image_name[image_index]
+
+        # Split image into patches
+        patches_rgb, patches_offsets, input_rgb = split_to_patches(
+            image_tensor.cpu().numpy()[0] * 255, 64, self.options.overlap
+        )
+
+        # Run vector estimation
+        patches_vector = vector_estimation(patches_rgb, self.model, self.device, image_index, self.options)
+
+        # Run refinement and merging based on primitive type
+        if self.options.primitive_type == "curve":
+            self._process_curve_pipeline(patches_rgb, patches_vector, patches_offsets, input_rgb)
+        elif self.options.primitive_type == "line":
+            self._process_line_pipeline(patches_rgb, patches_vector, patches_offsets, input_rgb, image)
+        else:
+            raise ValueError(f"Unsupported primitive type: {self.options.primitive_type}")
+
+    def _process_curve_pipeline(self, patches_rgb, patches_vector, patches_offsets, input_rgb):
+        """Process image using curve primitives pipeline."""
+        intermediate_output = {
+            "options": self.options,
+            "patches_offsets": patches_offsets,
+            "patches_vector": patches_vector,
+            "cleaned_image_shape": (patches_rgb.shape[1], patches_rgb.shape[2]),
+            "patches_rgb": patches_rgb,
+        }
+
+        primitives_after_optimization, patch__optim_offsets, repatch_scale, optim_vector_image = curve_refinement(
+            self.options, intermediate_output, optimization_iters_n=self.options.diff_render_it
+        )
+
+        merging_result = curve_merging(self.options, vector_image_from_optimization=optim_vector_image)
         return merging_result
+
+    def _process_line_pipeline(self, patches_rgb, patches_vector, patches_offsets, input_rgb, image):
+        """Process image using line primitives pipeline."""
+        vector_after_opt = render_optimization_hard(
+            patches_rgb, patches_vector, self.device, self.options, self.options.image_name[0]
+        )
+
+        merging_result, rendered_merged_image = postprocess(
+            vector_after_opt, patches_offsets, input_rgb, image, 0, self.options
+        )
+        return merging_result
+
+    def run(self):
+        """Execute the complete pipeline."""
+        self._load_model()
+        self._process_images()
+
+
+def main(options):
+    """Main entry point for the pipeline."""
+    runner = PipelineRunner(options)
+    return runner.run()
 
 
 def parse_args():

@@ -1,11 +1,40 @@
-# Deep Vectorization Codebase Analysis and Improvement Plan  
+# Deep Vectorization Codebase Analysis and Improvement Plan
+
 **(Updated February 2026 – talentoscope/DeepV fork)**
+
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Module-by-Module Analysis](#module-by-module-analysis)
+  - [Cleaning Module](#cleaning-module)
+  - [Vectorization Module](#vectorization-module)
+  - [Refinement Module](#refinement-module)
+  - [Merging Module](#merging-module)
+  - [Dataset Module](#dataset-module)
+  - [Util Files](#util-files)
+  - [Notebooks / Web UI](#notebooks--web-ui)
+- [Cross-Cutting Concerns](#cross-cutting-concerns)
+  - [Dependencies](#dependencies)
+  - [Testing](#testing)
+  - [Documentation](#documentation)
+  - [Code Quality](#code-quality)
+  - [Performance](#performance)
+  - [Features](#features)
+  - [Accuracy / Benchmarks](#accuracy--benchmarks)
+- [Roadmap (Refined February 2026)](#roadmap-refined-february-2026)
+  - [Phase 1–2: Foundation & Optimization – Mostly Completed](#phase-1-2-foundation--optimization--mostly-completed)
+  - [Phase 3: Enhancement – COMPLETED ✓](#phase-3-enhancement--completed-)
+  - [Phase 4: Production-Ready & Robustness (1–3 months, high priority now)](#phase-4-production-ready--robustness-1-3-months-high-priority-now)
+  - [Phase 5: Advanced & Next-Gen (Ongoing, 3–9 months)](#phase-5-advanced--next-gen-ongoing-3-9-months)
+  - [Recommended Immediate Next Steps (Priority Order)](#recommended-immediate-next-steps-priority-order)
+
+---
 
 ## Project Overview
 
 The Deep Vectorization project converts raster technical drawings (floor plans, engineering diagrams, architectural sketches) into structured vector representations using deep learning. The core pipeline includes cleaning (artifact/noise removal), vectorization (primitive detection), refinement (differentiable optimization), and merging (primitive consolidation). Implemented in PyTorch, it now supports extended primitives (lines, quadratic/cubic Béziers, arcs, splines), variable-length autoregressive prediction, parametric CAD export (DXF/SVG), and an interactive Gradio-based UI with Bézier splatting rendering.
 
-**Key Strengths (Current State):**
+### Key Strengths (Current State)
 - Highly modular design enabling independent module development and testing
 - End-to-end raster-to-vector-to-CAD pipeline
 - Broad primitive support including variable counts per patch (up to 20)
@@ -13,7 +42,7 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 - Distributed multi-GPU training support
 - Modern tooling: pre-commit hooks (black, flake8, mypy), pytest suite (14+ tests), Hydra configuration, poetry/pyproject.toml management
 
-**Overall Assessment:**
+### Overall Assessment
 - The fork has made excellent progress since the original Vahe1994 repository: Phase 3 enhancements are fully implemented, transforming the project from a research prototype into a more practical tool with CAD export and user-facing demo.
 - Remaining pain points typical of evolved academic codebases persist: incomplete docstrings (especially in refinement/merging), partial type hint coverage (~20–30% in critical areas), scattered magic numbers/hardcoded tolerances, limited integration/end-to-end testing, and unprofiled performance bottlenecks (particularly refinement).
 - Strong opportunities remain in 2025–2026 trends: diffusion transformers for generative vectorization, multimodal (text+image) conditioned synthesis, panoptic symbol spotting on datasets like ArchCAD-400K and FloorPlanCAD, and tighter integration with emerging SVG generation models (e.g., OmniSVG-style VLM+distillation approaches or LayerTracer diffusion transformers).
@@ -98,6 +127,8 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 - Add upload + edit loop in UI (vector correction feedback).
 - Explore deployment to Hugging Face Spaces for public access.
 
+---
+
 ## Cross-Cutting Concerns
 
 ### Dependencies
@@ -129,6 +160,8 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 - Build evaluation harness: F1/IoU/Hausdorff vs VectorGraphNET, newer diffusion-based methods.
 - Report on ArchCAD-400K and CAD-VGDrawing symbol spotting + vectorization quality.
 
+---
+
 ## Roadmap (Refined February 2026)
 
 ### Phase 1–2: Foundation & Optimization – Mostly Completed
@@ -153,19 +186,20 @@ Extended primitives, variable-length autoregressive model, CAD export, Gradio UI
 - Community: HF model hub upload, public demo Spaces
 - Regular security/dependency maintenance
 
-**Recommended Immediate Next Steps (Priority Order):**
-1. **1–2 weeks Quick Wins**  
-   - Extract all refinement/merging magic numbers to Hydra configs  
-   - Add docstrings to 10–15 most complex functions  
-   - Extend type hints in refinement pipeline  
+### Recommended Immediate Next Steps (Priority Order)
 
-2. **2–6 weeks Medium Term**  
-   - Refactor refinement long functions → classes/modules  
-   - Build basic end-to-end integration test suite  
-   - Add structured logging + exception hierarchy  
+#### 1–2 weeks Quick Wins
+- Extract all refinement/merging magic numbers to Hydra configs
+- Add docstrings to 10–15 most complex functions
+- Extend type hints in refinement pipeline
 
-3. **2–4 months Long Term**  
-   - Reach high type-hint coverage + strict mypy  
-   - Full performance profiling + targeted optimizations  
-   - Integrate ArchCAD-400K and CAD-VGDrawing + symbol spotting evaluation  
-   - Explore diffusion-transformer prototype for generative mode
+#### 2–6 weeks Medium Term
+- Refactor refinement long functions → classes/modules
+- Build basic end-to-end integration test suite
+- Add structured logging + exception hierarchy
+
+#### 2–4 months Long Term
+- Reach high type-hint coverage + strict mypy
+- Full performance profiling + targeted optimizations
+- Integrate ArchCAD-400K and CAD-VGDrawing + symbol spotting evaluation
+- Explore diffusion-transformer prototype for generative mode
