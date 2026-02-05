@@ -283,53 +283,6 @@ def download_quickdraw(output_dir: Path, test_mode: bool = False) -> Dict:
         raise
 
 
-def download_tuberlin(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download TU-Berlin sketches from Hugging Face."""
-    try:
-        from huggingface_hub import snapshot_download
-    except ImportError:
-        raise ImportError("Install huggingface_hub: pip install huggingface_hub")
-
-    dataset_dir = output_dir / "raw" / "tuberlin"
-    dataset_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"Downloading TU-Berlin to {dataset_dir}...")
-
-    if test_mode:
-        allow_patterns = ["*.json", "data/train-00000-of-*.parquet"]
-    else:
-        allow_patterns = None
-
-    try:
-        snapshot_download(
-            repo_id="kmewhort/tu-berlin-png",
-            repo_type="dataset",
-            local_dir=str(dataset_dir),
-            allow_patterns=allow_patterns,
-            max_workers=4,
-        )
-        print(f"[OK] Downloaded TU-Berlin to {dataset_dir}")
-
-        metadata = {
-            "name": "TU-Berlin",
-            "size": "20k sketches (250 categories, 80 each)",
-            "formats": ["PNG", "Parquet"],
-            "source": "https://huggingface.co/datasets/kmewhort/tu-berlin-png",
-            "license": "Research",
-            "download_date": str(Path(dataset_dir).stat().st_mtime),
-            "test_mode": test_mode,
-        }
-
-        with open(dataset_dir / "metadata.json", "w") as f:
-            json.dump(metadata, f, indent=2)
-
-        return metadata
-
-    except Exception as e:
-        print(f"[ERR] Failed to download TU-Berlin: {e}")
-        raise
-
-
 def download_sesyd(output_dir: Path, test_mode: bool = False) -> Dict:
     """Download SESYD synthetic floorplans."""
     import requests
@@ -501,63 +454,6 @@ def download_msd(output_dir: Path, test_mode: bool = False) -> Dict:
 
     except Exception as e:
         print(f"[ERR] Failed to download MSD: {e}")
-        raise
-
-
-def download_cvcfp(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download CVC-FP floorplan dataset."""
-    dataset_dir = output_dir / "raw" / "cvcfp"
-    dataset_dir.mkdir(parents=True, exist_ok=True)
-
-    if test_mode:
-        print("Test mode: CVC-FP is a small dataset (~20 MB)")
-        
-    print(f"Downloading CVC-FP to {dataset_dir}...")
-    
-    cvcfp_url = "http://dag.cvc.uab.es/DATASETS/CVC-FP.zip"
-    eval_url = "http://dag.cvc.uab.es/DATASETS/Evaluation.zip"
-    
-    try:
-        zip_path = dataset_dir / "CVC-FP.zip"
-        eval_zip_path = dataset_dir / "Evaluation.zip"
-        
-        download_with_progress(cvcfp_url, zip_path)
-        
-        if not test_mode:
-            download_with_progress(eval_url, eval_zip_path)
-        
-        print("Extracting archives...")
-        with zipfile.ZipFile(zip_path, "r") as zip_ref:
-            zip_ref.extractall(dataset_dir)
-        
-        if not test_mode and eval_zip_path.exists():
-            with zipfile.ZipFile(eval_zip_path, "r") as zip_ref:
-                zip_ref.extractall(dataset_dir / "evaluation")
-            eval_zip_path.unlink()
-        
-        zip_path.unlink()
-        
-        print(f"[OK] Downloaded CVC-FP to {dataset_dir}")
-
-        metadata = {
-            "name": "CVC-FP",
-            "size": "122 floorplans (4 subsets)",
-            "formats": ["Raster", "Masks", "Vector derivable"],
-            "source": "http://dag.cvc.uab.es/DATASETS/",
-            "license": "Research",
-            "download_date": str(Path(dataset_dir).stat().st_mtime),
-            "test_mode": test_mode,
-        }
-
-        with open(dataset_dir / "metadata.json", "w") as f:
-            json.dump(metadata, f, indent=2)
-
-        return metadata
-
-    except Exception as e:
-        print(f"[ERR] Failed to download CVC-FP: {e}")
-        if zip_path.exists():
-            zip_path.unlink()
         raise
 
 
@@ -1003,6 +899,68 @@ def download_cadvgdrawing(output_dir: Path, test_mode: bool = False) -> Dict:
         raise
 
 
+def download_fplanpoly(output_dir: Path, test_mode: bool = False) -> Dict:
+    """Download FPLAN-POLY from archived CVC site."""
+    import requests
+
+    dataset_dir = output_dir / "raw" / "fplanpoly"
+    dataset_dir.mkdir(parents=True, exist_ok=True)
+
+    print(f"Downloading FPLAN-POLY to {dataset_dir}...")
+
+    # Archived URL from web.archive.org
+    fplanpoly_url = "https://web.archive.org/web/20130621114030/http://www.cvc.uab.es/~marcal/FPLAN-POLY/img/FPLAN-POLY.zip"
+
+    if test_mode:
+        print("Test mode: creating metadata only")
+        metadata = {
+            "name": "FPLAN-POLY",
+            "size": "42 floorplans + 38 symbol models",
+            "formats": ["DXF vector"],
+            "source": "https://web.archive.org/web/20130621114030/http://www.cvc.uab.es/~marcal/FPLAN-POLY/",
+            "license": "Research",
+            "test_mode": True,
+            "note": "Test mode: full download requires accessing archived CVC site",
+        }
+        with open(dataset_dir / "metadata.json", "w") as f:
+            json.dump(metadata, f, indent=2)
+        print(f"[OK] Created metadata for FPLAN-POLY at {dataset_dir}")
+        return metadata
+
+    zip_path = dataset_dir / "FPLAN-POLY.zip"
+
+    try:
+        download_with_progress(fplanpoly_url, zip_path)
+
+        print("Extracting archive...")
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            zip_ref.extractall(dataset_dir)
+
+        # Clean up zip file
+        zip_path.unlink()
+
+        metadata = {
+            "name": "FPLAN-POLY",
+            "size": "42 floorplans + 38 symbol models",
+            "formats": ["DXF vector"],
+            "source": "https://web.archive.org/web/20130621114030/http://www.cvc.uab.es/~marcal/FPLAN-POLY/",
+            "license": "Research",
+            "download_date": str(Path(dataset_dir).stat().st_mtime),
+            "test_mode": test_mode,
+            "note": "Contains vector geometric primitives (polylines) suitable for DeepV",
+        }
+
+        with open(dataset_dir / "metadata.json", "w") as f:
+            json.dump(metadata, f, indent=2)
+
+        print(f"[OK] Downloaded and extracted FPLAN-POLY to {dataset_dir}")
+        return metadata
+
+    except Exception as e:
+        print(f"[ERR] Failed to download FPLAN-POLY: {e}")
+        raise
+
+
 # Dataset registry
 DATASETS = {
     "floorplancad": {
@@ -1033,19 +991,13 @@ DATASETS = {
         "size": "~1-5 GB (subset)",
         "license": "CC BY 4.0",
     },
-    "tuberlin": {
-        "name": "TU-Berlin",
-        "description": "20k sketches (250 categories)",
-        "downloader": download_tuberlin,
-        "size": "~500 MB",
-        "license": "Research",
-    },
     "sesyd": {
         "name": "SESYD",
-        "description": "1,000 synthetic floorplans",
-        "downloader": download_sesyd,
+        "description": "1,000 synthetic floorplans (unavailable)",
+        "downloader": None,
         "size": "~100 MB",
         "license": "Free",
+        "note": "Original site unavailable (404). Dataset unsuitable for DeepV - contains symbol spotting data, not vector primitives.",
     },
     "impact": {
         "name": "IMPACT",
@@ -1060,13 +1012,6 @@ DATASETS = {
         "downloader": download_msd,
         "size": "~17.4 GB",
         "license": "CC BY-SA 4.0",
-    },
-    "cvcfp": {
-        "name": "CVC-FP",
-        "description": "122 floorplans (4 subsets)",
-        "downloader": download_cvcfp,
-        "size": "~20 MB",
-        "license": "Research",
     },
     "sketchgraphs": {
         "name": "SketchGraphs",
@@ -1098,17 +1043,19 @@ DATASETS = {
     },
     "engsymbols": {
         "name": "Engineering Symbols",
-        "description": "2,432 engineering symbol instances",
+        "description": "2,432 engineering symbol instances (UNSUITABLE - raster symbol classification, not vector primitives)",
         "downloader": download_engsymbols,
         "size": "~Small",
         "license": "Research",
+        "note": "UNSUITABLE for DeepV - contains 100x100 pixel binary images for CNN classification, not vector geometric primitives",
     },
     "rplan": {
         "name": "RPLAN",
-        "description": "80k+ floorplans (access request)",
+        "description": "80k+ floorplans with vector boundaries/rooms/doors/windows",
         "downloader": download_rplan,
         "size": "~Large",
         "license": "Free (request)",
+        "note": "Highly suitable for DeepV - contains vector geometric primitives",
     },
     # Additional datasets from DATA_SOURCES.md
     "cadvgdrawing": {
@@ -1191,21 +1138,13 @@ DATASETS = {
         "license": "Apache 2.0 variant",
         "note": "Download from Harvard Dataverse: https://dataverse.harvard.edu/",
     },
-    "iamhandwriting": {
-        "name": "IAM Handwriting Database",
-        "description": "115k word images + 13k online sequences",
-        "downloader": None,
-        "size": "~Large",
-        "license": "Research",
-        "note": "Register for download: https://fki.tic.heia-fr.ch/databases/iam-handwriting-database",
-    },
     "fplanpoly": {
         "name": "FPLAN-POLY",
-        "description": "48 polygonal floorplans",
-        "downloader": None,
+        "description": "42 floorplans + 38 symbol models in DXF vector format",
+        "downloader": download_fplanpoly,
         "size": "~Small",
         "license": "Research",
-        "note": "Download from CVC site: http://www.cvc.uab.es/~marcal/FPLAN-POLY/index.html",
+        "note": "Highly suitable for DeepV - contains vector geometric primitives (polylines)",
     },
     "dld": {
         "name": "DLD (Degraded Line Drawings)",

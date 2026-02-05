@@ -1,6 +1,9 @@
 """Verify downloaded dataset files under data/raw and write a report."""
 from pathlib import Path
 import json
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from dataset.downloaders import download_dataset as mod
 
 root = Path('data') / 'raw'
