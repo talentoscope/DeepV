@@ -17,7 +17,7 @@ import time
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from scripts.evaluation_suite import BenchmarkEvaluator
+from evaluation_suite import BenchmarkEvaluator
 from util_files.file_utils import ensure_dir
 
 
@@ -242,9 +242,9 @@ class BenchmarkRunner:
             f.write("# DeepV Benchmark Summary Report\n\n")
 
             f.write("## Executive Summary\n\n")
-            f.write("This report presents a comprehensive evaluation of DeepV against\n")
-            f.write("state-of-the-art vectorization methods across\n")
-            f.write("multiple benchmark datasets.\n\n")
+            f.write("This report presents a comprehensive evaluation of DeepV\n")
+            f.write("against advanced vectorization methods\n")
+            f.write("across multiple benchmark datasets.\n\n")
 
             # Performance highlights
             f.write("## Key Findings\n\n")

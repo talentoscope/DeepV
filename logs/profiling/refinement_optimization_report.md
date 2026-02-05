@@ -4,11 +4,11 @@
 
 ### Render 64X64 Patch
 
-- **Time**: 0.0703s
+- **Time**: 0.0697s
 
 ### Gpu Line Renderer 64X64
 
-- **Time**: 0.9157s
+- **Time**: 0.9808s
 
 ### Energy Computation
 
@@ -20,8 +20,8 @@
 
 ## Identified Bottlenecks
 
-- Rendering: 0.0703s (target: <0.01s)
-- Full pipeline: 3.461s per patch (target: <2.0s)
+- Rendering: 0.0697s (target: <0.01s)
+- Full pipeline: 3.262s per patch (target: <2.0s)
 
 ## Optimization Recommendations
 

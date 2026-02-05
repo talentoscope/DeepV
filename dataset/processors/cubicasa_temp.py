@@ -1,4 +1,4 @@
-"""Processor for CubiCasa5K Dataset."""
+﻿"""Processor for CubiCasa5K Dataset."""
 
 from pathlib import Path
 from typing import Dict, Any
@@ -376,4 +376,4 @@ class CubiCasa5KProcessor(Processor):
 
         except Exception as e:
             print(f"Error processing SVG annotations for {floorplan_id}: {e}")
-            return None
+            return None 

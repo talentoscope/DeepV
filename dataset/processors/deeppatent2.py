@@ -3,7 +3,6 @@ import shutil
 import json
 from .base import Processor
 from typing import Dict, List, Any
-import xml.etree.ElementTree as ET
 
 
 class DeepPatent2Processor(Processor):
@@ -17,24 +16,24 @@ class DeepPatent2Processor(Processor):
     def standardize(self, raw_dir: Path, output_base: Path, dry_run: bool = True) -> Dict:
         raw_dir = Path(raw_dir)
         output_base = Path(output_base)
-        ras_dir = output_base / 'raster' / 'deeppatent2'
-        vec_dir = output_base / 'vector' / 'deeppatent2'
+        ras_dir = output_base / "raster" / "deeppatent2"
+        vec_dir = output_base / "vector" / "deeppatent2"
 
         # Find all PNG and JSON files
-        pngs = list(raw_dir.rglob('*.png'))
-        jsons = list(raw_dir.rglob('*.json'))
+        pngs = list(raw_dir.rglob("*.png"))
+        jsons = list(raw_dir.rglob("*.json"))
 
         # Filter out metadata.json files
-        jsons = [j for j in jsons if j.name != 'metadata.json']
+        jsons = [j for j in jsons if j.name != "metadata.json"]
 
         if dry_run:
             return {
-                'dataset': 'deeppatent2',
-                'png_count': len(pngs),
-                'json_count': len(jsons),
-                'ras_dir': str(ras_dir),
-                'vec_dir': str(vec_dir),
-                'dry_run': True,
+                "dataset": "deeppatent2",
+                "png_count": len(pngs),
+                "json_count": len(jsons),
+                "ras_dir": str(ras_dir),
+                "vec_dir": str(vec_dir),
+                "dry_run": True,
             }
 
         ras_dir.mkdir(parents=True, exist_ok=True)
@@ -61,12 +60,12 @@ class DeepPatent2Processor(Processor):
                 continue
 
         return {
-            'dataset': 'deeppatent2',
-            'png_count': len(pngs),
-            'png_moved': png_moved,
-            'json_count': len(jsons),
-            'json_processed': json_processed,
-            'svg_created': svg_created,
+            "dataset": "deeppatent2",
+            "png_count": len(pngs),
+            "png_moved": png_moved,
+            "json_count": len(jsons),
+            "json_processed": json_processed,
+            "svg_created": svg_created,
         }
 
     def _process_json_to_svg(self, json_file: Path, vec_dir: Path) -> int:
@@ -74,7 +73,7 @@ class DeepPatent2Processor(Processor):
 
         Returns the number of SVG files created (0 or 1).
         """
-        with open(json_file, 'r', encoding='utf-8') as f:
+        with open(json_file, "r", encoding="utf-8") as f:
             try:
                 data = json.load(f)
             except json.JSONDecodeError:
@@ -86,7 +85,7 @@ class DeepPatent2Processor(Processor):
 
         if svg_content:
             svg_file = vec_dir / f"{json_file.stem}.svg"
-            with open(svg_file, 'w', encoding='utf-8') as f:
+            with open(svg_file, "w", encoding="utf-8") as f:
                 f.write(svg_content)
             return 1
 
@@ -108,7 +107,7 @@ class DeepPatent2Processor(Processor):
         svg_elements = []
 
         for i, obj in enumerate(objects):
-            bbox = obj.get('bbox') or obj.get('bounding_box')
+            bbox = obj.get("bbox") or obj.get("bounding_box")
             if bbox and len(bbox) >= 4:
                 x, y, w, h = bbox[:4]
                 # Ensure positive dimensions
@@ -116,12 +115,14 @@ class DeepPatent2Processor(Processor):
                 h = max(h, 1)
 
                 # Get object label/category
-                label = obj.get('object', obj.get('class', obj.get('category', f'object_{i}')))
+                label = obj.get("object", obj.get("class", obj.get("category", f"object_{i}")))
 
                 # Create rectangle element
-                rect = f'<rect x="{x}" y="{y}" width="{w}" height="{h}" ' \
-                      f'fill="none" stroke="black" stroke-width="2" ' \
-                      f'title="{label}"/>'
+                rect = (
+                    f'<rect x="{x}" y="{y}" width="{w}" height="{h}" '
+                    f'fill="none" stroke="black" stroke-width="2" '
+                    f'title="{label}"/>'
+                )
                 svg_elements.append(rect)
 
         if not svg_elements:
@@ -131,27 +132,29 @@ class DeepPatent2Processor(Processor):
         svg_width = width or 1000  # Default width if not found
         svg_height = height or 1000  # Default height if not found
 
-        svg_content = f'<?xml version="1.0" encoding="UTF-8"?>\n' \
-                     f'<svg width="{svg_width}" height="{svg_height}" ' \
-                     f'xmlns="http://www.w3.org/2000/svg">\n' \
-                     f'  <title>{filename}</title>\n' \
-                     f'  {"  ".join(svg_elements)}\n' \
-                     f'</svg>'
+        svg_content = (
+            f'<?xml version="1.0" encoding="UTF-8"?>\n'
+            f'<svg width="{svg_width}" height="{svg_height}" '
+            f'xmlns="http://www.w3.org/2000/svg">\n'
+            f"  <title>{filename}</title>\n"
+            f'  {"  ".join(svg_elements)}\n'
+            f"</svg>"
+        )
 
         return svg_content
 
     def _extract_image_dimensions(self, data: Dict[str, Any]) -> tuple:
         """Extract image width and height from JSON data."""
         # Try various possible keys for image dimensions
-        width = data.get('width') or data.get('image_width') or data.get('img_width')
-        height = data.get('height') or data.get('image_height') or data.get('img_height')
+        width = data.get("width") or data.get("image_width") or data.get("img_width")
+        height = data.get("height") or data.get("image_height") or data.get("img_height")
 
         # Try nested structures
-        if not width and 'image' in data:
-            img_data = data['image']
+        if not width and "image" in data:
+            img_data = data["image"]
             if isinstance(img_data, dict):
-                width = img_data.get('width')
-                height = img_data.get('height')
+                width = img_data.get("width")
+                height = img_data.get("height")
 
         return width, height
 
@@ -160,7 +163,7 @@ class DeepPatent2Processor(Processor):
         objects = []
 
         # Try various possible keys for objects
-        possible_keys = ['objects', 'annotations', 'items', 'elements', 'shapes', 'regions']
+        possible_keys = ["objects", "annotations", "items", "elements", "shapes", "regions"]
 
         for key in possible_keys:
             if key in data and isinstance(data[key], list):
@@ -169,7 +172,7 @@ class DeepPatent2Processor(Processor):
         # Handle case where objects are at root level
         if not objects and isinstance(data, dict):
             # Check if the data itself represents an object
-            if any(k in data for k in ['bbox', 'bounding_box', 'object', 'class', 'category']):
+            if any(k in data for k in ["bbox", "bounding_box", "object", "class", "category"]):
                 objects.append(data)
 
         return objects

@@ -5,7 +5,6 @@ Profiles the refinement pipeline components to identify and optimize bottlenecks
 Target: <2s per 64x64 patch
 """
 
-import os
 import sys
 import time
 import cProfile
@@ -19,7 +18,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
 import torch
-from PIL import Image
 
 
 class RefinementProfiler:
@@ -28,7 +26,9 @@ class RefinementProfiler:
     def __init__(self):
         self.results = {}
 
-    def create_test_patch_data(self, num_patches: int = 4, primitives_per_patch: int = 10) -> Tuple[np.ndarray, np.ndarray]:
+    def create_test_patch_data(
+        self, num_patches: int = 4, primitives_per_patch: int = 10
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Create realistic test data for refinement profiling.
 
@@ -56,10 +56,10 @@ class RefinementProfiler:
                 # Draw simple line
                 if x1 != x2 and y1 != y2:
                     # Simple line drawing
-                    length = max(abs(x2-x1), abs(y2-y1))
+                    length = max(abs(x2 - x1), abs(y2 - y1))
                     for t in range(length):
-                        x = int(x1 + (x2-x1) * t / length)
-                        y = int(y1 + (y2-y1) * t / length)
+                        x = int(x1 + (x2 - x1) * t / length)
+                        y = int(y1 + (y2 - y1) * t / length)
                         if 0 <= x < 64 and 0 <= y < 64:
                             patch_rgb[y, x] = 0
 
@@ -79,7 +79,9 @@ class RefinementProfiler:
 
         return np.array(patches_rgb), np.array(patches_vector)
 
-    def profile_function_detailed(self, func, *args, name: str = "", **kwargs) -> Dict[str, Any]:
+    def profile_function_detailed(
+        self, func, *args, name: str = "", **kwargs
+    ) -> Dict[str, Any]:
         """
         Profile a function with detailed timing and memory analysis.
 
@@ -107,10 +109,9 @@ class RefinementProfiler:
         # Time the function
         start_time = time.time()
         try:
-            result = func(*args, **kwargs)
+            func(*args, **kwargs)
             success = True
         except Exception as e:
-            result = None
             success = False
             error = str(e)
         end_time = time.time()
@@ -127,32 +128,35 @@ class RefinementProfiler:
 
         # Get profiling stats
         s = io.StringIO()
-        ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
+        ps = pstats.Stats(profiler, stream=s).sort_stats("cumulative")
         ps.print_stats(20)  # Top 20 functions
         profile_output = s.getvalue()
 
         result_dict = {
-            'name': name,
-            'success': success,
-            'total_time': end_time - start_time,
-            'memory_before': memory_before,
-            'memory_after': memory_after,
-            'peak_memory': peak_memory,
-            'memory_delta': memory_after - memory_before,
-            'profile_output': profile_output[:2000],  # Limit output size
+            "name": name,
+            "success": success,
+            "total_time": end_time - start_time,
+            "memory_before": memory_before,
+            "memory_after": memory_after,
+            "peak_memory": peak_memory,
+            "memory_delta": memory_after - memory_before,
+            "profile_output": profile_output[:2000],  # Limit output size
         }
 
         if not success:
-            result_dict['error'] = error
+            result_dict["error"] = error
 
         self.results[name] = result_dict
 
         if success:
             print(".4f")
             if torch.cuda.is_available():
-                memory_delta = result_dict['memory_delta']
-                peak_memory = result_dict['peak_memory']
-                print(f"  Memory: {memory_delta / 1024 / 1024:.1f} MB (peak: {peak_memory / 1024 / 1024:.1f} MB)")
+                memory_delta = result_dict["memory_delta"]
+                peak_memory = result_dict["peak_memory"]
+                print(
+                    f"  Memory: {memory_delta / 1024 / 1024:.1f} MB "
+                    f"(peak: {peak_memory / 1024 / 1024:.1f} MB)"
+                )
         else:
             print(f"  FAILED: {error}")
 
@@ -163,7 +167,9 @@ class RefinementProfiler:
         print("=== Profiling Refinement Components ===")
 
         # Create test data
-        patches_rgb, patches_vector = self.create_test_patch_data(num_patches=1, primitives_per_patch=10)
+        patches_rgb, patches_vector = self.create_test_patch_data(
+            num_patches=1, primitives_per_patch=10
+        )
 
         # Profile rendering (used heavily in refinement)
         try:
@@ -191,14 +197,18 @@ class RefinementProfiler:
                 lines_tensor = torch.tensor(patches_vector[0], dtype=torch.float32)
                 return renderer.render_lines(lines_tensor)
 
-            self.profile_function_detailed(gpu_render_test, name="gpu_line_renderer_64x64")
+            self.profile_function_detailed(
+                gpu_render_test, name="gpu_line_renderer_64x64"
+            )
 
         except Exception as e:
             print(f"  Skipping GPU renderer profiling: {e}")
 
         # Profile energy computation (core refinement logic)
         try:
-            from refinement.our_refinement.utils.lines_refinement_functions import MeanFieldEnergyComputer
+            from refinement.our_refinement.utils.lines_refinement_functions import (
+                MeanFieldEnergyComputer,
+            )
 
             def energy_test():
                 computer = MeanFieldEnergyComputer()
@@ -217,10 +227,12 @@ class RefinementProfiler:
         print("\n=== Profiling Full Refinement Pipeline ===")
 
         # Create test data
-        patches_rgb, patches_vector = self.create_test_patch_data(num_patches=4, primitives_per_patch=10)
+        patches_rgb, patches_vector = self.create_test_patch_data(
+            num_patches=4, primitives_per_patch=10
+        )
 
         # Mock device and options for testing
-        device = torch.device('cpu')  # Use CPU for profiling
+        device = torch.device("cpu")  # Use CPU for profiling
 
         class MockOptions:
             def __init__(self):
@@ -235,21 +247,33 @@ class RefinementProfiler:
 
         # Profile full refinement
         try:
-            from refinement.our_refinement.refinement_for_lines import render_optimization_hard
+            from refinement.our_refinement.refinement_for_lines import (
+                render_optimization_hard,
+            )
 
             def full_refinement_test():
-                return render_optimization_hard(patches_rgb, patches_vector, device, options, "test")
+                return render_optimization_hard(
+                    patches_rgb, patches_vector, device, options, "test"
+                )
 
-            result = self.profile_function_detailed(full_refinement_test, name="full_refinement_pipeline")
+            result = self.profile_function_detailed(
+                full_refinement_test, name="full_refinement_pipeline"
+            )
 
             # Check if we meet the target (<2s per patch)
-            if result['success']:
-                time_per_patch = result['total_time'] / 4  # 4 patches
+            if result["success"]:
+                time_per_patch = result["total_time"] / 4  # 4 patches
                 target_time = 2.0
                 if time_per_patch < target_time:
-                    print(f"  ✓ MEETS TARGET: {time_per_patch:.3f}s < {target_time}s per patch")
+                    print(
+                        f"  ✓ MEETS TARGET: {time_per_patch:.3f}s < "
+                        f"{target_time}s per patch"
+                    )
                 else:
-                    print(f"  ✗ EXCEEDS TARGET: {time_per_patch:.3f}s > {target_time}s per patch")
+                    print(
+                        f"  ✗ EXCEEDS TARGET: {time_per_patch:.3f}s > "
+                        f"{target_time}s per patch"
+                    )
                     print("    Optimization needed!")
 
         except Exception as e:
@@ -260,17 +284,19 @@ class RefinementProfiler:
         bottlenecks = []
 
         # Check rendering performance
-        if 'render_64x64_patch' in self.results:
-            render_time = self.results['render_64x64_patch']['total_time']
+        if "render_64x64_patch" in self.results:
+            render_time = self.results["render_64x64_patch"]["total_time"]
             if render_time > 0.01:  # >10ms
                 bottlenecks.append(f"Rendering: {render_time:.4f}s (target: <0.01s)")
 
         # Check full pipeline performance
-        if 'full_refinement_pipeline' in self.results:
-            full_time = self.results['full_refinement_pipeline']['total_time']
+        if "full_refinement_pipeline" in self.results:
+            full_time = self.results["full_refinement_pipeline"]["total_time"]
             per_patch = full_time / 4
             if per_patch > 2.0:
-                bottlenecks.append(f"Full pipeline: {per_patch:.3f}s per patch (target: <2.0s)")
+                bottlenecks.append(
+                    f"Full pipeline: {per_patch:.3f}s per patch (target: <2.0s)"
+                )
 
         return bottlenecks
 
@@ -286,12 +312,17 @@ class RefinementProfiler:
 
         for name, data in self.results.items():
             report += f"### {name.replace('_', ' ').title()}\n\n"
-            if data['success']:
+            if data["success"]:
                 report += f"- **Time**: {data['total_time']:.4f}s\n"
-                if data.get('peak_memory', 0) > 0:
-                    report += f"- **Peak Memory**: {data['peak_memory'] / 1024 / 1024:.1f} MB\n"
+                if data.get("peak_memory", 0) > 0:
+                    report += (
+                        "- **Peak Memory**: " +
+                        f"{data['peak_memory'] / 1024 / 1024:.1f} MB\n"
+                    )
             else:
-                report += f"- **Status**: FAILED - {data.get('error', 'Unknown error')}\n"
+                report += (
+                    f"- **Status**: FAILED - {data.get('error', 'Unknown error')}\n"
+                )
             report += "\n"
 
         # Bottlenecks
@@ -305,16 +336,18 @@ class RefinementProfiler:
         # Optimization recommendations
         report += "## Optimization Recommendations\n\n"
 
-        if 'render_64x64_patch' in self.results:
-            render_time = self.results['render_64x64_patch']['total_time']
+        if "render_64x64_patch" in self.results:
+            render_time = self.results["render_64x64_patch"]["total_time"]
             if render_time > 0.01:
                 report += "### Rendering Optimization\n"
-                report += "- Consider using Bézier splatting instead of Cairo rendering\n"
+                report += (
+                    "- Consider using Bézier splatting instead of Cairo rendering\n"
+                )
                 report += "- Implement GPU-accelerated rendering\n"
                 report += "- Cache rendered results for similar primitives\n\n"
 
-        if 'full_refinement_pipeline' in self.results:
-            full_time = self.results['full_refinement_pipeline']['total_time']
+        if "full_refinement_pipeline" in self.results:
+            full_time = self.results["full_refinement_pipeline"]["total_time"]
             per_patch = full_time / 4
             if per_patch > 2.0:
                 report += "### Pipeline Optimization\n"
