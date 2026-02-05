@@ -2,8 +2,6 @@
 Custom exceptions for DeepV refinement and merging operations.
 """
 
-from typing import Optional
-
 
 class DeepVError(Exception):
     """Base exception class for DeepV operations."""

@@ -13,7 +13,9 @@ def liang_barsky_screen(point0, point1, bbox):
     point0_flip, point1_flip = flip_y(point0), flip_y(point1)
     bbox_flip = flip_bb(bbox)
 
-    point0_clip, point1_clip, is_draw = liang_barsky_clipping(point0_flip, point1_flip, bbox_flip)
+    point0_clip, point1_clip, is_draw = liang_barsky_clipping(
+        point0_flip, point1_flip, bbox_flip
+    )
     if is_draw:
         point0_clip, point1_clip = flip_y(point0_clip), flip_y(point1_clip)
     return point0_clip, point1_clip, is_draw
@@ -21,11 +23,12 @@ def liang_barsky_screen(point0, point1, bbox):
 
 def liang_barsky_clipping(point0, point1, bbox):
     # Based on
-    # Liang-Barsky function by Daniel White @ http://www.skytopia.com/project/articles/compsci/clipping.html
+    # Liang-Barsky function by Daniel White @
+    # http://www.skytopia.com/project/articles/compsci/clipping.html
 
     t0, t1 = 0.0, 1.0
     point0, point1 = np.array(point0), np.array(point1)
-    (x0, y0), (x1, y1) = point0, point1
+    x0, y0 = point0
     left, top, right, bottom = bbox
     xdelta, ydelta = point1 - point0
     for edge in range(4):  # Traverse through left, right, bottom, top edges.

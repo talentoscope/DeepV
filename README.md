@@ -1,10 +1,10 @@
-# Deep Vectorization of Technical Drawings
+# DeepV: Deep Vectorization of Technical Drawings
 
 [![Paper](https://img.shields.io/badge/arXiv-2003.05471-b31b1b.svg)](https://arxiv.org/abs/2003.05471)
 [![Video](https://img.shields.io/badge/YouTube-Demo-red)](https://www.youtube.com/watch?v=lnQNzHJOLvE)
 [![Slides](https://img.shields.io/badge/Google%20Slides-Presentation-blue)](https://drive.google.com/file/d1ZrykQeA2PE4_8yf1JwuEBk9sS4OP8KeM/view?usp=sharing)
 
-Official PyTorch repository for the ECCV 2020 paper: **Deep Vectorization of Technical Drawings**
+**DeepV** - Modern PyTorch implementation of deep vectorization for technical drawings. Based on the ECCV 2020 paper: **Deep Vectorization of Technical Drawings**
 
 ![DeepV Pipeline](https://drive.google.com/uc?export=view&id=191r0QAaNhOUIaHPOlPWH5H4Jg7qxCMRA)
 

@@ -4,7 +4,7 @@
 
 ### Benchmark Results
 
-- Mean: 0.0055s
+- Mean: 0.0053s
 
 - Std: 0.0005s
 
@@ -12,4 +12,4 @@
 
 - Max: 0.0066s
 
-- Median: 0.0054s
+- Median: 0.0051s

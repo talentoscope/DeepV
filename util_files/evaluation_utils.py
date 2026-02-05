@@ -45,7 +45,8 @@ def vector_image_from_patches(
     # 1. Shift primitives w.r.t patch offsets
     parameters_dim_i = 1
     primitive_shifts = torch.cat(
-        [patch_offsets] * control_points_n + [patch_offsets.new_zeros(patches_n, 2)], dim=parameters_dim_i
+        [patch_offsets] * control_points_n + [patch_offsets.new_zeros(patches_n, 2)],
+        dim=parameters_dim_i
     )
     primitive_shifts = primitive_shifts.reshape(patches_n, 1, parameters_n)
     primitives = primitives + primitive_shifts
@@ -78,7 +79,9 @@ def vector_image_from_patches(
     # 4. Get rid of primitives with small width, low confidence, and nans in parameters
     #    get rid of confidence parameter
     good_primitives = (
-        (primitives[:, -2] >= min_width) & (primitives[:, -1] >= min_confidence) & torch.isfinite(primitives).all(dim=1)
+        (primitives[:, -2] >= min_width) &
+        (primitives[:, -1] >= min_confidence) &
+        torch.isfinite(primitives).all(dim=1)
     )
     primitives = primitives[good_primitives, :-1].contiguous()
     bounding_boxes = bounding_boxes[good_primitives].contiguous()
@@ -103,7 +106,15 @@ def vector_image_from_patches(
 
     # 6. Convert primitives to Paths and assemble VectorImage
     # FIXME: hardcoded spatial_dims_n
-    paths = list(filter(None, map(primitive_to_path_and_crop, zip(primitives.numpy(), bounding_boxes.numpy()))))
+    paths = list(
+        filter(
+            None,
+            map(
+                primitive_to_path_and_crop,
+                zip(primitives.numpy(), bounding_boxes.numpy())
+            )
+        )
+    )
     del primitives, bounding_boxes
 
     width = Pixels(image_size[1])

@@ -1,16 +1,14 @@
 import sys
-from itertools import product
-
-from PIL import Image
-from torchvision import transforms
-
-sys.path.append("/code/Deep-Vectorization-of-Technical-Drawings/")
+sys.path.append(".")  # Add current directory to path for local imports
 
 import argparse
 import os
+from itertools import product
 
 import numpy as np
 import torch
+from PIL import Image
+from torchvision import transforms
 
 from merging.merging_for_curves import main as curve_merging
 from merging.merging_for_lines import postprocess
@@ -140,7 +138,10 @@ def vector_estimation(patches_rgb, model, device, it, options):
                 batch_output = model(patch_images[it_start:it_batches].cuda().float()).detach().cpu().numpy()
             else:
                 # Fixed length model - use model_output_count
-                batch_output = model(patch_images[it_start:it_batches].cuda().float(), options.model_output_count).detach().cpu().numpy()
+                batch_output = model(
+                    patch_images[it_start:it_batches].cuda().float(),
+                    options.model_output_count
+                ).detach().cpu().numpy()
 
             if it_start == 0:
                 patches_vector = batch_output
@@ -265,7 +266,7 @@ def parse_args():
         "--image_name",
         type=str,
         default="00050000_99fd5beca7714bc586260b6a_step_000.png",
-        help="Name of image.If None will perform to all images in " "folder.[default: None]",
+        help="Name of image. If None, will perform on all images in folder.",
     )
     parser.add_argument("--overlap", type=int, default=0, help="overlap in pixel")
     parser.add_argument("--model_output_count", type=int, default=10, help="max_model_output")
@@ -275,13 +276,14 @@ def parse_args():
         "--model_path",
         type=str,
         default="/logs/models/vectorization/lines/model_lines.weights",
-        help="parth to trained model",
+        help="Path to trained model",
     )
     parser.add_argument(
         "--json_path",
         type=str,
-        default="/code/Deep-Vectorization-of-Technical-Drawings/vectorization/models/specs/resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json",
-        help="dir to folder for json file for transformer",
+        default=("/code/vectorization/models/specs/"
+                 "resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json"),
+        help="Path to JSON model specification file",
     )
     options = parser.parse_args()
 

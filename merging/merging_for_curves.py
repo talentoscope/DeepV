@@ -1,12 +1,11 @@
 import os
-import pickle
 import sys
 from argparse import ArgumentParser
 
 import numpy as np
 
 sys.path.append("/code")
-from util_files.data.graphics.graphics import Path, VectorImage
+from util_files.data.graphics.graphics import Path
 from util_files.optimization.optimizer.logging import Logger
 from util_files.rendering.cairo import PT_LINE, PT_QBEZIER
 from util_files.simplification.join_qb import join_quad_beziers

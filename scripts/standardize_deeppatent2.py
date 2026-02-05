@@ -25,14 +25,14 @@ def copy_file(src: Path, dst: Path, overwrite: bool = False, dry_run: bool = Fal
     try:
         dst.parent.mkdir(parents=True, exist_ok=True)
         if dst.exists() and not overwrite:
-            return (src, dst, 'skipped')
+            return (src, dst, "skipped")
         if dry_run:
-            return (src, dst, 'dry')
+            return (src, dst, "dry")
         # Use copy2 to preserve metadata
         shutil.copy2(src, dst)
-        return (src, dst, 'copied')
+        return (src, dst, "copied")
     except Exception as e:
-        return (src, dst, f'error:{e}')
+        return (src, dst, f"error:{e}")
 
 
 def gather_files(source_dir: Path, pattern: str = "**/*"):
@@ -41,13 +41,32 @@ def gather_files(source_dir: Path, pattern: str = "**/*"):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Standardize DeepPatent2: copy Original -> standardized")
-    parser.add_argument("--source", type=Path, required=True, help="Source 'Original' folder")
-    parser.add_argument("--dest", type=Path, required=True, help="Destination standardized folder")
-    parser.add_argument("--pattern", type=str, default="**/*", help="Glob pattern to select files (default: all)")
+    parser = argparse.ArgumentParser(
+        description="Standardize DeepPatent2: copy Original -> standardized"
+    )
+    parser.add_argument(
+        "--source", type=Path, required=True, help="Source 'Original' folder"
+    )
+    parser.add_argument(
+        "--dest", type=Path, required=True, help="Destination standardized folder"
+    )
+    parser.add_argument(
+        "--pattern",
+        type=str,
+        default="**/*",
+        help="Glob pattern to select files (default: all)",
+    )
     parser.add_argument("--workers", type=int, default=8, help="Parallel copy workers")
-    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing files in destination")
-    parser.add_argument("--dry-run", action="store_true", help="Don't copy, just show what would be copied")
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing files in destination",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Don't copy, just show what would be copied",
+    )
     parser.add_argument("--verbose", action="store_true", help="Show per-file actions")
 
     args = parser.parse_args()
@@ -93,12 +112,15 @@ def main():
                 pbar.update(1)
 
     # Summarize
-    copied = sum(1 for r in results if r[2] == 'copied')
-    skipped = sum(1 for r in results if r[2] == 'skipped')
-    dry = sum(1 for r in results if r[2] == 'dry')
-    errors = [r for r in results if r[2].startswith('error:')]
+    copied = sum(1 for r in results if r[2] == "copied")
+    skipped = sum(1 for r in results if r[2] == "skipped")
+    dry = sum(1 for r in results if r[2] == "dry")
+    errors = [r for r in results if r[2].startswith("error:")]
 
-    print(f"\nSummary: total={total} copied={copied} skipped={skipped} dry={dry} errors={len(errors)}")
+    print(
+        f"\nSummary: total={total} copied={copied} skipped={skipped} dry={dry} "
+        f"errors={len(errors)}"
+    )
     if errors:
         print("Errors (sample):")
         for e in errors[:10]:
@@ -108,5 +130,5 @@ def main():
         print("Dry-run finished. Rerun without --dry-run to perform copying.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

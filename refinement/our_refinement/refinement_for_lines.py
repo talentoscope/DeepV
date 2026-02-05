@@ -1,8 +1,27 @@
 import argparse
+import os
 import signal
 from typing import Any
 
-from refinement.our_refinement.utils.lines_refinement_functions import *
+import numpy as np
+import torch
+from tqdm import tqdm
+
+from refinement.our_refinement.utils.lines_refinement_functions import (
+    NonanAdam,
+    collapse_redundant_lines,
+    constrain_parameters,
+    dtype,
+    h,
+    mean_field_energy_lines,
+    mean_vector_field_energy_lines,
+    padding,
+    reinit_excess_lines,
+    render_lines_with_type,
+    size_energy,
+    snap_lines,
+    w,
+)
 from util_files.metrics.iou import calc_iou__vect_image
 from util_files.optimization.optimizer.logging import Logger
 
@@ -32,7 +51,7 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
     """
     logger = Logger.prepare_logger(loglevel="info", logfile=None)
     logger.info(f"Starting refinement optimization for {name}")
-    
+
     patches_rgb_im = np.copy(patches_rgb)
 
     first_encounter = True
@@ -51,8 +70,6 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
         if it_batches > patches_vector.shape[0]:
             it_batches = patches_vector.shape[0]
 
-        take_batches_n = 300
-
         rasters_batch = patches_rgb.detach()
 
         take_batches = []
@@ -62,7 +79,6 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
         if take_batches == []:
             continue
         rasters_batch = rasters_batch[take_batches, 0].type(dtype).to(device)
-        raster_np = (1 - rasters_batch[0].cpu().numpy()) * 255
 
         initial_vector = patches_vector.detach()[take_batches].cpu()
 
@@ -78,7 +94,6 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
 
         rasters_batch = torch.nn.functional.pad(rasters_batch, [padding, padding, padding, padding])
         lines_batch = torch.from_numpy(initial_vector).type(dtype).to(device)
-        lines_n = lines_batch.shape[1]
 
         # get the canonical parameters
         x1 = lines_batch[:, :, 0]
@@ -244,7 +259,8 @@ def render_optimization_hard(patches_rgb, patches_vector, device, options, name)
 
             if (i % 20 == 0) or its_time_to_stop[0]:
                 # 6.1. Record the current values of parameters separately
-                #      The following steps are performed with these separate values and do not affect the parameters being optimized
+                #      The following steps are performed with these separate values and
+                #      do not affect the parameters being optimized
                 cx_final[patches_to_optimize] = cx.data[patches_to_optimize]
                 cy_final[patches_to_optimize] = cy.data[patches_to_optimize]
                 theta_final[patches_to_optimize] = theta.data[patches_to_optimize]

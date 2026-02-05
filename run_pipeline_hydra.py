@@ -6,7 +6,6 @@ It demonstrates how to use the new configuration system for reproducible experim
 
 import os
 import sys
-from itertools import product
 from pathlib import Path
 
 import numpy as np
@@ -18,7 +17,6 @@ from torchvision import transforms
 sys.path.append(str(Path(__file__).parent))
 
 import hydra
-from hydra.core.config_store import ConfigStore
 from omegaconf import DictConfig
 
 from merging.merging_for_curves import main as curve_merging

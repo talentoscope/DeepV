@@ -9,7 +9,7 @@ import io
 import pstats
 import time
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict
 
 import numpy as np
 import torch
@@ -24,7 +24,7 @@ def time_block(name: str):
         yield
     finally:
         end_time = time.time()
-        print(".4f")
+        print(f"{name}: {end_time - start_time:.4f}s")
 
 
 def profile_function(func: Callable, *args, **kwargs) -> Dict[str, Any]:
@@ -46,7 +46,9 @@ def profile_function(func: Callable, *args, **kwargs) -> Dict[str, Any]:
 
 def torch_profile_function(func: Callable, *args, **kwargs) -> Dict[str, Any]:
     """Profile a function using PyTorch profiler."""
-    with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
+    with profile(
+        activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True
+    ) as prof:
         with record_function("model_inference"):
             result = func(*args, **kwargs)
 
@@ -56,7 +58,9 @@ def torch_profile_function(func: Callable, *args, **kwargs) -> Dict[str, Any]:
     return {"result": result, "profiler": prof}
 
 
-def benchmark_function(func: Callable, *args, num_runs: int = 10, warmup_runs: int = 2, **kwargs) -> Dict[str, float]:
+def benchmark_function(
+    func: Callable, *args, num_runs: int = 10, warmup_runs: int = 2, **kwargs
+) -> Dict[str, float]:
     """Benchmark a function's performance over multiple runs."""
     # Warmup runs
     for _ in range(warmup_runs):
@@ -115,7 +119,9 @@ class PerformanceProfiler:
     def __init__(self):
         self.results = {}
 
-    def profile_refinement(self, refinement_func: Callable, test_data: Any) -> Dict[str, Any]:
+    def profile_refinement(
+        self, refinement_func: Callable, test_data: Any
+    ) -> Dict[str, Any]:
         """Profile refinement function performance."""
         print("=== Profiling Refinement Function ===")
 
@@ -145,7 +151,9 @@ class PerformanceProfiler:
         self.results["refinement"] = combined_result
         return combined_result
 
-    def profile_rendering(self, render_func: Callable, test_primitives: Any) -> Dict[str, Any]:
+    def profile_rendering(
+        self, render_func: Callable, test_primitives: Any
+    ) -> Dict[str, Any]:
         """Profile rendering function performance."""
         print("=== Profiling Rendering Function ===")
 
@@ -161,7 +169,11 @@ class PerformanceProfiler:
         print("\n=== Benchmarking (10 runs) ===")
         benchmark_result = benchmark_function(render_func, test_primitives, num_runs=10)
 
-        combined_result = {"result": result, "cpu_profile": profile_result, "benchmark": benchmark_result}
+        combined_result = {
+            "result": result,
+            "cpu_profile": profile_result,
+            "benchmark": benchmark_result,
+        }
 
         self.results["rendering"] = combined_result
         return combined_result

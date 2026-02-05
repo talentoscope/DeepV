@@ -4,7 +4,6 @@ This script profiles the refinement and rendering components to identify
 performance hotspots and bottlenecks.
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -12,7 +11,6 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 import numpy as np
-import torch
 
 from util_files.performance_profiler import PerformanceProfiler
 
@@ -51,7 +49,9 @@ def profile_refinement_hard(profiler):
     test_primitives = {PT_LINE: np.concatenate((lines, line_widths), axis=1)}
 
     # Profile rendering (which is called during refinement)
-    result = profiler.profile_rendering(lambda p: render(p, (64, 64), data_representation="vahe"), test_primitives)
+    result = profiler.profile_rendering(
+        lambda p: render(p, (64, 64), data_representation="vahe"), test_primitives
+    )
 
     return result
 
@@ -73,7 +73,9 @@ def profile_rendering(profiler):
     test_primitives = {PT_LINE: line_data, PT_QBEZIER: curve_data}
 
     # Profile rendering
-    result = profiler.profile_rendering(lambda p: render(p, (256, 256), data_representation="vahe"), test_primitives)
+    result = profiler.profile_rendering(
+        lambda p: render(p, (256, 256), data_representation="vahe"), test_primitives
+    )
 
     return result
 
@@ -88,12 +90,12 @@ def main():
     # Profile refinement (rendering component)
     print("\n1. Profiling Refinement Rendering Component")
     print("-" * 40)
-    refinement_result = profile_refinement_hard(profiler)
+    profile_refinement_hard(profiler)
 
     # Profile rendering
     print("\n2. Profiling Rendering")
     print("-" * 40)
-    rendering_result = profile_rendering(profiler)
+    profile_rendering(profiler)
 
     # Generate report
     print("\n3. Generating Performance Report")

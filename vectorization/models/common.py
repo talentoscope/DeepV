@@ -53,6 +53,7 @@ def vgg_model_creator(in_channels=1, convmap_channels=128, blocks=1, conf="A", b
     def _make_layers(cfg, batch_norm=False, in_channels=1, convmap_channels=128, blocks=1):
         layers = []
         block_idx = 0  # how many max-pool layers have passed
+        conv2d = None  # Initialize conv2d
         for v in cfg:
             if block_idx == blocks:
                 # this should be true as block_idx can be incremented only after creating 'M' layer,
@@ -124,7 +125,7 @@ class VectorizationOutput(SpecifiedModuleBase):
         self.relu = nn.ReLU()
 
     def forward(
-        self,
+        self, h_dec
     ):
         fc = self.final_fc(self.relu(h_dec))  # [b, n, output_dim]
         coord = (self.final_tanh(fc[:, :, :-1]) + 1.0) / 2.0  # [b, n, output_dim-1]

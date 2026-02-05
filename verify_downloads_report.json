@@ -1,46 +1,28 @@
 [
   {
     "dataset": "floorplancad",
-    "exists": false,
-    "num_files": 0,
-    "nonempty_files": 0,
-    "total_size_bytes": 0,
-    "metadata_present": false,
-    "note": ""
-  },
-  {
-    "dataset": "archcad",
-    "exists": false,
-    "num_files": 0,
-    "nonempty_files": 0,
-    "total_size_bytes": 0,
-    "metadata_present": false,
+    "exists": true,
+    "num_files": 3002,
+    "nonempty_files": 3002,
+    "total_size_bytes": 282124024,
+    "metadata_present": true,
     "note": ""
   },
   {
     "dataset": "cubicasa5k",
-    "exists": false,
-    "num_files": 0,
-    "nonempty_files": 0,
-    "total_size_bytes": 0,
-    "metadata_present": false,
+    "exists": true,
+    "num_files": 17346,
+    "nonempty_files": 17346,
+    "total_size_bytes": 5982151736,
+    "metadata_present": true,
     "note": ""
   },
   {
     "dataset": "quickdraw",
-    "exists": false,
-    "num_files": 0,
-    "nonempty_files": 0,
-    "total_size_bytes": 0,
-    "metadata_present": false,
-    "note": ""
-  },
-  {
-    "dataset": "tuberlin",
     "exists": true,
-    "num_files": 4,
-    "nonempty_files": 4,
-    "total_size_bytes": 292510181,
+    "num_files": 1,
+    "nonempty_files": 1,
+    "total_size_bytes": 362,
     "metadata_present": true,
     "note": ""
   },
@@ -51,7 +33,7 @@
     "nonempty_files": 0,
     "total_size_bytes": 0,
     "metadata_present": false,
-    "note": ""
+    "note": "Original site unavailable (404). Dataset unsuitable for DeepV - contains symbol spotting data, not vector primitives."
   },
   {
     "dataset": "impact",
@@ -64,38 +46,29 @@
   },
   {
     "dataset": "msd",
-    "exists": false,
-    "num_files": 0,
-    "nonempty_files": 0,
-    "total_size_bytes": 0,
-    "metadata_present": false,
+    "exists": true,
+    "num_files": 2,
+    "nonempty_files": 2,
+    "total_size_bytes": 17744258,
+    "metadata_present": true,
     "note": ""
   },
   {
     "dataset": "sketchgraphs",
-    "exists": false,
-    "num_files": 0,
-    "nonempty_files": 0,
-    "total_size_bytes": 0,
-    "metadata_present": false,
+    "exists": true,
+    "num_files": 121,
+    "nonempty_files": 120,
+    "total_size_bytes": 16145721,
+    "metadata_present": true,
     "note": ""
   },
   {
     "dataset": "deeppatent2",
-    "exists": false,
-    "num_files": 0,
-    "nonempty_files": 0,
-    "total_size_bytes": 0,
-    "metadata_present": false,
-    "note": ""
-  },
-  {
-    "dataset": "abc",
-    "exists": false,
-    "num_files": 0,
-    "nonempty_files": 0,
-    "total_size_bytes": 0,
-    "metadata_present": false,
+    "exists": true,
+    "num_files": 1,
+    "nonempty_files": 1,
+    "total_size_bytes": 640,
+    "metadata_present": true,
     "note": ""
   },
   {
@@ -114,24 +87,15 @@
     "nonempty_files": 0,
     "total_size_bytes": 0,
     "metadata_present": false,
-    "note": ""
-  },
-  {
-    "dataset": "rplan",
-    "exists": false,
-    "num_files": 0,
-    "nonempty_files": 0,
-    "total_size_bytes": 0,
-    "metadata_present": false,
-    "note": ""
+    "note": "UNSUITABLE for DeepV - contains 100x100 pixel binary images for CNN classification, not vector geometric primitives"
   },
   {
     "dataset": "cadvgdrawing",
-    "exists": false,
-    "num_files": 0,
-    "nonempty_files": 0,
-    "total_size_bytes": 0,
-    "metadata_present": false,
+    "exists": true,
+    "num_files": 4,
+    "nonempty_files": 4,
+    "total_size_bytes": 442345378,
+    "metadata_present": true,
     "note": "Google Drive folder: https://drive.google.com/drive/folders/1t9uO2iFh1eVDXRCKUEonKPBu8WGYA8wU"
   },
   {
@@ -216,22 +180,13 @@
     "note": "Download from Harvard Dataverse: https://dataverse.harvard.edu/"
   },
   {
-    "dataset": "iamhandwriting",
-    "exists": false,
-    "num_files": 0,
-    "nonempty_files": 0,
-    "total_size_bytes": 0,
-    "metadata_present": false,
-    "note": "Register for download: https://fki.tic.heia-fr.ch/databases/iam-handwriting-database"
-  },
-  {
     "dataset": "fplanpoly",
-    "exists": false,
-    "num_files": 0,
-    "nonempty_files": 0,
-    "total_size_bytes": 0,
-    "metadata_present": false,
-    "note": "Download from CVC site: http://www.cvc.uab.es/~marcal/FPLAN-POLY/index.html"
+    "exists": true,
+    "num_files": 119,
+    "nonempty_files": 119,
+    "total_size_bytes": 4387536,
+    "metadata_present": true,
+    "note": "Highly suitable for DeepV - contains vector geometric primitives (polylines)"
   },
   {
     "dataset": "dld",
@@ -244,11 +199,11 @@
   },
   {
     "dataset": "resplan",
-    "exists": false,
-    "num_files": 0,
-    "nonempty_files": 0,
-    "total_size_bytes": 0,
-    "metadata_present": false,
-    "note": "Request access via arXiv: https://arxiv.org/abs/2508.14006"
+    "exists": true,
+    "num_files": 3,
+    "nonempty_files": 3,
+    "total_size_bytes": 397615331,
+    "metadata_present": true,
+    "note": "Contains vector geometries and graphs for architectural tasks"
   }
 ]

@@ -1,6 +1,6 @@
 # DeepV Q&A
 
-Frequently asked questions about DeepV - Deep Vectorization of Technical Drawings.
+Frequently asked questions about **DeepV** - Deep Vectorization of Technical Drawings.
 
 ## Table of Contents
 

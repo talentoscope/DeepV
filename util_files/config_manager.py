@@ -6,7 +6,7 @@ It allows for hierarchical configuration with environment-specific overrides.
 
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from hydra import compose, initialize_config_dir
 from hydra.core.global_hydra import GlobalHydra
@@ -36,11 +36,14 @@ class ConfigManager:
             initialize_config_dir(config_dir=str(self.config_path), version_base=None)
             self._hydra_initialized = True
 
-    def get_config(self, config_name: str = "config", overrides: Optional[list] = None) -> DictConfig:
+    def get_config(
+        self, config_name: str = "config", overrides: Optional[list] = None
+    ) -> DictConfig:
         """Get a configuration by name.
 
         Args:
-            config_name: Name of the config file (without .yaml extension)
+            config_name: Name of the config file
+                (without .yaml extension)
             overrides: List of configuration overrides
 
         Returns:
@@ -78,11 +81,14 @@ class ConfigManager:
 config_manager = ConfigManager()
 
 
-def get_config(config_name: str = "config", overrides: Optional[list] = None) -> DictConfig:
+def get_config(
+    config_name: str = "config", overrides: Optional[list] = None
+) -> DictConfig:
     """Convenience function to get configuration.
 
     Args:
-        config_name: Name of the config file
+        config_name: Name of the config
+            file
         overrides: List of configuration overrides
 
     Returns:

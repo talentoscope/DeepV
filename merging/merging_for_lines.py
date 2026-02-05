@@ -1,7 +1,4 @@
-import argparse
-
 import numpy as np
-import torch
 from rtree import index
 
 from merging.utils.merging_functions import (

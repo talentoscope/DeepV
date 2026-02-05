@@ -1,6 +1,6 @@
-# Datasets for Deep Vectorization
+# Datasets for DeepV
 
-This document compiles a comprehensive list of publicly available datasets suitable for training, evaluating, or benchmarking deep vectorization models, with a primary focus on technical drawings (e.g., CAD, floorplans, mechanical schematics, patents). Vectorization tasks typically involve converting raster inputs (e.g., PNG scans) to vector outputs (e.g., SVG primitives, parametric sequences, graphs) or related processes like primitive extraction, symbol spotting, and generative modeling. Datasets are categorized into **real-world** (scanned or industry-sourced, often noisy) and **synthetic/processed** (generated, cleaner for augmentation).
+This document compiles a comprehensive list of publicly available datasets suitable for training, evaluating, or benchmarking DeepV vectorization models, with a primary focus on technical drawings (e.g., CAD, floorplans, mechanical schematics, patents). Vectorization tasks typically involve converting raster inputs (e.g., PNG scans) to vector outputs (e.g., SVG primitives, parametric sequences, graphs) or related processes like primitive extraction, symbol spotting, and generative modeling. Datasets are categorized into **real-world** (scanned or industry-sourced, often noisy) and **synthetic/processed** (generated, cleaner for augmentat...
 
 Inclusion criteria prioritize datasets with:
 - Raster-vector pairs or derivable alignments.
@@ -22,7 +22,7 @@ For each dataset, details include size, formats, key features, access links, lic
 - [Internal Dataset Pipeline](#internal-dataset-pipeline)
 
 ## Evaluation Status
-All datasets listed in this document have been thoroughly evaluated for suitability in DeepV (Deep Vectorization) as of February 5, 2026. Evaluations focused on the presence of vector geometric primitives (e.g., lines, arcs, curves in formats like SVG, DXF, or parametric sequences) needed for technical drawing vectorization. Unsuitable datasets are marked with "(UNSUITABLE for DeepV)" followed by detailed reasoning. Suitable datasets include highly suitable ones (e.g., FPLAN-POLY) with direct vector primitives, and secondary ones (e.g., QuickDraw, SketchGraphs) with vector data for related tasks.
+All datasets listed in this document have been thoroughly evaluated for suitability in **DeepV** as of February 5, 2026. Evaluations focused on the presence of vector geometric primitives (e.g., lines, arcs, curves in formats like SVG, DXF, or parametric sequences) needed for technical drawing vectorization. Unsuitable datasets are marked with "(UNSUITABLE for DeepV)" followed by detailed reasoning. Suitable datasets include highly suitable ones (e.g., FPLAN-POLY) with direct vector primitives, and secondary ones (e.g., QuickDraw, SketchGraphs) with vector data for related tasks.
 
 ## Suitable Datasets
 
@@ -290,7 +290,7 @@ These datasets lack vector geometric primitives or are otherwise unsuitable for 
 
 ## Internal Dataset Pipeline
 
-This section documents the project's internal pipeline for downloading and preprocessing datasets used in Deep Vectorization.
+This section documents the project's internal pipeline for downloading and preprocessing datasets used in **DeepV**.
 
 ### Downloaders
 Dataset downloaders are located in `dataset/downloaders/`. These scripts handle fetching datasets from their original sources (e.g., Hugging Face, Google Drive, GitHub releases).

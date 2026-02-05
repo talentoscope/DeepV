@@ -2,6 +2,7 @@ import argparse
 import os
 
 import numpy as np
+import torchvision
 
 
 def parse_args(args=None):
@@ -53,7 +54,7 @@ def parse_args(args=None):
     return parser.parse_args(args)
 
 
-### Todo check this metric or change it
+# TODO: check this metric or change it
 # `iou_score` is imported lazily inside `validate` to avoid importing heavy image libs at module import time.
 
 
@@ -174,6 +175,11 @@ def load_model(model, path):
 
 
 def main(args):
+    """Main training function for DeepV cleaning models.
+
+    Trains UNet-based models for technical drawing cleaning and artifact removal.
+    Supports various model architectures and training configurations.
+    """
     # Local heavy imports
     import torch
     from tensorboardX import SummaryWriter

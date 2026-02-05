@@ -5,7 +5,7 @@ Consolidates separate line/curve refinement and merging pipelines into unified i
 """
 
 import sys
-from typing import Dict, Any, Optional, Union, Tuple
+from typing import Dict, Any, Union, Tuple
 import numpy as np
 import torch
 
@@ -28,7 +28,7 @@ class UnifiedPipeline:
             raise ValueError(f"Unsupported primitive type: {primitive_type}")
 
     def run_refinement(self, patches_rgb: np.ndarray, patches_vector: torch.Tensor,
-                      device: torch.device, options: Any) -> torch.Tensor:
+                       device: torch.device, options: Any) -> torch.Tensor:
         """
         Run refinement for the specified primitive type.
 
@@ -45,15 +45,14 @@ class UnifiedPipeline:
             from refinement.our_refinement.refinement_for_lines import render_optimization_hard
             return render_optimization_hard(patches_rgb, patches_vector, device, options, options.sample_name)
         elif self.primitive_type == "curve":
-            from refinement.our_refinement.refinement_for_curves import main as curve_refinement
             # Curve refinement has a different interface - would need adaptation
             raise NotImplementedError("Curve refinement unification pending")
         else:
             raise ValueError(f"Unknown primitive type: {self.primitive_type}")
 
     def run_merging(self, vector_data: Union[torch.Tensor, Dict],
-                   patches_offsets: np.ndarray, input_rgb: np.ndarray,
-                   cleaned_image: torch.Tensor, options: Any) -> Tuple[Any, Any]:
+                    patches_offsets: np.ndarray, input_rgb: np.ndarray,
+                    cleaned_image: torch.Tensor, options: Any) -> Tuple[Any, Any]:
         """
         Run merging for the specified primitive type.
 
@@ -71,14 +70,13 @@ class UnifiedPipeline:
             from merging.merging_for_lines import postprocess
             return postprocess(vector_data, patches_offsets, input_rgb, cleaned_image, 0, options)
         elif self.primitive_type == "curve":
-            from merging.merging_for_curves import main as curve_merging
             # Curve merging has different interface - would need adaptation
             raise NotImplementedError("Curve merging unification pending")
         else:
             raise ValueError(f"Unknown primitive type: {self.primitive_type}")
 
     def run_full_pipeline(self, image_tensor: torch.Tensor, model: torch.nn.Module,
-                         device: torch.device, options: Any) -> Any:
+                          device: torch.device, options: Any) -> Any:
         """
         Run the complete pipeline: preprocessing -> vectorization -> refinement -> merging.
 

@@ -13,10 +13,10 @@ import sys
 import torch
 import numpy as np
 from PIL import Image
-import matplotlib.pyplot as plt
 
 # Add the project root to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 
 def demo_vectorize_image(image_path, output_path=None, method='analytical'):
     """
@@ -61,6 +61,7 @@ def demo_vectorize_image(image_path, output_path=None, method='analytical'):
 
     return svg_content
 
+
 def create_svg_from_lines(rendered_array):
     """
     Create a simple SVG from rendered lines.
@@ -83,12 +84,13 @@ def create_svg_from_lines(rendered_array):
 
     return svg_content
 
+
 def main():
     parser = argparse.ArgumentParser(description='DeepV Web UI Demo')
     parser.add_argument('--image', '-i', required=True, help='Path to input image')
     parser.add_argument('--output', '-o', help='Path to save SVG output')
     parser.add_argument('--method', '-m', choices=['analytical', 'bezier'],
-                       default='analytical', help='Vectorization method')
+                        default='analytical', help='Vectorization method')
 
     args = parser.parse_args()
 
@@ -110,6 +112,7 @@ def main():
     else:
         print("\nDemo failed!")
         return 1
+
 
 if __name__ == '__main__':
     sys.exit(main())

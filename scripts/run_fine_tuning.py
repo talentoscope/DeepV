@@ -10,27 +10,35 @@ import sys
 import subprocess
 from pathlib import Path
 
+
 def main():
     """Run the fine-tuning with predefined parameters."""
     # Set CUDA device
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
     # Get the script directory and navigate to cleaning
     script_dir = Path(__file__).parent
-    cleaning_dir = script_dir.parent / 'cleaning' / 'scripts'
+    cleaning_dir = script_dir.parent / "cleaning" / "scripts"
 
     # Change to cleaning directory
     os.chdir(cleaning_dir)
 
     # Run the fine-tuning command
     cmd = [
-        sys.executable, 'main_cleaning.py',
-        '--model', 'UNET',
-        '--n_epochs', '30',
-        '--datadir', '/dataset/Cleaning/Real/train',
-        '--valdatadir', '/dataset/Cleaning/Real/val',
-        '--batch_size', '4',
-        '--name', 'UNET_test'
+        sys.executable,
+        "main_cleaning.py",
+        "--model",
+        "UNET",
+        "--n_epochs",
+        "30",
+        "--datadir",
+        "/dataset/Cleaning/Real/train",
+        "--valdatadir",
+        "/dataset/Cleaning/Real/val",
+        "--batch_size",
+        "4",
+        "--name",
+        "UNET_test",
     ]
 
     print("Running fine-tuning...")
@@ -47,6 +55,7 @@ def main():
     except KeyboardInterrupt:
         print("Fine-tuning interrupted by user")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -25,7 +25,8 @@ def unpatchify(patches: np.ndarray, imsize: Tuple[int, int]):
     o_w = (n_w * p_w - i_w) / (n_w - 1)
     o_h = (n_h * p_h - i_h) / (n_h - 1)
 
-    # The overlap should be integer, otherwise the patches are unable to reconstruct into a image with given shape
+    # The overlap should be integer, otherwise the patches are unable to
+    # reconstruct into a image with given shape
     assert int(o_w) == o_w
     assert int(o_h) == o_h
 
@@ -66,7 +67,9 @@ def split_to_patches(rgb, patch_size, overlap=0):
     height, width, channels = rgb.shape
 
     assert patch_size > 0 and 0 <= overlap < patch_size
-    patches = patchify(rgb, patch_size=(patch_size, patch_size, channels), step=patch_size - overlap)
+    patches = patchify(
+        rgb, patch_size=(patch_size, patch_size, channels), step=patch_size - overlap
+    )
     patches = patches.reshape((-1, patch_size, patch_size, channels))
     height_offsets = np.arange(0, height - patch_size, step=patch_size - overlap)
     width_offsets = np.arange(0, width - patch_size, step=patch_size - overlap)

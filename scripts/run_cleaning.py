@@ -10,26 +10,33 @@ import sys
 import subprocess
 from pathlib import Path
 
+
 def main():
     """Run the cleaning training with predefined parameters."""
     # Set CUDA device
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
     # Get the script directory and navigate to cleaning
     script_dir = Path(__file__).parent
-    cleaning_dir = script_dir.parent / 'cleaning' / 'scripts'
+    cleaning_dir = script_dir.parent / "cleaning" / "scripts"
 
     # Change to cleaning directory
     os.chdir(cleaning_dir)
 
     # Run the training command
     cmd = [
-        sys.executable, 'main_cleaning.py',
-        '--model', 'UNET',
-        '--n_epochs', '30',
-        '--datadir', '/dataset/Cleaning/Synthetic/train',
-        '--valdatadir', '/dataset/Cleaning/Synthetic/val',
-        '--batch_size', '4'
+        sys.executable,
+        "main_cleaning.py",
+        "--model",
+        "UNET",
+        "--n_epochs",
+        "30",
+        "--datadir",
+        "/dataset/Cleaning/Synthetic/train",
+        "--valdatadir",
+        "/dataset/Cleaning/Synthetic/val",
+        "--batch_size",
+        "4",
     ]
 
     print("Running cleaning training...")
@@ -46,6 +53,7 @@ def main():
     except KeyboardInterrupt:
         print("Training interrupted by user")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

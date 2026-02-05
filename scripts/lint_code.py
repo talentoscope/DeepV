@@ -9,10 +9,10 @@ Usage:
     python scripts/lint_code.py
 """
 
-import os
 import sys
 import subprocess
 from pathlib import Path
+
 
 def check_venv():
     """Check if virtual environment exists."""
@@ -22,26 +22,28 @@ def check_venv():
         return False
     return True
 
+
 def activate_venv():
     """Activate the virtual environment."""
-    if sys.platform == "win32":
-        activate_script = ".venv/Scripts/activate.bat"
-    else:
-        activate_script = ".venv/bin/activate"
-
     # Note: We can't actually activate the venv in a subprocess,
     # but we can run commands with the venv's Python
-    return str(Path(".venv") / "Scripts" / "python.exe") if sys.platform == "win32" else str(Path(".venv") / "bin" / "python")
+    return (
+        str(Path(".venv") / "Scripts" / "python.exe")
+        if sys.platform == "win32"
+        else str(Path(".venv") / "bin" / "python")
+    )
+
 
 def run_command(cmd, description):
     """Run a command and return success status."""
     print(f"Running {description}...")
     try:
-        result = subprocess.run(cmd, check=True, capture_output=False)
+        subprocess.run(cmd, check=True, capture_output=False)
         return True
     except subprocess.CalledProcessError as e:
         print(f"❌ {description} failed with return code: {e.returncode}")
         return False
+
 
 def main():
     """Run all linting checks."""
@@ -52,18 +54,23 @@ def main():
     python_exe = activate_venv()
 
     # Upgrade pip and install dev requirements
-    if not run_command([python_exe, "-m", "pip", "install", "--upgrade", "pip"],
-                      "pip upgrade"):
+    if not run_command(
+        [python_exe, "-m", "pip", "install", "--upgrade", "pip"], "pip upgrade"
+    ):
         return 1
 
-    if not run_command([python_exe, "-m", "pip", "install", "-r", "requirements-dev.txt"],
-                      "dev requirements installation"):
+    if not run_command(
+        [python_exe, "-m", "pip", "install", "-r", "requirements-dev.txt"],
+        "dev requirements installation",
+    ):
         return 1
 
     # Run linters
     success = True
     success &= run_command([python_exe, "-m", "black", "--check", "."], "black (check)")
-    success &= run_command([python_exe, "-m", "isort", "--check-only", "."], "isort (check)")
+    success &= run_command(
+        [python_exe, "-m", "isort", "--check-only", "."], "isort (check)"
+    )
     success &= run_command([python_exe, "-m", "flake8", "."], "flake8")
 
     if success:
@@ -72,6 +79,7 @@ def main():
     else:
         print("❌ Some linting checks failed!")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())
