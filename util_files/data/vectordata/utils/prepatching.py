@@ -38,16 +38,17 @@ def make_patches(
     else:
         workers_pool = 0
 
-    path = lambda basename, origin, width="def", ori="def", rot=0, t=(0, 0): os.path.join(
-        patches_root,
-        basename,
-        "{}x{}".format(*patch_size),
-        "width_{}".format(width),
-        "orientation_{}".format(ori),
-        "rotated_deg_{}".format(rot),
-        "translated_{}_{}".format(*t),
-        "{}_{}.svg".format(*origin),
-    )
+    def path(basename, origin, width="def", ori="def", rot=0, t=(0, 0)):
+        return os.path.join(
+            patches_root,
+            basename,
+            "{}x{}".format(*patch_size),
+            "width_{}".format(width),
+            "orientation_{}".format(ori),
+            "rotated_deg_{}".format(rot),
+            "translated_{}_{}".format(*t),
+            "{}_{}.svg".format(*origin),
+        )
 
     orientations = ["def"]
     if mirror:

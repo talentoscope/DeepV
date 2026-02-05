@@ -81,7 +81,7 @@ def iou(preds, labels, C, EMPTY=1.0, ignore=None, per_image=False):
 
 
 def lovasz_hinge(logits, labels, per_image=True, ignore=None):
-    """
+    r"""
     Binary Lovasz hinge loss
       logits: [B, H, W] Variable, logits at each pixel (between -\infty and +\infty)
       labels: [B, H, W] Tensor, binary ground truth masks (0 or 1)
@@ -99,7 +99,7 @@ def lovasz_hinge(logits, labels, per_image=True, ignore=None):
 
 
 def lovasz_hinge_flat(logits, labels):
-    """
+    r"""
     Binary Lovasz hinge loss
       logits: [P] Variable, logits at each prediction (between -\infty and +\infty)
       labels: [P] Tensor, binary ground truth labels (0 or 1)
@@ -144,7 +144,7 @@ class StableBCELoss(torch.nn.modules.Module):
 
 
 def binary_xloss(logits, labels, ignore=None):
-    """
+    r"""
     Binary Cross entropy loss
       logits: [B, H, W] Variable, logits at each pixel (between -\infty and +\infty)
       labels: [B, H, W] Tensor, binary ground truth masks (0 or 1)
@@ -240,21 +240,21 @@ def isnan(x):
     return x != x
 
 
-def mean(l, ignore_nan=False, empty=0):
+def mean(values, ignore_nan=False, empty=0):
     """
     nanmean compatible with generators.
     """
-    l = iter(l)
+    values = iter(values)
     if ignore_nan:
-        l = ifilterfalse(isnan, l)
+        values = ifilterfalse(isnan, values)
     try:
         n = 1
-        acc = next(l)
+        acc = next(values)
     except StopIteration:
         if empty == "raise":
             raise ValueError("Empty mean")
         return empty
-    for n, v in enumerate(l, 2):
+    for n, v in enumerate(values, 2):
         acc += v
     if n == 1:
         return acc

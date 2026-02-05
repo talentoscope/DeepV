@@ -307,7 +307,17 @@ This section provides a comprehensive listing of all Python files in the DeepV c
 - [x] `util_files/data/prefetcher.py` - CUDA prefetcher (broke long docstring URL)
 - [x] `util_files/data/preprocessed.py` - Preprocessed data utilities (removed unused DataLoader import; fixed block comment style from ## to #; broke long comment line)
 - [x] `util_files/data/graphics/graphics.py` - Graphics utilities (removed unused variable assignments; initialized full_img to fix undefined name; replaced lambda with def function)
-- [ ] Plus 34+ additional files in subdirectories (data/, optimization/, rendering/, simplification/, etc.)
+- [x] `util_files/data/syndata/datasets.py` - Synthetic datasets (removed unused imports Arc, BezierCurve, DegradationGenerator, render)
+- [x] `util_files/data/syndata/patch_topology.py` - Patch topology (fixed NotImplemented to NotImplementedError; removed unused variable second_len)
+- [x] `util_files/data/vectordata/common.py` - Vectordata common utilities (broke long assert messages and isinstance statements)
+- [x] `util_files/data/vectortools/transforms.py` - Vectortools transforms (broke long docstring line; replaced lambda with def function)
+- [x] `util_files/data/vectordata/iterators.py` - Vectordata iterators (broke long docstring line)
+- [x] `util_files/data/vectordata/utils/prepatching.py` - Vectordata prepatching utils (replaced lambda with def function)
+- [x] `util_files/data/graphics/primitives.py` - Graphics primitives (added missing scipy.optimize.minimize import)
+- [x] `util_files/data/graphics/utils/parse.py` - Graphics parse utils (replaced lambda with def function; fixed blank lines)
+- [x] `util_files/data/graphics/utils/splitting.py` - Graphics splitting utils (renamed ambiguous variable 'l' to 'line_vec'; replaced lambda with def function)
+- [x] `util_files/data/transforms/ocrodeg_degrade.py` - OCR degradation transforms (replaced star import with explicit numpy imports; renamed ambiguous parameter 'l' to 'length')
+- [ ] Plus 19+ additional files in subdirectories (data/, optimization/, rendering/, simplification/, etc.)
 - [ ] Plus 40+ additional files in subdirectories (data/, optimization/, rendering/, simplification/, etc.)
 
 #### Web UI (0/1 files)
@@ -321,9 +331,9 @@ This section provides a comprehensive listing of all Python files in the DeepV c
 
 ### 📊 Progress Summary
 - **Total Python Files**: 120+ (excluding data/raw/sketchgraphs third-party code)
-- **Completed Files**: 54 (45.0%)
+- **Completed Files**: 65 (54.2%)
 - **In Progress**: 0 (0%)
-- **Remaining Files**: 66+ (55.0%)
+- **Remaining Files**: 55+ (45.8%)
 - **Priority Modules**: Core pipeline ✅, Merging ✅, Refinement ✅, Scripts ✅, Dataset/Utilities 🔄, Web UI ✅
 
 ### 🎯 Next Priority Files

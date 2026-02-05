@@ -4,7 +4,23 @@ from random import randint
 
 import numpy as np
 import scipy.ndimage as ndi
-from numpy import *
+from numpy import (
+    add,
+    amin,
+    amax,
+    array,
+    clip,
+    cos,
+    dtype,
+    log10,
+    maximum,
+    minimum,
+    percentile,
+    pi,
+    prod,
+    sin,
+    zeros,
+)
 
 
 def autoinvert(image):
@@ -176,8 +192,8 @@ def random_blotches(image, fgblobs, bgblobs, fgscale=10, bgscale=10):
 #
 
 
-def make_fiber(l, a, stepsize=0.5):
-    angles = np.random.standard_cauchy(l) * a
+def make_fiber(length, a, stepsize=0.5):
+    angles = np.random.standard_cauchy(length) * a
     angles[0] += 2 * pi * np.random.random_sample()
     angles = add.accumulate(angles)
     coss = add.accumulate(cos(angles) * stepsize)
@@ -185,13 +201,13 @@ def make_fiber(l, a, stepsize=0.5):
     return array([coss, sins]).transpose(1, 0)
 
 
-def make_fibrous_image(shape, nfibers=300, l=300, a=0.2, stepsize=0.5, frange=(0.1, 1.0), blur=1.0):
+def make_fibrous_image(shape, nfibers=300, length=300, a=0.2, stepsize=0.5, frange=(0.1, 1.0), blur=1.0):
     h, w = shape
     lo, hi = frange
     result = zeros(shape)
     for i in range(nfibers):
         v = np.random.random_sample() * (hi - lo) + lo
-        fiber = make_fiber(l, a, stepsize=stepsize)
+        fiber = make_fiber(length, a, stepsize=stepsize)
         y, x = randint(0, h - 1), randint(0, w - 1)
         fiber[:, 0] += y
         fiber[:, 0] = clip(fiber[:, 0], 0, h - 0.1)

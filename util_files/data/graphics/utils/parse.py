@@ -3,9 +3,11 @@ import css_parser as cssutils
 from util_files import warnings
 from util_files.data.graphics import units
 
-throw_transparency_warning = lambda attributes="": warnings.warn(
-    "Transparency is ignored. {}".format(attributes), warnings.UndefinedWarning
-)
+
+def throw_transparency_warning(attributes=""):
+    warnings.warn(
+        "Transparency is ignored. {}".format(attributes), warnings.UndefinedWarning
+    )
 
 
 def fill(attributes):

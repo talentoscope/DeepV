@@ -10,11 +10,13 @@ def split_by_line(segs, line):
     l0, l1 = np.asarray(line)
     assert np.any(l0 != l1)
 
-    l = l1 - l0
-    l = l / np.linalg.norm(l)
-    n = np.roll(l, 1, axis=-1)
+    line_vec = l1 - l0
+    line_vec = line_vec / np.linalg.norm(line_vec)
+    n = np.roll(line_vec, 1, axis=-1)
     n[0] *= -1  # normal is 90 degrees counterclockwise, i.e it is directed to the left
-    dist = lambda p: (p.real - l0[0]) * n[0] + (p.imag - l0[1]) * n[1]
+
+    def dist(p):
+        return (p.real - l0[0]) * n[0] + (p.imag - l0[1]) * n[1]
 
     left_segs = []
     right_segs = []

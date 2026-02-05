@@ -157,9 +157,10 @@ def get_random_patch_from_svg(
 
 def sample_parametric_representation(paths, attribute_dicts, max_lines_n=None, max_arc_n=0, max_beziers_n=None):
     warnings.warn("legacy", DeprecationWarning)
-    assert (
-        max_arc_n == 0
-    ), "Arc has rotation as its parameter, but a CNN is unlikely to learn finding such parameter from an image. Need to convert arcs to bezier curves."
+    assert max_arc_n == 0, (
+        "Arc has rotation as its parameter, but a CNN is unlikely to learn finding such parameter from an image. "
+        "Need to convert arcs to bezier curves."
+    )
 
     # TODO implement random sampling instead of taking first max_x_count
     lines = []
@@ -191,9 +192,10 @@ def sample_parametric_representation(paths, attribute_dicts, max_lines_n=None, m
 def sample_primitive_representation(
     paths, attribute_dicts, max_lines_n=None, max_arc_n=0, max_beziers_n=None, sample_primitives_randomly=True
 ):
-    assert (
-        max_arc_n == 0
-    ), "Arc has rotation as its parameter, but a CNN is unlikely to learn finding such parameter from an image. Need to convert arcs to bezier curves."
+    assert max_arc_n == 0, (
+        "Arc has rotation as its parameter, but a CNN is unlikely to learn finding such parameter from an image. "
+        "Need to convert arcs to bezier curves."
+    )
 
     lines = []
     arcs = []
@@ -228,11 +230,18 @@ def sample_primitive_representation(
 
 def to_parametric_representation(seg, attributes):
     warnings.warn("legacy", DeprecationWarning)
-    assert not isinstance(
-        seg, svgpathtools.Arc
-    ), "Not implemented. Arc has rotation as its parameter, but a CNN is unlikely to learn finding such parameter from an image. Need to convert arcs to bezier curves."
+    assert not isinstance(seg, svgpathtools.Arc), (
+        "Not implemented. Arc has rotation as its parameter, but a CNN is unlikely to learn "
+        "finding such parameter from an image. Need to convert arcs to bezier curves."
+    )
 
-    if isinstance(seg, (svgpathtools.Line, svgpathtools.CubicBezier)):
+    if isinstance(
+        seg,
+        (
+            svgpathtools.Line,
+            svgpathtools.CubicBezier
+        )
+    ):
         points = seg.bpoints()
     # convert quadratic bezier to cubic bezier
     if isinstance(seg, svgpathtools.QuadraticBezier):
@@ -255,11 +264,18 @@ def to_parametric_representation(seg, attributes):
 
 
 def to_primitive_representation(seg, attributes):
-    assert not isinstance(
-        seg, svgpathtools.Arc
-    ), "Not implemented. Arc has rotation as its parameter, but a CNN is unlikely to learn finding such parameter from an image. Need to convert arcs to bezier curves."
+    assert not isinstance(seg, svgpathtools.Arc), (
+        "Not implemented. Arc has rotation as its parameter, but a CNN is unlikely to learn "
+        "finding such parameter from an image. Need to convert arcs to bezier curves."
+    )
 
-    if isinstance(seg, (svgpathtools.Line, svgpathtools.CubicBezier)):
+    if isinstance(
+        seg,
+        (
+            svgpathtools.Line,
+            svgpathtools.CubicBezier
+        )
+    ):
         points = seg.bpoints()
     # convert quadratic bezier to cubic bezier
     if isinstance(seg, svgpathtools.QuadraticBezier):

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from copy import copy, deepcopy
 
 import numpy as np
+from scipy.optimize import minimize
 
 # Try to import svgpathtools, but make it optional for compatibility
 try:

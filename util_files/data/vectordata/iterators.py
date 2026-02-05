@@ -11,7 +11,8 @@ def createLineIterator(P1, P2, img):
         -img: the image being processed
 
     Returns:
-        -it: a numpy array that consists of the coordinates and intensities of each pixel in the radii (shape: [numPixels, 3], row = [x,y,intensity])
+        -it: a numpy array that consists of the coordinates and intensities of each pixel in the radii
+            (shape: [numPixels, 3], row = [x,y,intensity])
     """
     # define local variables for readability
     imageH = img.shape[0]

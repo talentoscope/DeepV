@@ -4,16 +4,14 @@ from enum import Enum, auto
 import numpy as np
 from numpy.random import normal, uniform
 
-from util_files.data.graphics_primitives import Arc, BezierCurve, Line, PrimitiveType
+from util_files.data.graphics_primitives import Line, PrimitiveType
 from util_files.data.line_drawings_dataset import LineDrawingsDataset
 
 # from vectran.data.transforms.degradation_models import DegradationGenerator, all_degradations
 # from vectran.util.color_utils import rgb_to_gray, img_8bit_to_float, gray_float_to_8bit
-from util_files.data.transforms.degradation_models import DegradationGenerator
 from util_files.geometric import rotation_matrix_2d
 
 # from PIL import Image
-from util_files.rendering.cairo import render
 
 from .patch_topology import TOPOLOGY_BY_NAME
 from .utils import choose_with_proba

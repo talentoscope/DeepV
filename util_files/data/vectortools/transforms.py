@@ -10,7 +10,8 @@ def random_jitter(paths, translation_amplitude=0j, radius_amplitude=0, rotation_
     :type paths: iterable over `Path`
     :param translation_amplitude: amplitude of points translation
     :type translation_amplitude: complex, real part corresponds to horizontal and imaginary -- to vertical translations
-    :param radius_amplitude: amplitude of relative arc radii transformation; radius is scaled by `random.uniform(1 - radius_amplitude, 1 + radius_amplitude)`
+    :param radius_amplitude: amplitude of relative arc radii transformation; radius is scaled by
+        `random.uniform(1 - radius_amplitude, 1 + radius_amplitude)`
     :param rotation_amplitude: amplitude of arc rotation transformation
     """
     # gather all points to transform the coinciding points accordingly
@@ -64,7 +65,9 @@ def random_rotate(paths, rotation_amplitude):
     :type paths: iterable over `Path`
     :param deg_amplitude: rotate by `random.uniform(-rotation_amplitude, rotation_amplitude)` degrees
     """
-    bbox_to_center = lambda xmin, xmax, ymin, ymax: (xmin + xmax + (ymin + ymax) * 1j) / 2
+    def bbox_to_center(xmin, xmax, ymin, ymax):
+        return (xmin + xmax + (ymin + ymax) * 1j) / 2
+
     return [
         path.rotated(random.uniform(-rotation_amplitude, rotation_amplitude), bbox_to_center(*path.bbox()))
         for path in paths

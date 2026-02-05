@@ -14,7 +14,8 @@ class _SVGDataset(LineDrawingsDataset):
         margin (scalar): how many patches are left around The patch for augmentation.
         ppi (scalar): pixels per inch. Larger values mean wider lines and less rich patches.
         scale_width (scalar): the original path width is multiplied by this value.
-        skip_empty (bool): if ``True`` sample patch until it is not empty. Be aware of immenient infinite loop.
+        skip_empty (bool): if ``True`` sample patch until it is not empty. Be aware of
+            immenient infinite loop.
 
     Augmentation arguments:
         random_width (bool): if ``True`` then the width of each path is sampled from gaussian distribution with mean = 3 sigma = the original width.

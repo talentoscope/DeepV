@@ -37,10 +37,10 @@ class PatchTopology:
         return cls(dataset)
 
     def _sample_juncpoints(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     def _sample_directions(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     def _sample_direction_props(self):
         # TODO @artonson: same line width for all primitives?
@@ -117,7 +117,7 @@ class PatchTopology:
         return vector
 
     def _compute_primitive_props(self, junction_points, directions, directions_props):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 class NoJunctionTopology(PatchTopology):
@@ -295,7 +295,7 @@ class TOuterTopology(TTopology):
     def _do_snap(self, first_lines, second_lines):
         et_first, et_second = self.ENDPOINT_TYPES[0]
 
-        first_len, second_len = len(first_lines), len(second_lines)
+        first_len = len(first_lines)
         if first_len == 1:
             snapped_first = snap_beam(first_lines, second_lines, et_first)
             snapped_second = second_lines
