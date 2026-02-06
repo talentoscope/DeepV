@@ -9,10 +9,16 @@ import os
 import sys
 import subprocess
 from pathlib import Path
+import torch
 
 
 def main():
     """Run the fine-tuning with predefined parameters."""
+    # Enforce GPU usage
+    if not torch.cuda.is_available():
+        print("Error: GPU is required for DeepV fine-tuning but CUDA is not available on this machine.")
+        return 1
+
     # Set CUDA device
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 

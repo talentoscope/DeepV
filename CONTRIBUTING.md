@@ -153,20 +153,65 @@ docs: update installation guide
 
 ## Areas for Contribution
 
-### High Priority
-- Bug fixes and performance improvements
-- Additional test coverage
-- Documentation improvements
+### 🔴 Highest Value (February 2026)
 
-### Medium Priority
-- New primitive types (arcs, splines)
-- CAD export functionality
-- Web UI improvements
+**CRITICAL: Real-world performance** - The #1 blocking issue
+- Research and implement domain adaptation techniques
+- Create data augmentation pipelines with realistic scanning artifacts
+- Implement geometric regularization during refinement (parallelism, perpendicularity)
+- Add architectural priors for floor plans (right angles, grid alignment, symmetry)
+- Experiment with perceptual and geometric loss functions
 
-### Research Areas
-- Transformer/diffusion models for vectorization
-- Multimodal vectorization approaches
-- Advanced differentiable rendering techniques
+**Why this matters**: Model performs 13x worse on real data vs synthetic. This blocks production deployment.
+
+### 🟡 High Priority
+
+**Documentation & Type Safety**
+- Add docstrings to undocumented functions (especially refinement/merging - ~50% missing)
+- Add type hints to function signatures (currently ~60%, target 80%+)
+- Update module READMEs with recent changes
+
+**Testing & Validation**
+- Write integration tests for full pipeline
+- Add regression tests comparing outputs to baselines
+- Create performance benchmarks with time/memory targets
+
+**Code Quality**
+- Extract remaining magic numbers to Hydra configs
+- Improve error handling and validation
+- Refactor complex functions (>100 lines) into smaller units
+
+### 🟢 Medium Priority
+
+**New Features & Improvements**
+- Multi-scale processing for complex drawings
+- Enhanced CAD export with parametric constraints
+- Additional primitive types and rendering methods
+- Web UI improvements and deployment fixes
+
+**Research Areas**
+- Attention mechanisms for better spatial relationships
+- Adaptive primitive selection based on local characteristics
+- Robust handling of different degradation types
+- Multi-term loss functions (reconstruction + geometric + perceptual)
+
+### Getting Started with Contributing
+
+**For First-Time Contributors**:
+1. Start with documentation improvements (add docstrings, fix typos)
+2. Add tests for existing functionality
+3. Fix small bugs or TODOs marked "good first issue"
+
+**For Experienced Contributors**:
+1. Work on the real-world performance gap (domain adaptation, geometric priors)
+2. Implement advanced features (multi-scale processing, new primitives)
+3. Conduct research experiments and share findings
+
+**For Researchers**:
+1. Experiment with domain adaptation techniques on FloorPlanCAD dataset
+2. Propose and implement improved loss functions
+3. Benchmark against state-of-the-art vectorization methods
+4. Write up findings in issues or discussions
 
 ---
 

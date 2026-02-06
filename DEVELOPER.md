@@ -3,11 +3,53 @@
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Current Development Focus](#current-development-focus)
 - [Development Environment](#development-environment)
 - [Code Quality](#code-quality)
 - [Testing](#testing)
 - [Pipeline Development](#pipeline-development)
 - [Contributing](#contributing)
+- [Common Tasks & Troubleshooting](#common-tasks--troubleshooting)
+
+## Current Development Focus
+
+### Phase 4: Production-Ready & Robustness (~70% Complete)
+
+**Top Priorities (February 2026):**
+
+1. **🔴 Critical Issue**: Real-world data performance gap
+   - Synthetic data works well (IoU: 0.927)
+   - Real FloorPlanCAD data performs 13x worse (IoU: 0.010)
+   - Primary focus: domain adaptation, geometric constraints, better losses
+
+2. **Documentation & Type Safety**: 
+   - ~70% of functions missing docstrings (especially refinement/merging)
+   - Type hint coverage at ~20-30% in critical areas
+   - Target: 80%+ documentation coverage
+
+3. **Code Quality & Refactoring**:
+   - Refinement module: 400+ line functions need breaking apart
+   - Magic numbers scattered throughout (tolerances, thresholds)
+   - Tensor broadcasting issues in batch processing
+
+4. **Testing & Validation**:
+   - Current: 14+ tests, pre-commit hooks active
+   - Target: 70-80% unit test coverage, full integration tests
+   - Need regression tests for pipeline outputs
+
+**Recent Wins** 🎉:
+- 90% speedup in greedy merging (53s → 5s)
+- 387x faster Bézier splatting (2.5s → 0.0064s per patch)
+- 70% overall pipeline improvement (77s → 23s)
+- Large image support fixed (handles 1121×771px)
+- Comprehensive metrics framework implemented
+
+**Where to Contribute:**
+- Domain adaptation research (synthetic→real gap)
+- Docstring additions (focus: refinement/merging)
+- Integration tests for full pipeline
+- Type hint improvements
+- Performance profiling and optimization
 
 ## Quick Start
 
@@ -171,10 +213,28 @@ def test_function_edge_cases():
 
 DeepV processes images through four main stages:
 
-1. **Cleaning**: Noise removal and preprocessing
-2. **Vectorization**: Neural network primitive prediction
-3. **Refinement**: Differentiable optimization
-4. **Merging**: Primitive consolidation and CAD export
+1. **Cleaning**: Noise removal and preprocessing (UNet-based)
+2. **Vectorization**: Neural network primitive prediction (ResNet + Transformer)
+3. **Refinement**: Differentiable optimization with Bézier splatting rendering
+4. **Merging**: Primitive consolidation and CAD export (DXF/SVG)
+
+**Key Insight**: The pipeline works well on synthetic data but struggles with real-world scanned images. When developing:
+- Test on both synthetic (NES) and real (FloorPlanCAD) datasets
+- Monitor IoU, Dice coefficient, SSIM, and CAD compliance metrics
+- Use `scripts/comprehensive_analysis.py` for full quality assessment
+
+### Performance Characteristics
+
+**Current Bottlenecks** (profiled February 2026):
+- Rendering: 0.04-0.05s per iteration (Cairo-based; Bézier splatting optimized)
+- Refinement: Needs further profiling; tensor broadcasting issues
+- Merging: Spatial indexing could be improved (currently R-tree with 30px window)
+
+**Optimization Opportunities**:
+- Adaptive step sizes in refinement
+- Better spatial indexing in merging
+- Multi-scale processing for complex drawings
+- Batch processing improvements
 
 ### Development Workflow
 
@@ -259,6 +319,89 @@ refactor: simplify primitive merging logic
 - **Issues**: Search existing issues first
 - **Discussions**: Use GitHub Discussions for questions
 - **Code**: Read existing implementations for patterns
+
+## Common Tasks & Troubleshooting
+
+### Quick Reference Commands
+
+```bash
+# Environment validation
+python scripts/validate_env.py
+
+# Run comprehensive analysis on outputs
+python scripts/comprehensive_analysis.py --results-dir logs/outputs/your_experiment
+
+# Profile performance
+python scripts/benchmark_performance.py
+python scripts/profile_refinement_bottlenecks.py
+
+# Benchmark against baselines
+python scripts/benchmark_pipeline.py --data-root ./data --datasets floorplancad
+
+# Extract ground truth from FloorPlanCAD SVGs
+python scripts/extract_floorplancad_ground_truth.py
+
+# Quick smoke test
+python run_web_ui_demo.py
+```
+
+### Debugging Tips
+
+**Tensor Shape Issues** (common in refinement):
+```python
+# Always validate tensor dimensions when modifying batch processing
+print(f"Tensor shape: {tensor.shape}")
+assert tensor.shape == expected_shape, f"Expected {expected_shape}, got {tensor.shape}"
+```
+
+**Import Issues**:
+```python
+# Prefer explicit imports from util_files
+from util_files import file_utils as fu
+# NOT: from util_files.os import ...  (old pattern)
+```
+
+**Performance Issues**:
+- Check if Cairo is using system library (not Python fallback)
+- Profile with: `python -m cProfile -o profile.stats run_pipeline.py`
+- Analyze with: `python -c "import pstats; p=pstats.Stats('profile.stats'); p.sort_stats('cumtime').print_stats(20)"`
+
+**Poor Results on Real Data**:
+- This is expected and under active research
+- Try data augmentation with scanning artifacts during training
+- Consider fine-tuning on small real dataset
+- Check PLAN.md for improvement strategies
+
+### Working with Datasets
+
+**FloorPlanCAD** (14,625 real drawings):
+- Location: `data/vector/floorplancad/` (SVG) and `data/raster/floorplancad/` (PNG)
+- Status: Pre-processed and ready
+- Warning: Model performs poorly on this dataset (active research area)
+
+**Synthetic Data** (NES test images):
+- Location: `data/synthetic/`
+- Status: Model performs well here
+- Use for initial testing and validation
+
+**Creating Custom Splits**:
+```bash
+python scripts/create_floorplancad_splits.py --data-dir data/raster/floorplancad --output data/splits/
+```
+
+### Understanding Metrics
+
+Run comprehensive analysis to get full quality report:
+```bash
+python scripts/comprehensive_analysis.py --results-dir logs/outputs/test_nes
+```
+
+**Key Metrics to Watch**:
+- **IoU (Intersection over Union)**: Geometric overlap; target >0.8 (currently 0.927 synthetic, 0.010 real)
+- **Dice Coefficient**: Similar to IoU; target >0.9
+- **SSIM (Structural Similarity)**: Visual quality; target >0.7 (currently low)
+- **CAD Angle Compliance**: Percentage at standard angles (0\u00b0, 90\u00b0, etc.); target >80%
+- **Chamfer Distance**: Point cloud similarity; lower is better
 
 ---
 

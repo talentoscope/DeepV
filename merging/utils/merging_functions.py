@@ -389,13 +389,15 @@ def merge_close(lines: np.ndarray, idx, widths: np.ndarray, tol: float = 1e-3, m
     close = [[] for _ in range(n)]
 
     for i in tqdm(range(n)):
-        #         if (line_legth(lines[i, :4]) < 3):
+        #         if (line_length(lines[i, :4]) < 3):
         #             continue
-        for j in idx.intersection(lines[i, :4] + window):
+        # Create properly ordered bounding box for intersection query
+        query_bbox = ordered(lines[i, :4]) + np.array([-window_width, -window_width, window_width, window_width])
+        for j in idx.intersection(query_bbox):
             if i == j:
                 continue
 
-            if line_legth(lines[j, :4]) < 3:
+            if line_length(lines[j, :4]) < 3:
                 continue
             if (
                 dist(lines[i], lines[j]) < max_dist or intersect(lines[i], lines[j])  # lines are close
@@ -408,7 +410,7 @@ def merge_close(lines: np.ndarray, idx, widths: np.ndarray, tol: float = 1e-3, m
 
     for i in range(n):
 
-        if line_legth(lines[i, :4]) < 3:
+        if line_length(lines[i, :4]) < 3:
             continue
 
         elif (close[i]) and (i not in merged):
@@ -452,25 +454,58 @@ def maximiz_final_iou(nump: np.ndarray, input_rgb: np.ndarray) -> List[np.ndarra
         - Iteratively tests removing each line and keeps removals that improve MSE.
         - Uses skeleton rendering for line visualization.
         - Can be computationally expensive for large line counts.
+        - OPTIMIZED: Only tests removal of short/low-opacity lines, limits iterations.
     """
+    if len(nump) == 0:
+        return nump
+
+    # Pre-compute reference rendering and MSE
     aa = (draw_with_skeleton(nump, max_x=input_rgb.shape[1], max_y=input_rgb.shape[0]) / 255.0)[..., 0]
     k = input_rgb[..., 0] / 255.0
     mse_ref = ((np.array(aa) - np.array(k)) ** 2).mean()
+
     lines = list(nump)
-    it = 0
-    l = 0
-    while it < len(lines):
-        poped_line = lines.pop(it)
-        tmp_scr = (draw_with_skeleton(np.array(lines), max_x=input_rgb.shape[1], max_y=input_rgb.shape[0]) / 255.0)[
-            ..., 0
-        ]
-        tmp_scr = ((np.array(tmp_scr) - np.array(k)) ** 2).mean()
-        if tmp_scr > mse_ref:
-            lines.insert(it, poped_line)
-            it += 1
+
+    # Only test removal of potentially redundant lines:
+    # - Short lines (length < 10 pixels)
+    # - Low opacity lines (< 0.7)
+    # - Thin lines (width < 1.0)
+    line_lengths = np.array([line_length(line) for line in lines])
+    short_lines = line_lengths < 10
+    low_opacity = np.array([line[5] for line in lines]) < 0.7
+    thin_lines = np.array([line[4] for line in lines]) < 1.0
+
+    # Prioritize removal candidates: short + low opacity + thin
+    candidates = np.where(short_lines | low_opacity | thin_lines)[0]
+
+    # Limit to top 50 candidates to avoid excessive computation
+    if len(candidates) > 50:
+        # Sort by combined score (shorter + lower opacity + thinner = higher priority)
+        scores = line_lengths[candidates] + np.array([lines[i][5] for i in candidates]) + np.array([lines[i][4] for i in candidates])
+        candidates = candidates[np.argsort(scores)][:50]
+
+    # Test removal of candidate lines
+    removed_count = 0
+    for idx in candidates:
+        if idx >= len(lines):  # Line might have been removed already
+            continue
+
+        # Remove the line temporarily
+        poped_line = lines.pop(idx)
+
+        # Re-render with line removed
+        tmp_scr = (draw_with_skeleton(np.array(lines), max_x=input_rgb.shape[1], max_y=input_rgb.shape[0]) / 255.0)[..., 0]
+        tmp_mse = ((np.array(tmp_scr) - np.array(k)) ** 2).mean()
+
+        if tmp_mse > mse_ref:
+            # MSE got worse, put the line back
+            lines.insert(idx, poped_line)
         else:
-            mse_ref = tmp_scr
-        l += 1
+            # MSE improved, keep the removal
+            mse_ref = tmp_mse
+            removed_count += 1
+
+    print(f"IOU optimization: tested {len(candidates)} lines, removed {removed_count} redundant lines")
     return lines
 
 

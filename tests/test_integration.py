@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 # Import improved components
 from util_files.exceptions import DeepVError, EmptyPixelError, ClippingError
-from util_files.logging import Logger
+from util_files.structured_logging import get_pipeline_logger
 
 
 class TestIntegration(unittest.TestCase):
@@ -56,7 +56,7 @@ class TestIntegration(unittest.TestCase):
     def test_logging_integration(self):
         """Test that logging system integrates properly."""
         # Create a logger
-        logger = Logger("test_logger")
+        logger = get_pipeline_logger("test.integration")
 
         # Test logging methods exist
         self.assertTrue(hasattr(logger, 'info'))

@@ -18,6 +18,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 from web_ui.app import create_interface
 
 if __name__ == "__main__":
+    # Enforce GPU usage
+    import torch
+    if not torch.cuda.is_available():
+        print("Error: GPU is required for DeepV but CUDA is not available on this machine.")
+        sys.exit(1)
+
     print("Starting DeepV Web UI...")
     print("This is a demo interface showcasing rendering capabilities.")
     print("For full vectorization, use the main pipeline scripts.")

@@ -7,7 +7,7 @@ from ..parameters import (
     pixel_center_coodinates_are_integer,
     reinit_period,
 )
-from .logging import Logger
+from util_files.structured_logging import get_pipeline_logger
 
 
 class PrimitiveAligner:
@@ -22,7 +22,7 @@ class PrimitiveAligner:
         loglevel
         """
         if logger is None:
-            self.logger = Logger.prepare_logger(loglevel=loglevel, logfile=None)
+            self.logger = get_pipeline_logger("optimization.primitive_aligner")
         else:
             self.logger = logger
         self.prim_ten = initial_primitives_tensor

@@ -83,9 +83,15 @@ def main(options):
     parallel = False
     distributed = getattr(options, 'distributed', False)
     print(options.gpu)
+
+    # Enforce GPU usage
+    if not torch.cuda.is_available():
+        raise RuntimeError("GPU is required for DeepV training but CUDA is not available on this machine.")
+
     if len(options.gpu) == 0:
-        device = torch.device("cpu")
-        prefetch_data = False
+        options.gpu = [0]  # Default to first GPU
+        device = torch.device("cuda:0")
+        prefetch_data = True
     elif len(options.gpu) == 1:
         device = torch.device("cuda:{}".format(options.gpu[0]))
         prefetch_data = True

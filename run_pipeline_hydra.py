@@ -125,14 +125,19 @@ def main(cfg: DictConfig) -> None:
     print(f"Primitive type: {cfg.pipeline.primitive_type}")
     print(f"GPU: {cfg.gpu}")
 
+    # Enforce GPU usage
+    if not torch.cuda.is_available():
+        raise RuntimeError("GPU is required for DeepV but CUDA is not available on this machine.")
+
     # Set random seed
     if cfg.seed is not None:
         torch.manual_seed(cfg.seed)
         np.random.seed(cfg.seed)
 
-    # Set GPU
-    if cfg.gpu is not None:
-        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(map(str, cfg.gpu))
+    # Set GPU - if not specified, use default cuda:0
+    if cfg.gpu is None or len(cfg.gpu) == 0:
+        cfg.gpu = [0]  # Default to first GPU
+    os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(map(str, cfg.gpu))
 
     # Run pipeline stages
     try:

@@ -94,6 +94,11 @@ def main():
 
     args = parser.parse_args()
 
+    # Enforce GPU usage
+    if not torch.cuda.is_available():
+        print("Error: GPU is required for DeepV but CUDA is not available on this machine.")
+        return 1
+
     if not os.path.exists(args.image):
         print(f"Error: Image file not found: {args.image}")
         return 1

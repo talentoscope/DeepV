@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from typing import Tuple, Any
 from rtree import index
 
@@ -61,8 +62,8 @@ def postprocess(
             idx,
             widths,
             max_angle=options.max_angle_to_connect,
-            window_width=200,
-            max_dist=options.max_angle_to_connect,
+            window_width=30,  # Reduced from 200 to 30 for better performance
+            max_dist=5,  # Fixed: was using angle instead of distance
         )
     )
     save_svg(result, cleaned_image.shape, options.image_name[it], options.output_dir + "merging_output/")

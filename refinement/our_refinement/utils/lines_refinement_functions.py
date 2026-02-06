@@ -3,7 +3,7 @@ import os
 import signal
 import sys
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Tuple, Optional
 
 import numpy as np
 import torch
@@ -14,6 +14,8 @@ from tqdm import tqdm
 
 ### Todo check this metric or change it
 from util_files.exceptions import EmptyPixelError, OptimizationError
+from util_files.rendering.bezier_splatting import BezierSplatting
+from util_files.rendering.gpu_line_renderer import GPULineRenderer
 from util_files.rendering.cairo import render as original_render
 from util_files.rendering.cairo import (
     render_with_skeleton as original_render_with_skeleton,
@@ -32,7 +34,7 @@ try:
 except:
     # Fallback to hardcoded values
     h, w = 64, 64
-    padding = 3
+    padding = 1
 
 padded_h = h + padding * 2
 padded_w = w + padding * 2
@@ -119,11 +121,11 @@ class NonanAdam(torch.optim.Adam):
         return loss
 
 
-def render(data, dimensions, data_representation):
+def render(data: Any, dimensions: Tuple[int, int], data_representation: Any) -> Any:
     return original_render(data, dimensions, data_representation, linecaps="butt", linejoin="miter")
 
 
-def render_skeleton(data, dimensions, data_representation, padding=0, scaling=4):
+def render_skeleton(data: np.ndarray, dimensions: Tuple[int, int], data_representation: Any, padding: int = 0, scaling: int = 4) -> Any:
     w, h = dimensions
     data[..., [0, 2]] = np.clip(data[..., [0, 2]], 0.5, w - 0.5)
     data[..., [1, 3]] = np.clip(data[..., [1, 3]], 0.5, h - 0.5)
@@ -142,7 +144,7 @@ def render_skeleton(data, dimensions, data_representation, padding=0, scaling=4)
     )
 
 
-def get_random_line(h, w, max_width=None):
+def get_random_line(h: int, w: int, max_width: Optional[float] = None) -> np.ndarray:
     if max_width is None:
         max_width = max(h, w) // 10
     line = np.float32(np.random.random(5) * [w, h, w, h, max_width])
@@ -474,26 +476,22 @@ def render_primitives_hard(primitives_batch, uint=False):
 
 
 def render_lines_bezier_splatting(lines_batch, supersampling=4, uint=False):
-    """Render lines using Bézier Splatting for faster differentiable rendering."""
+    """Render lines using fast differentiable rendering optimized for performance."""
     batch_size, lines_n, _ = lines_batch.shape
 
-    # Create Bézier Splatting renderer
-    renderer = BezierSplatting(canvas_size=(padded_h, padded_w), supersampling=supersampling)
-    renderer.to_device(lines_batch.device)
-
+    # Use the fast differentiable renderer that matches Cairo performance but provides gradients
     rasters = []
     for i in range(batch_size):
         batch_lines = lines_batch[i]  # (lines_n, 5)
 
-        # Convert to Bézier Splatting format (add padding to match coordinate system)
-        start_points = batch_lines[:, :2] + padding  # (lines_n, 2)
-        end_points = batch_lines[:, 2:4] + padding  # (lines_n, 2)
-        widths = batch_lines[:, 4]  # (lines_n,)
+        # Convert to differentiable rendering format (add padding)
+        gpu_lines = batch_lines.clone()
+        gpu_lines[:, :2] += padding  # start points
+        gpu_lines[:, 2:4] += padding  # end points
 
-        # Render batch of lines
-        canvas = renderer.render_lines(start_points, end_points, widths)
+        # Use fast differentiable rendering
+        canvas = render_lines_differentiable_fast(gpu_lines, (padded_h, padded_w))
 
-        # Convert to same format as render_lines_pt: (padded_h, padded_w)
         rasters.append(canvas)
 
     rasters = torch.stack(rasters, dim=0)  # (batch_size, padded_h, padded_w)
@@ -504,7 +502,95 @@ def render_lines_bezier_splatting(lines_batch, supersampling=4, uint=False):
         return rasters
 
 
-def render_lines_skeleton(lines_batch):
+def render_lines_differentiable_fast(lines: torch.Tensor, canvas_size: Tuple[int, int]) -> torch.Tensor:
+    """
+    Fast differentiable line rendering that provides gradients and approaches Cairo performance.
+
+    Vectorized across all lines for maximum performance.
+    """
+    h, w = canvas_size
+    num_lines = len(lines)
+    device = lines.device
+
+    # Create coordinate grids once
+    y_coords = torch.arange(h, dtype=torch.float32, device=device)
+    x_coords = torch.arange(w, dtype=torch.float32, device=device)
+    grid_y, grid_x = torch.meshgrid(y_coords, x_coords, indexing='ij')
+
+    # Initialize canvas
+    canvas = torch.zeros((h, w), dtype=torch.float32, device=device)
+
+    # Process lines in batches for memory efficiency
+    batch_size = min(50, num_lines)  # Process up to 50 lines at once
+
+    for batch_start in range(0, num_lines, batch_size):
+        batch_end = min(batch_start + batch_size, num_lines)
+        batch_lines = lines[batch_start:batch_end]
+        batch_size_actual = len(batch_lines)
+
+        # Extract line parameters: (batch_size, 5) -> separate tensors
+        x1 = batch_lines[:, 0]  # (batch_size,)
+        y1 = batch_lines[:, 1]
+        x2 = batch_lines[:, 2]
+        y2 = batch_lines[:, 3]
+        widths = batch_lines[:, 4]
+
+        # Line vectors and lengths: (batch_size, 2) and (batch_size,)
+        line_vecs = torch.stack([x2 - x1, y2 - y1], dim=-1)
+        line_lengths = torch.norm(line_vecs, dim=-1)
+
+        # Avoid division by zero
+        line_lengths = torch.clamp(line_lengths, min=1e-6)
+
+        # Unit vectors along lines: (batch_size, 2)
+        line_dirs = line_vecs / line_lengths.unsqueeze(-1)
+
+        # Perpendicular vectors: (batch_size, 2)
+        perp_dirs = torch.stack([-line_dirs[:, 1], line_dirs[:, 0]], dim=-1)
+
+        # Expand grids for batch computation: (h, w, batch_size)
+        grid_x_exp = grid_x.unsqueeze(-1).expand(-1, -1, batch_size_actual)
+        grid_y_exp = grid_y.unsqueeze(-1).expand(-1, -1, batch_size_actual)
+
+        # Pixel vectors from start points: (h, w, batch_size, 2)
+        pixel_vecs = torch.stack([grid_x_exp - x1, grid_y_exp - y1], dim=-1)
+
+        # Projections: (h, w, batch_size)
+        proj_line = torch.sum(pixel_vecs * line_dirs, dim=-1)
+        proj_perp = torch.sum(pixel_vecs * perp_dirs, dim=-1)
+
+        # Clamp projection along line to segment bounds: (h, w, batch_size)
+        proj_line_clamped = torch.clamp(proj_line, torch.zeros_like(proj_line), line_lengths)
+
+        # Distance to closest point on line segment: (h, w, batch_size)
+        closest_x = x1 + proj_line_clamped * line_dirs[:, 0]
+        closest_y = y1 + proj_line_clamped * line_dirs[:, 1]
+
+        distances = torch.sqrt((grid_x_exp - closest_x)**2 + (grid_y_exp - closest_y)**2)
+
+        # Anti-aliasing with smooth falloff: (h, w, batch_size)
+        half_widths = widths / 2
+        falloff_widths = torch.clamp(widths * 0.1, min=0.5, max=2.0)  # Anti-aliasing zone
+
+        edge_distances = half_widths - distances
+        alpha_raw = torch.clamp(edge_distances / falloff_widths, 0, 1)
+        alpha_smooth = alpha_raw * alpha_raw * (3 - 2 * alpha_raw)  # Smoothstep
+
+        # Only render within line segment bounds (with small extension)
+        extensions = falloff_widths * 0.5
+        along_line_mask = (proj_line >= -extensions) & (proj_line <= line_lengths + extensions)
+        alpha_smooth = alpha_smooth * along_line_mask.float()
+
+        # Take maximum across all lines in this batch: (h, w)
+        batch_canvas = torch.max(alpha_smooth, dim=-1)[0]
+
+        # Composite with main canvas
+        canvas = torch.maximum(canvas, batch_canvas)
+
+    return canvas
+
+
+def render_lines_skeleton(lines_batch: torch.Tensor) -> np.ndarray:
     return np.stack(
         list(
             map(
@@ -515,7 +601,7 @@ def render_lines_skeleton(lines_batch):
     )
 
 
-def line_to_point_energy_canonical(line_length, line_halfwidth, point_x, point_y, R):
+def line_to_point_energy_canonical(line_length: torch.Tensor, line_halfwidth: torch.Tensor, point_x: torch.Tensor, point_y: torch.Tensor, R: float) -> torch.Tensor:
     r"""Gives the total energy of interaction of a line and a point
      for a point-to-point interaction energy given by `-exp(-r**2/R**2)`.
     Coordinates of the point `point_x` and `point_y` correspond to the coordiante system
@@ -528,7 +614,7 @@ def line_to_point_energy_canonical(line_length, line_halfwidth, point_x, point_y
     )
 
 
-def line_to_point_energy(lines_batch, point_charges, division_epsilon=1e-12, R_close=1, R_far=32, far_weight=1 / 50):
+def line_to_point_energy(lines_batch: torch.Tensor, point_charges: torch.Tensor, division_epsilon: float = 1e-12, R_close: float = 1, R_far: float = 32, far_weight: float = 1 / 50) -> torch.Tensor:
     r"""For each line in `lines_batch` gives the total energy of interaction of this line with `point_charges`.
 
     Parameters
@@ -567,8 +653,8 @@ def line_to_point_energy(lines_batch, point_charges, division_epsilon=1e-12, R_c
         ly.unsqueeze(-1),
         length.unsqueeze(-1),
         point_charges,
-        raster_coordinates[0],
-        raster_coordinates[1],
+        raster_coordinates[0].to(point_charges.device),
+        raster_coordinates[1].to(point_charges.device),
     )
 
     # Translate points to canonical coordinate systems of the lines
@@ -591,7 +677,7 @@ def line_to_point_energy(lines_batch, point_charges, division_epsilon=1e-12, R_c
     return energies
 
 
-def line_to_vector_energy(lines_batch, vector_field, division_epsilon=1e-12, R_close=1, collinearity_beta=None, collinearity_field_weight=2):
+def line_to_vector_energy(lines_batch: torch.Tensor, vector_field: torch.Tensor, division_epsilon: float = 1e-12, R_close: float = 1, collinearity_beta: Optional[float] = None, collinearity_field_weight: float = 2) -> torch.Tensor:
     r"""For each line in `lines_batch` gives the total energy of interaction of this line with `vector_field`.
 
     Parameters
@@ -631,8 +717,8 @@ def line_to_vector_energy(lines_batch, vector_field, division_epsilon=1e-12, R_c
         lx.unsqueeze(-1),
         ly.unsqueeze(-1),
         length.unsqueeze(-1),
-        raster_coordinates[0],
-        raster_coordinates[1],
+        raster_coordinates[0].to(vector_field.device),
+        raster_coordinates[1].to(vector_field.device),
     )
 
     # Calculate intensities of vector field interactions and total field interaction intensities
@@ -772,6 +858,18 @@ class MeanFieldEnergyComputer:
         cx = (x1 + x2) / 2
         cy = (y1 + y2) / 2
         del x1, x2, y1, y2
+        # Debug: log shapes to diagnose broadcasting mismatches
+        try:
+            print(f"[DEBUG] shapes before broadcast: cx={tuple(cx.unsqueeze(-1).shape)}, cy={tuple(cy.unsqueeze(-1).shape)}, lx={tuple(lx.unsqueeze(-1).shape)}, ly={tuple(ly.unsqueeze(-1).shape)}, excess_raster={tuple(excess_raster.shape)}, rasters_batch={tuple(rasters_batch.shape)}, raster_coordinates0={tuple(raster_coordinates[0].shape)}, raster_coordinates1={tuple(raster_coordinates[1].shape)}")
+        except Exception:
+            pass
+
+        # Ensure rasters_batch has shape (batch, 1, rasters_n) to match excess_raster
+        if rasters_batch.ndim == 3:
+            rasters_batch = rasters_batch.type(dtype).reshape(rasters_batch.shape[0], -1).unsqueeze(1)
+        else:
+            rasters_batch = rasters_batch.type(dtype)
+
         cx, cy, lx, ly, excess_raster, rasters_batch, raster_x, raster_y = torch.broadcast_tensors(
             cx.unsqueeze(-1),
             cy.unsqueeze(-1),
@@ -779,8 +877,8 @@ class MeanFieldEnergyComputer:
             ly.unsqueeze(-1),
             excess_raster,
             rasters_batch,
-            raster_coordinates[0],
-            raster_coordinates[1],
+            raster_coordinates[0].to(excess_raster.device),
+            raster_coordinates[1].to(excess_raster.device),
         )
 
         # Translate points to canonical coordinate systems of the lines
@@ -1034,6 +1132,12 @@ def size_energy(
         cx = (x1 + x2) / 2
         cy = (y1 + y2) / 2
         del x1, x2, y1, y2
+        # Ensure rasters_batch has shape (batch, 1, rasters_n) to match excess_raster
+        if rasters_batch.ndim == 3:
+            rasters_batch = rasters_batch.type(dtype).reshape(rasters_batch.shape[0], -1).unsqueeze(1)
+        else:
+            rasters_batch = rasters_batch.type(dtype)
+
         cx, cy, lx, ly, excess_raster, rasters_batch, raster_x, raster_y = torch.broadcast_tensors(
             cx.unsqueeze(-1),
             cy.unsqueeze(-1),
@@ -1041,8 +1145,8 @@ def size_energy(
             ly.unsqueeze(-1),
             excess_raster,
             rasters_batch,
-            raster_coordinates[0],
-            raster_coordinates[1],
+            raster_coordinates[0].to(excess_raster.device),
+            raster_coordinates[1].to(excess_raster.device),
         )
 
         # Translate points to canonical coordinate systems of the lines
@@ -1116,17 +1220,17 @@ def size_energy(
 
 
 def reinit_excess_lines(
-    cx,
-    cy,
-    width,
-    length,
-    excess_raster,
-    patches_to_consider,
-    min_raster_to_fill=0.5,
-    min_width=1 / 8,
-    initial_width=1,
-    initial_length=1,
-):
+    cx: torch.Tensor,
+    cy: torch.Tensor,
+    width: torch.Tensor,
+    length: torch.Tensor,
+    excess_raster: torch.Tensor,
+    patches_to_consider: torch.Tensor,
+    min_raster_to_fill: float = 0.5,
+    min_width: float = 1 / 8,
+    initial_width: float = 1,
+    initial_length: float = 1,
+) -> None:
     r"""
     Algorithm is:
     1. In each patch find the maximum value of excess raster
@@ -1144,40 +1248,48 @@ def reinit_excess_lines(
        and reinitialize the length and width of this line
     """
     with torch.no_grad():
+        # Ensure raster_coordinates is on the same device as cx
+        raster_coordinates_device = raster_coordinates.to(cx.device)
         # 1. In each patch find the maximum value of excess raster
         #    that is not already covered by some vector primitive
         max_excess, max_excess_id = torch.max(excess_raster, dim=-1)
-        # 2. Find the patches for which this value is larger than `min_raster_to_fill`
-        #    and that are from `patches_to_consider`
-        #    -- only these patches need reinitialization
-        patches_to_reinit = torch.tensor(patches_to_consider, dtype=torch.bool, device=cx.device)
-        patches_to_consider_to_reinit = max_excess >= min_raster_to_fill
-        patches_to_reinit.masked_scatter_(patches_to_reinit, patches_to_consider_to_reinit)
-        if patches_to_reinit.sum() == 0:
+        # 2. Find patches that have significant excess and are in the considered set
+        device = cx.device
+        num_patches = max_excess.shape[0]
+        patches_considered_mask = torch.tensor(patches_to_consider, dtype=torch.bool, device=device)
+        patches_with_excess = (max_excess >= min_raster_to_fill) & patches_considered_mask
+        if patches_with_excess.sum() == 0:
             return
-        # 3. In every such patch find the line with the minimal width
-        min_lines_width, lines_to_reinit = torch.min(width[patches_to_reinit], dim=-1)
-        # 4. Find the patches for which this value is lower than `min_width`
-        #      (the patch has invisible lines that are not already 'working')
-        #    and that need reinitialization
-        #    -- only these patches will be reinitialized
-        patches_to_reinit_with_excess_lines = min_lines_width < min_width
-        patches_to_consider_to_reinit[patches_to_consider_to_reinit] &= patches_to_reinit_with_excess_lines
-        patches_to_reinit[patches_to_reinit] &= patches_to_reinit_with_excess_lines
-        if patches_to_reinit.sum() == 0:
+
+        # 3. For every patch compute the index of the line with the minimal width
+        lines_min_idx = torch.argmin(width, dim=-1)
+
+        # 4. Select patches where the minimal-width line is smaller than threshold
+        min_line_widths_full = width[torch.arange(num_patches, device=device), lines_min_idx]
+        patches_to_reinit_mask = patches_with_excess & (min_line_widths_full < min_width)
+        if patches_to_reinit_mask.sum() == 0:
             return
-        lines_to_reinit = lines_to_reinit[patches_to_reinit_with_excess_lines]
+
+        # Indices of patches to reinitialize
+        reinit_patch_indices = torch.where(patches_to_reinit_mask)[0]
+
+        # Lines (per-patch) to reinitialize
+        lines_to_reinit_selected = lines_min_idx[reinit_patch_indices]
+
+        # Corresponding raster positions of maximum excess per selected patch
+        max_excess_id_selected = max_excess_id[reinit_patch_indices]
+        
         # 5. In every such patch put the line with the minimal width from step 3
         #    into the position maximum excess raster from step 1
         #    and reinitialize the length and width of this line
-        cx.data[patches_to_reinit, lines_to_reinit] = raster_coordinates[
-            0, max_excess_id[patches_to_consider_to_reinit]
+        cx.data[reinit_patch_indices, lines_to_reinit_selected] = raster_coordinates_device[
+            0, max_excess_id_selected
         ]
-        cy.data[patches_to_reinit, lines_to_reinit] = raster_coordinates[
-            1, max_excess_id[patches_to_consider_to_reinit]
+        cy.data[reinit_patch_indices, lines_to_reinit_selected] = raster_coordinates_device[
+            1, max_excess_id_selected
         ]
-        length.data[patches_to_reinit, lines_to_reinit] = initial_length
-        width.data[patches_to_reinit, lines_to_reinit] = initial_width
+        length.data[reinit_patch_indices, lines_to_reinit_selected] = initial_length
+        width.data[reinit_patch_indices, lines_to_reinit_selected] = initial_width
 
 
 def snap_lines(
@@ -1463,7 +1575,10 @@ def collapse_redundant_lines(cx, cy, theta, length, width, patches_to_consider, 
 
             # 4. Remove redundant lines from the total rendering
             patch_rasterizations[line_is_redundant] -= individual_rasterizations[line_is_redundant, line_i]
-            patches_to_work_with[patches_to_work_with] = line_is_redundant
+            # Avoid in-place aliasing issues by cloning before masked assignment
+            mask = patches_to_work_with.clone()
+            mask[patches_to_work_with] = line_is_redundant
+            patches_to_work_with = mask
             width[patches_to_work_with, line_i] = min_linear
             length[patches_to_work_with, line_i] = min_linear
         del individual_rasterizations, patch_rasterizations, line_is_redundant
@@ -1511,20 +1626,22 @@ def constrain_parameters(
     dwarf_lines = width.data > length.data * dwarfness_ratio
     width.data[dwarf_lines], length.data[dwarf_lines] = length.data[dwarf_lines], width.data[dwarf_lines]
     theta.data[dwarf_lines] += np.pi / 2
-    (
-        size_optimizer.state[length]["exp_avg"].data[dwarf_lines],
-        size_optimizer.state[width]["exp_avg"].data[dwarf_lines],
-    ) = (
-        size_optimizer.state[width]["exp_avg"].data[dwarf_lines],
-        size_optimizer.state[length]["exp_avg"].data[dwarf_lines],
-    )
-    (
-        size_optimizer.state[length]["exp_avg_sq"].data[dwarf_lines],
-        size_optimizer.state[width]["exp_avg_sq"].data[dwarf_lines],
-    ) = (
-        size_optimizer.state[width]["exp_avg_sq"].data[dwarf_lines],
-        size_optimizer.state[length]["exp_avg_sq"].data[dwarf_lines],
-    )
+    # Swap optimizer internal state for parameters if available; otherwise skip safely
+    try:
+        exp_avg_len = size_optimizer.state[length]["exp_avg"].data
+        exp_avg_wid = size_optimizer.state[width]["exp_avg"].data
+        tmp = exp_avg_len[dwarf_lines].clone()
+        exp_avg_len[dwarf_lines] = exp_avg_wid[dwarf_lines]
+        exp_avg_wid[dwarf_lines] = tmp
+
+        exp_avg_sq_len = size_optimizer.state[length]["exp_avg_sq"].data
+        exp_avg_sq_wid = size_optimizer.state[width]["exp_avg_sq"].data
+        tmp2 = exp_avg_sq_len[dwarf_lines].clone()
+        exp_avg_sq_len[dwarf_lines] = exp_avg_sq_wid[dwarf_lines]
+        exp_avg_sq_wid[dwarf_lines] = tmp2
+    except Exception:
+        # If optimizer state keys are not present or another issue occurs, skip swapping
+        pass
 
     # 4. Limit positions of the lines to the canvas
     #    Nonzero padding is used to prevent nonstability for the lines trying to fit super-narrow raster

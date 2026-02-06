@@ -92,7 +92,7 @@ def read_data(options, image_type="RGB"):
                 print(image_name[-4:])
                 continue
 
-            img = train_transform(Image.open(options.data_dir + image_name).convert(image_type))
+            img = train_transform(Image.open(os.path.join(options.data_dir, image_name)).convert(image_type))
             print(img.shape)
             img_t = torch.ones(
                 img.shape[0], img.shape[1] + (32 - img.shape[1] % 32), img.shape[2] + (32 - img.shape[2] % 32)
@@ -101,7 +101,7 @@ def read_data(options, image_type="RGB"):
             dataset.append(img_t)
         options.image_name = image_names
     else:
-        img = train_transform(Image.open(options.data_dir + options.image_name).convert(image_type))
+        img = train_transform(Image.open(os.path.join(options.data_dir, options.image_name)).convert(image_type))
         print(img)
         print(img.shape)
         img_t = torch.ones(
@@ -135,11 +135,11 @@ def vector_estimation(patches_rgb, model, device, it, options):
             # Check if model supports variable length output
             if hasattr(model.hidden, 'max_primitives'):
                 # Variable length model - no need for model_output_count
-                batch_output = model(patch_images[it_start:it_batches].cuda().float()).detach().cpu().numpy()
+                batch_output = model(patch_images[it_start:it_batches].to(device).float()).detach().cpu().numpy()
             else:
                 # Fixed length model - use model_output_count
                 batch_output = model(
-                    patch_images[it_start:it_batches].cuda().float(),
+                    patch_images[it_start:it_batches].to(device).float(),
                     options.model_output_count
                 ).detach().cpu().numpy()
 
@@ -161,20 +161,29 @@ class PipelineRunner:
 
     def _setup_device(self):
         """Set up the appropriate compute device."""
-        if len(self.options.gpu) == 0:
-            return torch.device("cpu")
-        elif len(self.options.gpu) == 1:
-            return torch.device(f"cuda:{self.options.gpu[0]}")
+        # Allow CPU fallback for testing
+        if torch.cuda.is_available():
+            # Use provided GPU ids if given, otherwise default to cuda:0
+            if self.options.gpu is None or len(self.options.gpu) == 0:
+                # Prefer the first visible CUDA device
+                return torch.device("cuda:0")
+            elif len(self.options.gpu) == 1:
+                return torch.device(f"cuda:{self.options.gpu[0]}")
+            else:
+                os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+                os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(self.options.gpu)
+                return torch.device(f"cuda:{self.options.gpu[0]}")
         else:
-            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-            os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(self.options.gpu)
-            return torch.device(f"cuda:{self.options.gpu[0]}")
+            # Fallback to CPU for testing
+            print("Warning: CUDA not available, using CPU. Performance will be slow.")
+            return torch.device("cpu")
 
     def _load_model(self):
         """Load and initialize the ML model."""
         self.model = load_model(self.options.json_path).to(self.device)
-        checkpoint = serialize(torch.load(self.options.model_path))
-        self.model.load_state_dict(checkpoint["model_state_dict"])
+        if not self.options.init_random:
+            checkpoint = serialize(torch.load(self.options.model_path, map_location=self.device))
+            self.model.load_state_dict(checkpoint["model_state_dict"])
 
     def _process_images(self):
         """Process all images through the pipeline."""
@@ -223,13 +232,53 @@ class PipelineRunner:
 
     def _process_line_pipeline(self, patches_rgb, patches_vector, patches_offsets, input_rgb, image):
         """Process image using line primitives pipeline."""
-        vector_after_opt = render_optimization_hard(
-            patches_rgb, patches_vector, self.device, self.options, self.options.image_name[0]
-        )
+        # Basic validation and logging
+        print(f"[Pipeline] patches_rgb.shape={patches_rgb.shape}, patches_vector.shape={patches_vector.shape}")
+        if patches_vector is None or patches_vector.shape[0] == 0:
+            print("[Pipeline][Warning] Empty patches_vector received; skipping optimization")
 
-        merging_result, rendered_merged_image = postprocess(
-            vector_after_opt, patches_offsets, input_rgb, image, 0, self.options
-        )
+        try:
+            vector_after_opt = render_optimization_hard(
+                patches_rgb, patches_vector, self.device, self.options, self.options.image_name[0]
+            )
+        except Exception as e:
+            print(f"[Pipeline][Error] render_optimization_hard failed: {e}")
+            raise
+
+        try:
+            merging_result, rendered_merged_image = postprocess(
+                vector_after_opt, patches_offsets, input_rgb, image, 0, self.options
+            )
+        except Exception as e:
+            print(f"[Pipeline][Error] postprocess failed: {e}")
+            raise
+
+        # Ensure output directory exists and save results for inspection
+        try:
+            os.makedirs(self.options.output_dir, exist_ok=True)
+            final_dir = os.path.join(self.options.output_dir, "final_renders")
+            os.makedirs(final_dir, exist_ok=True)
+            # Save rendered merged image (numpy array) if available
+            if rendered_merged_image is not None:
+                try:
+                    img = Image.fromarray(rendered_merged_image)
+                    out_path = os.path.join(final_dir, f"{self.options.image_name[0]}")
+                    img.save(out_path)
+                    print(f"[Pipeline] Saved rendered merged image to {out_path}")
+                except Exception as e:
+                    print(f"[Pipeline][Warning] Failed to save rendered image: {e}")
+
+            # Save merged vectors as numpy for later inspection
+            try:
+                vectors_out = os.path.join(self.options.output_dir, f"{self.options.image_name[0]}.npy")
+                np.save(vectors_out, merging_result)
+                print(f"[Pipeline] Saved merged vectors to {vectors_out}")
+            except Exception as e:
+                print(f"[Pipeline][Warning] Failed to save merged vectors: {e}")
+        except Exception:
+            # Non-fatal; we've already produced the result
+            pass
+
         return merging_result
 
     def run(self):
@@ -260,7 +309,7 @@ def parse_args():
         dest="init_random",
         help="init model with random [default: False].",
     )
-    parser.add_argument("--rendering_type", type=str, default="hard", help="hard -oleg,simple Alexey")
+    parser.add_argument("--rendering_type", type=str, default="bezier_splatting", help="hard - analytical rendering, bezier_splatting - fast differentiable rendering")
     parser.add_argument("--data_dir", type=str, default="/data/synthetic/", help="dir to folder for input")
     parser.add_argument(
         "--image_name",
@@ -275,7 +324,7 @@ def parse_args():
     parser.add_argument(
         "--model_path",
         type=str,
-        default="logs/models/vectorization/lines/model_lines.weights",
+        default="models/model_lines.weights",
         help="Path to trained model",
     )
     parser.add_argument(

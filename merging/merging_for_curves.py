@@ -6,9 +6,9 @@ import numpy as np
 
 sys.path.append("/code")
 from util_files.data.graphics.graphics import Path
-from util_files.optimization.optimizer.logging import Logger
 from util_files.rendering.cairo import PT_LINE, PT_QBEZIER
 from util_files.simplification.join_qb import join_quad_beziers
+from util_files.structured_logging import get_pipeline_logger
 
 
 def main(options, vector_image_from_optimization=None, width_percentile=90, fit_tol=0.5, w_tol=np.inf, join_tol=0.5):
@@ -34,7 +34,7 @@ def main(options, vector_image_from_optimization=None, width_percentile=90, fit_
         - Uses join_quad_beziers for intelligent curve consolidation.
         - Saves output to options.output_dir/merging_output/.
     """
-    logger = Logger.prepare_logger(loglevel="info", logfile=None)
+    logger = get_pipeline_logger("merging.curves")
     if vector_image_from_optimization is None:
         raise ValueError("vector_image_from_optimization must be provided - job_tuples mode not supported")
 

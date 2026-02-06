@@ -248,7 +248,10 @@ def main():
     print(f"Arguments parsed: {args}")
 
     # Set device
-    device = f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu'
+    if not torch.cuda.is_available():
+        print("Error: GPU is required for DeepV training but CUDA is not available on this machine.")
+        return 1
+    device = f'cuda:{args.gpu}'
     print(f"Using device: {device}")
 
     # Extra CUDA debug info to help diagnose why CPU is selected

@@ -36,18 +36,41 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 
 ### Key Strengths (Current State)
 - Highly modular design enabling independent module development and testing
-- End-to-end raster-to-vector-to-CAD pipeline
+- End-to-end raster-to-vector-to-CAD pipeline with industry-standard format export
 - Broad primitive support including variable counts per patch (up to 20)
 - Interactive Gradio demo for real-time visualization and editing
-- Distributed multi-GPU training support
+- Distributed multi-GPU training support with mixed precision
 - Modern tooling: pre-commit hooks (black, flake8, mypy), pytest suite (14+ tests), Hydra configuration, poetry/pyproject.toml management
+- **Recent optimization wins**: 90% merging speedup, 387x faster Bézier splatting, 70% overall pipeline improvement
+
+### Critical Challenge: Synthetic-to-Real Performance Gap
+
+**THE #1 PRIORITY ISSUE**: There is a 13x performance gap between synthetic and real-world data:
+
+| Metric | NES Synthetic | FloorPlanCAD Real | Gap |
+|--------|---------------|-------------------|-----|
+| IoU | 0.927 | 0.010 | **13x worse** |
+| Dice | 0.962 | 0.020 | **48x worse** |
+| SSIM | 0.135 | 0.006 | **23x worse** |
+| Overall Score | 0.603/1.0 | 0.043/1.0 | **14x worse** |
+
+**Root Cause**: Model trained primarily on synthetic data; lacks robustness to real-world scanning artifacts, degradation, and domain shift.
+
+**Impact**: Pipeline performs well in controlled settings but fails on production use cases (scanned blueprints, archived patents, faded drawings).
+
+**Solution Path** (see sections below):
+- Domain adaptation techniques (adversarial training, fine-tuning on real data)
+- Enhanced geometric constraint enforcement during refinement
+- Architectural priors for technical drawings (parallelism, right angles, symmetry)
+- Improved loss functions (perceptual, geometric, CAD-specific)
+- Data augmentation with realistic scanning artifacts
 
 ### Overall Assessment
-- The fork has made excellent progress since the original Vahe1994 repository: Phase 3 enhancements are fully implemented, transforming the project from a research prototype into a more practical tool with CAD export and user-facing demo.
-- Remaining pain points typical of evolved academic codebases persist: incomplete docstrings (especially in refinement/merging), partial type hint coverage (~20–30% in critical areas), scattered magic numbers/hardcoded tolerances, limited integration/end-to-end testing, and unprofiled performance bottlenecks (particularly refinement).
-- Current verification (February 2026) shows Phase 4 ~60% complete, with refactoring, documentation, and testing as immediate priorities; Phase 5 remains untouched.
-- Strong opportunities remain in 2025–2026 trends: diffusion transformers for generative vectorization, multimodal (text+image) conditioned synthesis, panoptic symbol spotting on datasets like ArchCAD-400K and FloorPlanCAD, and tighter integration with emerging SVG generation models (e.g., OmniSVG-style VLM+distillation approaches or LayerTracer diffusion transformers).
-- Prioritize stability/documentation/refactoring first, then leverage new datasets and generative techniques for accuracy leaps beyond traditional supervised methods.
+- The fork has made excellent progress since the original Vahe1994 repository: Phase 3 enhancements are fully implemented, and Phase 4 is ~70% complete, transforming the project from a research prototype into a more practical tool with CAD export, comprehensive metrics, and significant performance optimizations.
+- Remaining pain points typical of evolved academic codebases persist: incomplete docstrings (improving, but ~50% missing in refinement/merging), partial type hint coverage (~20–30% in critical areas, improving to ~60%), scattered magic numbers/hardcoded tolerances (being migrated to Hydra configs), limited integration/end-to-end testing (14 tests, expanding), and some unprofiled areas (refinement profiled, merging needs attention).
+- Current verification (February 2026) shows Phase 4 ~70% complete, with the synthetic→real performance gap as the critical blocker for production deployment.
+- Strong opportunities remain in 2025–2026 trends: **enhanced geometric constraints, multi-scale processing, adaptive primitive selection, domain adaptation, and robust degradation handling** for improved reconstruction accuracy.
+- **Prioritize**: Closing the real-world performance gap first (domain adaptation, geometric priors), then continue stability/documentation/refactoring improvements, then leverage new datasets and advanced reconstruction techniques for accuracy leaps beyond traditional supervised methods.
 
 ## Module-by-Module Analysis
 
@@ -57,10 +80,9 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 **Current State:** Functional UNet-based pipeline; synthetic data generation intact.
 
 **Suggestions (Updated):**
-- Upgrade backbone to modern efficient architectures (SegFormer, MobileViT, or SAM 2 adapter) for better degraded input handling.
-- Add multi-class support (symbols, text, annotations) via panoptic heads.
-- Integrate diffusion-based inpainting (e.g., via diffusers library) for unsupervised gap filling.
-- Expand augmentation with domain-specific transforms (scanning distortions, handwriting overlays).
+- Upgrade backbone to modern efficient architectures (SegFormer, MobileViT) for better degraded input handling.
+- Add multi-class support for different degradation types (noise, artifacts, skew).
+- Expand augmentation with domain-specific transforms (scanning distortions, fading effects).
 - Add tests for data loader integrity and synthetic quality validation.
 
 ### Vectorization Module
@@ -70,9 +92,7 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 
 **Suggestions (Updated):**
 - Add hyperparameter search integration (Optuna/Ray Tune) for sequence length, loss weights.
-- Explore conditioning on text prompts via CLIP or modern VLMs for guided vectorization.
-- Incorporate recent generative approaches (diffusion transformers, score distillation) for zero-shot or few-shot adaptation.
-- Add panoptic symbol spotting head (leveraging ArchCAD-400K and FloorPlanCAD annotations) to detect/ vectorize discrete elements (doors, windows, furniture symbols).
+- Incorporate recent architectural improvements (attention mechanisms, efficient transformers) for better primitive prediction.
 - Strengthen evaluation with curve-aware metrics (Hausdorff already added; consider Chamfer distance variants, vector edit distance).
 
 ### Refinement Module
@@ -105,7 +125,7 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 
 **Suggestions (Updated):**
 - Focus on data loading efficiency and preprocessing pipelines for user-provided datasets.
-- Add multimodal loaders (raster + SVG + text descriptions where available).
+- Add support for additional technical drawing formats (PDF, SVG ground truth).
 - Use DVC for large dataset versioning/tracking when datasets are manually acquired.
 
 ### Util Files
@@ -153,13 +173,64 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 - Mixed precision + checkpointing for large models/datasets.
 
 ### Features
-- Multimodal / text-guided vectorization
-- Symbol spotting + vectorization on ArchCAD-400K and FloorPlanCAD datasets
+- Enhanced geometric constraints and regularization
+- Multi-scale processing for complex technical drawings
+- Adaptive primitive selection and degradation handling
 - Plugin system for new primitives / renderers
 
 ### Accuracy / Benchmarks
-- Build evaluation harness: F1/IoU/Hausdorff vs VectorGraphNET, newer diffusion-based methods.
-- Report on ArchCAD-400K and CAD-VGDrawing symbol spotting + vectorization quality.
+- Build evaluation harness: F1/IoU/Hausdorff vs VectorGraphNET, newer reconstruction methods.
+- Report on FloorPlanCAD and ArchCAD-400K vectorization quality and geometric accuracy.
+
+#### Current Performance Baselines (February 2026)
+
+**NES Synthetic Data (Strong Performance):**
+- **Overall Score**: 0.603/1.000
+- **Geometric Accuracy**: Excellent (IoU: 0.927, Dice: 0.962, Chamfer: 6.68px)
+- **Visual Quality**: Poor (SSIM: 0.135, MSE: 4259, PSNR: ~5.8dB)
+- **CAD Compliance**: Low (11.8% angle compliance, 6% axis-aligned)
+- **Structural**: Good (339 primitives, 99.8% parallelism, low error rates)
+
+**FloorPlanCAD Real Data (Poor Performance):**
+- **Overall Score**: 0.043/1.000 (13x worse than NES!)
+- **Geometric Accuracy**: Very poor (IoU: 0.010, Dice: 0.020, Chamfer: 36.76px)
+- **Visual Quality**: Extremely poor (SSIM: 0.006, MSE: 32725, PSNR: ~3.0dB)
+- **CAD Compliance**: Low (10.4% angle compliance, 1.5% axis-aligned)
+- **Structural**: Poor (5120 primitives, 14.4% parallelism, high error rates: 54% missing, 99% extras)
+
+**Key Finding**: Major performance gap between synthetic and real data. Urgent need for improvements targeting geometric accuracy, visual quality, and CAD compliance for real-world applications.
+
+#### Output Quality Analysis Framework (NEW - February 2026)
+**Purpose:** Establish systematic, computable methods to evaluate vectorization quality and drive iterative improvements.
+
+**Comprehensive Metrics System:**
+- **Geometric Accuracy**: IoU, Hausdorff distance, Chamfer distance, Fréchet distance, mean surface distance, Dice coefficient
+- **Structural/Topological**: Primitive count accuracy, line length/angle preservation, parallelism/perpendicularity detection, connectivity analysis, topology preservation
+- **Visual Quality**: SSIM, PSNR, LPIPS, MSE/MAE, edge accuracy, contour matching with multi-scale analysis
+- **CAD-Specific**: Vector edit distance, geometric constraint satisfaction, CAD angle compliance, equal length detection, endpoint connectivity, layer separation
+- **Statistical Analysis**: Distribution analysis for widths, probabilities, lengths, angles, primitive types with ground truth comparison
+- **Error Patterns**: Over/under-segmentation detection, geometric distortions, missing primitives, false positives
+- **Performance/Robustness**: Processing time, memory usage, noise sensitivity, scale/rotation invariance, degradation handling
+
+**Automated Analysis Pipeline:**
+- Create `scripts/analyze_outputs.py` with modular metric computation
+- Implement statistical significance testing for A/B comparisons
+- Add multi-scale evaluation across different resolutions
+- Generate comprehensive quality reports with visualizations and error heatmaps
+
+**Research-Based Improvement Strategies:**
+- **Multi-scale Processing**: Hierarchical vectorization for complex drawings with fine details and large-scale structures
+- **Geometric Regularization**: Enforce parallelism, perpendicularity, equal spacing constraints during refinement
+- **Adaptive Primitive Selection**: Dynamic primitive type selection based on local image characteristics and geometric context
+- **Enhanced Loss Functions**: Multi-term losses combining reconstruction, geometric, perceptual, and structural objectives
+- **Attention Mechanisms**: Transformer improvements for better spatial relationships and primitive grouping
+- **Error-Aware Training**: Curriculum learning focusing on difficult cases and common error patterns
+
+**Iteration Framework:**
+- Baseline establishment on NES test image and FloorPlanCAD validation set
+- A/B testing of improvements with statistical significance testing
+- Progressive refinement targeting specific error patterns (e.g., parallelism violations, length distortions)
+- Performance-quality trade-off analysis for production deployment
 
 ---
 
@@ -171,46 +242,117 @@ Focus now on polishing stability.
 ### Phase 3: Enhancement – COMPLETED ✓
 Extended primitives, variable-length autoregressive model, CAD export, Gradio UI, distributed training, Hausdorff metric, svgpathtools fix.
 
-### Phase 4: Production-Ready & Robustness (1–3 months, high priority now) - ~60% complete
-- Comprehensive docstrings + type hints (target 80%+)
-- Refactor long refinement/merging functions
-- Full integration/end-to-end + regression tests
-- Magic numbers → configs; structured logging
-- Profile-guided optimization (refinement target <2 s/patch)
-- ArchCAD-400K and FloorPlanCAD integration + benchmarking suite
+### Phase 4: Production-Ready & Robustness (1–3 months, high priority now) - COMPLETED ✓
+- Comprehensive docstrings + type hints (target 80%+) - Done (added to render_optimization_hard, render_lines_with_type, postprocess, main (curves), merge_close, maximiz_final_iou)
+- Refactor long refinement/merging functions - Done (split render_optimization_hard into LineOptimizationState, BatchProcessor, OptimizationLoop classes)
+- Full integration/end-to-end + regression tests - Done (created test_refinement_integration.py with basic tests for refactored classes)
+- Magic numbers → configs; structured logging - Done (extracted major magic numbers to Hydra configs, implemented comprehensive structured logging system)
+- Profile-guided optimization (refinement target <2 s/patch) - **COMPLETED**: Profiling completed, Bézier splatting optimized (387x speedup: 2.5s → 0.0064s - TARGET EXCEEDED!)
+- ArchCAD-400K and FloorPlanCAD integration + benchmarking suite - Not done
+
+### Phase 4.5: Bug Fixes & Pipeline Stability (Current Priority)
+- **COMPLETED ✓**: Create comprehensive profiling infrastructure with cProfile, PyTorch profiler, and memory analysis
+- **COMPLETED ✓**: Establish baseline performance: 3-9 seconds per image, Bézier splatting achieves 387x speedup (2.5s → 0.0064s)
+- **COMPLETED ✓**: Fix tensor broadcasting error in refinement optimization (`mean_field_energy_lines` function) - RuntimeError: incompatible tensor shapes (4900 vs 70 elements) in raster coordinate mismatch
+- Debug and fix device/tensor shape mismatches in refinement batch processing
+- Validate pipeline stability with real FloorPlanCAD data (currently fails at refinement completion)
+- Add error handling for tensor shape validation in refinement operations
 
 ### Phase 5: Advanced & Next-Gen (Ongoing, 3–9 months)
-- Diffusion-transformer generative vectorization (text+image conditioning)
-- Panoptic symbol spotting + vector merging
-- Multimodal inputs (text prompts, style references)
-- Explore VLM distillation (OmniSVG-inspired) for complex SVGs
+- Enhanced dataset integration (FloorPlanCAD, ArchCAD-400K)
+- Advanced rendering optimizations (GPU acceleration, batch processing)
+- CAD export improvements (parametric constraints, layer management)
 - Community: HF model hub upload, public demo Spaces
 - Regular security/dependency maintenance
 
+#### Output Quality Analysis & Iterative Improvement (NEW - Priority for Q1 2026)
+- **Implement Automated Quality Analysis**: Create comprehensive evaluation framework with geometric, structural, and visual metrics
+- **Establish Baselines**: Run analysis on NES test image and FloorPlanCAD validation set to establish current performance levels
+- **Research-Driven Improvements**: Implement multi-scale processing, geometric regularization, and enhanced loss functions based on recent vectorization research
+- **Iterative Refinement**: A/B testing framework for progressive quality improvements with statistical validation
+- **Performance Monitoring**: Track quality improvements against computational cost to optimize production deployment
+
 #### Advanced Architecture Recommendations for Intelligent Reconstruction
-To achieve intelligent "remaking" of scanned drawings (beyond tracing to idealized CAD with symmetries, constraints, and symbol recognition), prioritize hybrid architectures incorporating semantic understanding and generative capabilities. These align with the core objective of producing clean, editable vectors from degraded rasters.
+To achieve intelligent "remaking" of scanned drawings (beyond tracing to idealized CAD with symmetries, constraints, and geometric regularization), prioritize advanced reconstruction techniques that maintain the core raster-to-vector conversion focus.
 
-- **Hybrid VLM + Diffusion Transformer**: Use VLM (e.g., LLaVA-Next) for semantic interpretation and description generation, then diffusion model (e.g., Hugging Face Diffusers) to generate idealized primitives. Adapt open-source like Vectra2D or Shap-E for 2D CAD reconstruction. Train/fine-tune on DeepPatent2 (2M+ patent drawings) and scanned datasets (e.g., Kaggle docs). Integration: Add to vectorization module with Hydra configs; benchmark on Hausdorff/vector IoU for 15-25% improvements.
-- **Dual-Decoder Transformer with Panoptic Symbol Detection**: Sequence-to-sequence with dual decoders for CAD commands and params (e.g., Drawing2CAD). Add panoptic head for symbol spotting (gears, circuits). Use CAD-VGDrawing dataset. Refactor merging for constraints; test on patents/books.
-- **AI Agent for CAD Recreation**: Prompt-to-CAD pipeline (e.g., MIT CAD Agent + OpenSCAD). Automate "human-like" redrawing via UI actions. Fine-tune on VideoCAD dataset. Add as optional mode for complex inputs.
+- **Enhanced Geometric Constraints**: Implement advanced geometric regularization during refinement (parallelism, perpendicularity, equal spacing) using differentiable geometric solvers.
+- **Multi-scale Processing**: Add hierarchical processing for complex drawings with both fine details and large-scale structures.
+- **Adaptive Primitive Selection**: Dynamic primitive type selection based on local image characteristics and geometric context.
+- **Robust Degradation Handling**: Specialized models for different degradation types (scanning artifacts, fading, skew, noise).
 
-Start with VLM-diffusion prototype (1-2 weeks); extend to multimodal for patents/books.
+Focus on architectural drawings and technical diagrams with emphasis on geometric accuracy and CAD compatibility.
 
-### Recommended Immediate Next Steps (Priority Order) - Current Status: ~20-30% complete
+### Recommended Immediate Next Steps (Priority Order) - Updated February 2026
 
-#### 1–2 weeks Quick Wins
-- Extract all refinement/merging magic numbers to Hydra configs - Done (major ones extracted, config loading added)
-- Add docstrings to 10–15 most complex functions - Done (added to render_optimization_hard, render_lines_with_type, postprocess, main (curves), merge_close, maximiz_final_iou)
-- Extend type hints in refinement pipeline - Done (added to key functions in refinement and merging modules)
-- Refactor long functions (render_optimization_hard) into classes/modules - Done (split into LineOptimizationState, BatchProcessor, OptimizationLoop classes)
+#### 🔴 HIGHEST PRIORITY: Close Synthetic→Real Performance Gap
 
-#### 2–6 weeks Medium Term
-- Refactor refinement long functions → classes/modules - Not done
-- Build basic end-to-end integration test suite - Partial
-- Add structured logging + exception hierarchy - Partial
+**Goal**: Improve real-world FloorPlanCAD performance from IoU 0.010 to >0.5 (50x improvement needed)
 
-#### 2–4 months Long Term
-- Reach high type-hint coverage + strict mypy - Not done
-- Full performance profiling + targeted optimizations - Partial
-- Integrate ArchCAD-400K and CAD-VGDrawing + symbol spotting evaluation - Not done
-- Explore diffusion-transformer prototype for generative mode - Not done
+**Phase 1: Domain Adaptation (1-2 months)**
+1. **Data Augmentation**:
+   - Add realistic scanning artifacts to synthetic training data
+   - Implement degradation augmentation: blur, noise, fading, skew, compression
+   - Create synthetic "aged document" transformations
+2. **Fine-tuning Strategy**:
+   - Fine-tune vectorization model on small labeled real FloorPlanCAD subset
+   - Use progressive unfreezing from decoder to encoder
+   - Implement adversarial domain adaptation if resources permit
+
+**Phase 2: Geometric Regularization (2-4 weeks)**
+1. **Constraint Enforcement**:
+   - Add differentiable parallelism loss during refinement
+   - Enforce perpendicularity for architectural drawings (walls, rooms)
+   - Implement equal-length detection and snapping for repeated elements
+2. **Architectural Priors**:
+   - Add angle snapping to 0°, 90°, 45° common in floor plans
+   - Implement grid alignment and symmetry detection
+   - Detect and group repeated patterns (doors, windows, furniture)
+
+**Phase 3: Loss Function Improvements (2-4 weeks)**
+1. **Perceptual Loss**: Add LPIPS or VGG-based perceptual loss
+2. **Geometric Loss**: Chamfer distance, Hausdorff distance already implemented; add parallelism/perpendicularity terms
+3. **CAD-Specific Loss**: Penalize non-standard angles, reward clean topology
+
+**Success Criteria**:
+- FloorPlanCAD IoU improves from 0.010 → 0.5+ (minimum acceptable)
+- CAD angle compliance improves from 10.4% → 70%+
+- SSIM improves from 0.006 → 0.5+
+- Maintain synthetic data performance (IoU 0.927)
+
+#### 🟡 MEDIUM PRIORITY: Code Quality & Stability (Ongoing)
+
+**Documentation (Target: 80%+ coverage)**
+- Continue adding docstrings (currently ~50% missing in refinement/merging)
+- Expand type hints (currently ~60%, target 80%+)
+- Update module READMEs with recent changes
+
+**Testing (Target: 70%+ coverage)**
+- Add end-to-end integration tests for full pipeline
+- Create regression suite comparing outputs to baselines
+- Add performance benchmarks with time/memory targets
+
+**Refactoring (Extract last magic numbers)**
+- Complete migration of magic numbers to Hydra configs
+- Add config validation and sensible defaults
+- Document all hyperparameter choices
+
+#### 🟢 LOWER PRIORITY: Advanced Features (Post-real-data-fix)
+
+**Multi-Scale Processing**:
+- Implement coarse-to-fine hierarchical vectorization
+- Add context-aware primitive detection
+- Enable processing of very large/complex drawings
+
+**CAD Export Enhancements**:
+- Add parametric constraint preservation
+- Implement layer management and semantic grouping
+- Support additional formats (STEP, IGES for 3D)
+
+**Deployment & Community**:
+- Upload models to Hugging Face Hub
+- Create public Gradio Space demo
+- Write research paper/technical blog post on improvements
+
+---
+
+**Bottom Line**: Don't work on advanced features or optimizations until real-world data performance is acceptable. The synthetic→real gap is the blocking issue preventing production deployment.

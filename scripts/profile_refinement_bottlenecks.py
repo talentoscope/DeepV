@@ -173,20 +173,17 @@ class RefinementProfiler:
 
         # Profile rendering (used heavily in refinement)
         try:
-            from util_files.data.graphics_primitives import PT_LINE
-            from util_files.rendering.cairo import render
+            from refinement.our_refinement.utils.lines_refinement_functions import render_lines_with_type
+            import torch
 
             def render_test():
-                lines = patches_vector[0][:, :4]  # x1,y1,x2,y2
-                widths = patches_vector[0][:, 4:5]  # width
-                line_data = np.concatenate((lines, widths), axis=1)
-                primitives = {PT_LINE: line_data}
-                return render(primitives, (64, 64), data_representation="vahe")
+                lines_tensor = torch.tensor(patches_vector[0], dtype=torch.float32)
+                return render_lines_with_type(lines_tensor, "bezier_splatting")
 
-            self.profile_function_detailed(render_test, name="render_64x64_patch")
+            self.profile_function_detailed(render_test, name="render_64x64_patch_bezier")
 
         except ImportError as e:
-            print(f"  Skipping render profiling: {e}")
+            print(f"  Skipping Bézier render profiling: {e}")
 
         # Profile GPU-accelerated rendering
         try:
@@ -241,7 +238,7 @@ class RefinementProfiler:
                 self.init_random = False
                 self.max_angle_to_connect = 10
                 self.max_distance_to_connect = 3
-                self.rendering_type = "hard"
+                self.rendering_type = "bezier_splatting"
 
         options = MockOptions()
 

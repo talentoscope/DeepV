@@ -12,7 +12,7 @@ from tqdm import trange
 sys.path.append(".")
 from util_files.evaluation_utils import vector_image_from_patches
 from util_files.optimization.optimizer.adam import Adam
-from util_files.optimization.optimizer.logging import Logger
+from util_files.structured_logging import get_pipeline_logger
 from util_files.optimization.primitives.line_tensor import LineTensor
 from util_files.optimization.primitives.quadratic_bezier_tensor import (
     QuadraticBezierTensor,
@@ -464,7 +464,7 @@ class RefinementPipeline:
 
     def __init__(self, options):
         self.options = options
-        self.logger = Logger(options.output_dir, "refinement")
+        self.logger = get_pipeline_logger("refinement.curves")
 
     def run(self):
         """Run the complete refinement pipeline."""

@@ -31,18 +31,43 @@ DeepV is a deep learning framework for converting raster technical drawings into
 
 ### Key Features
 
-- **Extended Primitives**: Lines, quadratic/cubic Béziers, arcs, splines
-- **Variable Length**: Up to 20 primitives per patch via autoregressive transformer
-- **Intelligent Reconstruction**: Beyond pixel tracing—idealizes degraded scans (e.g., straightening lines, inferring symmetries, recognizing components) for professional CAD-quality output
-- **CAD Export**: Direct export to DXF and SVG formats with layers
-- **Interactive UI**: Gradio-based web interface with real-time Bézier splatting rendering
-- **Distributed Training**: Multi-GPU support with PyTorch distributed
-- **Modern Tooling**: Hydra configuration, pytest testing, pre-commit hooks
-- **Robust to Degradation**: Handles scanned books, patents, faded photocopies with noise, skew, and artifacts
+**Core Capabilities:**
+- **Extended Primitives**: Lines, quadratic/cubic Béziers, arcs, splines with variable counts (up to 20 per patch)
+- **Intelligent Reconstruction**: Goes beyond pixel tracing—straightens degraded lines, infers symmetries, enforces geometric constraints, removes artifacts
+- **CAD-Quality Output**: Direct export to industry-standard DXF and SVG formats with proper layering
+- **End-to-End Pipeline**: Cleaning → Vectorization → Refinement → Merging with differentiable optimization
+
+**Performance & Scalability:**
+- **Optimized Processing**: 70% speed improvement; 387x faster Bézier splatting rendering
+- **Large Image Support**: Handles images up to 1121×771px with automatic patch-based processing
+- **GPU Accelerated**: Multi-GPU distributed training support; mixed precision training
+
+**Developer Experience:**
+- **Interactive UI**: Gradio-based web interface for real-time visualization and experimentation
+- **Modern Tooling**: Hydra configuration system, pytest testing (14+ tests), pre-commit hooks, comprehensive metrics
+- **Flexible Architecture**: Modular design enables easy experimentation with new primitives and algorithms
+
+**Robustness:**
+- ✅ Works well on synthetic and clean technical drawings
+- ⚠️ Real-world degraded images (scanned books, faded blueprints) are an active research area—see status above
 
 ### Problem Statement
 
-Many valuable technical drawings exist only in raster form: scanned pages from old books, archived patents, faded photocopies, or degraded images. DeepV addresses the challenge of converting these into clean, editable CAD vectors by intelligently reconstructing and idealizing them as if redrawn professionally—enforcing geometric constraints, removing noise, and producing compact, parametric outputs suitable for modern engineering workflows.
+Many valuable technical drawings exist only in raster form: scanned pages from old engineering textbooks, archived patents, faded blueprints, or degraded photocopies. These raster images are non-editable, difficult to modify, and lose information when scaled. Simply tracing pixels is insufficient—the results are noisy and lack the geometric idealization present in professional CAD.
+
+**DeepV solves this through intelligent reconstruction**: Beyond pixel-tracing, it infers design intent, enforces geometric constraints (parallelism, perpendicularity, symmetry), removes artifacts, straightens degraded lines, and produces clean, parametric vector outputs suitable for professional CAD workflows (DXF/SVG export). The goal is not just conversion, but restoration and idealization—as if a skilled engineer had redrawn the diagram from scratch.
+
+### Current Status & Performance
+
+**Development Phase**: Phase 4 (Production-Ready & Robustness) - ~70% complete
+
+**Performance Overview**:
+- ✅ **Synthetic data**: Strong performance (IoU: 0.927, Dice: 0.962) with fast processing
+- ⚠️ **Real-world data**: Significant performance gap (IoU: 0.010) - active research priority
+- ⚡ **Speed**: 70% overall pipeline speedup achieved (77s → 23s per image)
+- 🎯 **Focus**: Closing the synthetic→real performance gap through domain adaptation and geometric constraints
+
+See [PLAN.md](PLAN.md) for detailed metrics and improvement roadmap.
 
 ## Repository Structure
 
@@ -300,6 +325,25 @@ If you use this code in your research, please cite our paper:
 
 See `requirements.txt` for complete list.
 
+## Known Limitations & Research Areas
+
+### Current Limitations
+
+1. **Real-world Performance Gap**: Model performs significantly better on synthetic data than real scanned drawings. Domain adaptation is an active research priority.
+2. **Degradation Handling**: Heavy noise, severe skew, or extreme blur may require preprocessing or cleaning module improvements.
+3. **Complex Layouts**: Very dense or overlapping primitives may cause merging issues.
+4. **Color Drawings**: Current implementation converts to grayscale; color information is not preserved.
+
+### Active Research Directions
+
+- Domain adaptation techniques (adversarial training, fine-tuning on real data)
+- Enhanced geometric constraint enforcement during refinement
+- Multi-scale processing for complex technical drawings
+- Architectural priors (e.g., walls at right angles, repeated patterns)
+- Improved loss functions (perceptual, geometric, CAD-specific)
+
+See [TODO.md](TODO.md) and [PLAN.md](PLAN.md) for detailed improvement roadmap.
+
 ## Troubleshooting
 
 ### Common Issues
@@ -308,12 +352,13 @@ See `requirements.txt` for complete list.
 2. **CUDA Issues**: Check PyTorch CUDA compatibility with your GPU drivers
 3. **Memory Errors**: Reduce batch size or use smaller patch sizes
 4. **Rendering Issues**: Install system cairo library (`libcairo2-dev` on Ubuntu)
+5. **Poor Results on Real Images**: This is expected—see "Known Limitations" above
 
 ### Getting Help
 
 - **Issues**: [GitHub Issues](https://github.com/your-repo/DeepV/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/your-repo/DeepV/discussions)
-- **Documentation**: See module-specific READMEs and docstrings
+- **Documentation**: See module-specific READMEs, [QA.md](QA.md), and docstrings
 
 ---
 

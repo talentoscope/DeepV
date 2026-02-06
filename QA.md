@@ -63,7 +63,44 @@ python scripts/validate_env.py
 
 ### <b>How accurate is the vectorization?</b>
 
-<b>Answer:</b> Accuracy depends on the input quality and model training. Typical metrics include F1 scores >0.8, IoU >0.7, and Hausdorff distances <2 pixels for well-trained models on clean data.
+<b>Answer:</b> Accuracy varies significantly by input type:
+
+**On Synthetic/Clean Data** (excellent):
+- IoU: 0.927 (92.7% overlap with ground truth)
+- Dice coefficient: 0.962
+- Chamfer distance: ~7 pixels
+- Works well on computer-generated or clean technical drawings
+
+**On Real Scanned Data** (poor - active research area):
+- IoU: 0.010 (only 1% overlap - 13x worse than synthetic!)
+- Very low visual quality (SSIM: 0.006)
+- High over-segmentation (410x more primitives than ground truth)
+- **Not recommended for production use on real scans yet**
+
+**Why the gap?** Model trained primarily on synthetic data; lacks robustness to real-world scanning artifacts, noise, fading, and domain shift. This is the #1 priority issue being actively researched.
+
+See [PLAN.md](PLAN.md) for improvement strategies and current work on closing this gap.
+
+### <b>Why do my scanned drawings produce poor results?</b>
+
+<b>Answer:</b> This is a known limitation. The model currently performs 13x worse on real-world scanned images compared to synthetic data. We're actively working on:
+- Domain adaptation techniques (fine-tuning on real data)
+- Better data augmentation with scanning artifacts
+- Geometric constraint enforcement
+- Improved loss functions for real-world inputs
+
+For now, best results are achieved on clean, high-contrast, synthetic or computer-generated drawings.
+
+### <b>What are the current limitations?</b>
+
+<b>Answer:</b> Key limitations (February 2026):
+1. **Real-world performance**: Significant gap between synthetic and real scanned images
+2. **Color drawings**: Converted to grayscale; color info not preserved
+3. **Heavy degradation**: Severe noise, blur, or skew may fail
+4. **Dense layouts**: Very complex or overlapping primitives may have merging issues
+5. **CAD compliance**: Low angle compliance (11-12%) on standard CAD angles
+
+We're prioritizing fixes for #1 (real-world performance) as it's the most critical.
 
 ## Usage & Applications
 

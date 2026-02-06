@@ -1,5 +1,36 @@
 # Installation Guide for DeepV
 
+## Important: Current Status (February 2026)
+
+⚠️ **Before Installing**: DeepV is currently in Phase 4 development (~70% complete). Here's what you should know:
+
+**What Works Well**:
+- ✅ Pipeline runs successfully on synthetic/clean technical drawings
+- ✅ Fast processing (70% speed improvement, 23s per image)
+- ✅ CAD export to DXF/SVG formats
+- ✅ Interactive Gradio demo for visualization
+
+**Known Limitations**:
+- ⚠️ **Real-world performance gap**: Model performs significantly worse (13x) on real scanned drawings compared to synthetic data
+- ⚠️ Degraded/noisy scanned images may produce poor results (active research priority)
+- ⚠️ Web UI has deployment issues with some Gradio/conda combinations
+- ⚠️ Color drawings are converted to grayscale
+
+**Best Use Cases** (currently):
+- Clean technical drawings and diagrams
+- Synthetic or computer-generated drawings
+- Research and experimentation
+- Testing domain adaptation techniques
+
+**Not Recommended** (yet):
+- Production deployment on real scanned blueprints/patents
+- Critical CAD reconstruction tasks requiring high accuracy
+- Processing heavily degraded or low-quality scans
+
+See [README.md](README.md) and [PLAN.md](PLAN.md) for detailed status and improvement roadmap.
+
+---
+
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)

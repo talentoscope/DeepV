@@ -28,7 +28,7 @@ from refinement.our_refinement.utils.lines_refinement_functions import (
     w,
 )
 from util_files.metrics.iou import calc_iou__vect_image
-from util_files.optimization.optimizer.logging import Logger
+from util_files.structured_logging import StructuredLogger
 
 # Load refinement config
 try:
@@ -77,11 +77,11 @@ class LineOptimizationState:
         cy = (y1 + y2) / 2
 
         # Store canonical parameters
-        self.cx = cx.clone().detach().requires_grad_(True)
-        self.cy = cy.clone().detach().requires_grad_(True)
-        self.theta = theta.clone().detach().requires_grad_(True)
-        self.length = length.clone().detach().requires_grad_(True)
-        self.width = width.clone().detach().requires_grad_(True)
+        self.cx = cx.clone().detach().requires_grad_(True).to(device)
+        self.cy = cy.clone().detach().requires_grad_(True).to(device)
+        self.theta = theta.clone().detach().requires_grad_(True).to(device)
+        self.length = length.clone().detach().requires_grad_(True).to(device)
+        self.width = width.clone().detach().requires_grad_(True).to(device)
 
         # Initialize optimizers
         self.pos_optimizer = NonanAdam([self.cx, self.cy, self.theta], lr=refinement_config.learning_rate_lines)
@@ -157,7 +157,7 @@ class OptimizationLoop:
     """Manages the main optimization loop for line refinement."""
 
     def __init__(self, rasters_batch: torch.Tensor, initial_vector: np.ndarray,
-                 device: torch.device, rendering_type: str, logger: Logger):
+                 device: torch.device, rendering_type: str, logger: StructuredLogger):
         """
         Initialize optimization loop.
 
@@ -168,7 +168,7 @@ class OptimizationLoop:
             rendering_type: Type of rendering ('hard' or 'bezier_splatting')
             logger: Logger instance
         """
-        self.rasters_batch = torch.nn.functional.pad(rasters_batch, [padding, padding, padding, padding])
+        self.rasters_batch = torch.nn.functional.pad(rasters_batch, [padding, padding, padding, padding]).to(device)
         self.device = device
         self.rendering_type = rendering_type
         self.logger = logger
@@ -362,9 +362,13 @@ class OptimizationLoop:
             )
 
             # Calculate IOU
-            iou_mass.append(calc_iou__vect_image(
+            iou_val = calc_iou__vect_image(
                 self.lines_batch_final.data.cpu() / 64, patches_rgb_im[take_batches]
-            ))
+            )
+            # Ensure it's a scalar by taking mean if it's an array
+            if hasattr(iou_val, '__len__') and len(iou_val) > 1:
+                iou_val = float(np.mean(iou_val))
+            iou_mass.append(iou_val)
             mass_for_iou_one.append(self.lines_batch_final.cpu().data.detach().numpy())
 
     def get_final_result(self) -> torch.Tensor:

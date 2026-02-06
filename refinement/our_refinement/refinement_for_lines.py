@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import signal
 from typing import Any, List, Tuple
@@ -23,8 +24,9 @@ from refinement.our_refinement.utils.lines_refinement_functions import (
     snap_lines,
     w,
 )
+from util_files.structured_logging import get_pipeline_logger
 from util_files.metrics.iou import calc_iou__vect_image
-from util_files.optimization.optimizer.logging import Logger
+from util_files.structured_logging import get_pipeline_logger
 
 # Load refinement config
 try:
@@ -94,99 +96,142 @@ def render_optimization_hard(
         - Optimization iterates over position and size parameters alternately.
         - Saves IOU metrics and refined vectors to numpy files in options.output_dir/arrays/.
     """
-    logger = Logger.prepare_logger(loglevel="info", logfile=None)
-    logger.info(f"Starting refinement optimization for {name}")
+    # Initialize structured logger
+    logger = get_pipeline_logger("refinement.lines")
 
-    # Initialize data structures
-    patches_rgb_im = np.copy(patches_rgb)
-    patches_vector = torch.tensor(patches_vector)
-    y_pred_rend = torch.zeros((patches_vector.shape[0], patches_vector.shape[1], patches_vector.shape[2] - 1))
-    patches_rgb = 1 - torch.tensor(patches_rgb).squeeze(3).unsqueeze(1) / 255.0
+    with logger.timing("refinement_optimization", logging.INFO):
+        logger.log_pipeline_step("refinement", "started", component="lines", dataset=name)
 
-    logger.info(f"init_random: {options.init_random}")
-    if options.init_random:
-        logger.info("Initializing with random vectors")
-        patches_vector = torch.rand((patches_vector.shape)) * 64
-        patches_vector[..., 4] = 1
+        # Initialize data structures
+        patches_rgb_im = np.copy(patches_rgb)
+        patches_vector = torch.tensor(patches_vector)
+        y_pred_rend = torch.zeros((patches_vector.shape[0], patches_vector.shape[1], patches_vector.shape[2] - 1))
+        patches_rgb = 1 - torch.tensor(patches_rgb).squeeze(3).unsqueeze(1) / 255.0
 
-    # Initialize batch processor
-    batch_processor = BatchProcessor(patches_rgb.squeeze(1), patches_vector, refinement_config.batch_size)
+        logger.info(f"Starting refinement optimization for dataset '{name}'",
+                   extra={"dataset": name, "num_patches": patches_vector.shape[0],
+                         "primitives_per_patch": patches_vector.shape[1]})
 
-    # Process batches
-    first_encounter = True
-    iou_all = None
-    mass_for_iou = None
+        logger.info(f"Random initialization: {options.init_random}",
+                   extra={"init_random": options.init_random})
 
-    for batch_start in range(0, patches_vector.shape[0], refinement_config.batch_size):
-        batch_end = min(batch_start + refinement_config.batch_size, patches_vector.shape[0])
-        batch_indices = list(range(batch_start, batch_end))
+        if options.init_random:
+            logger.info("Initializing with random vectors")
+            patches_vector = torch.rand((patches_vector.shape)) * 64
+            patches_vector[..., 4] = 1
 
-        # Skip empty batches
-        batch_rgb = patches_rgb.squeeze(1)[batch_indices]
-        if torch.mean(batch_rgb) == 0:
-            continue
+        # Initialize batch processor
+        batch_processor = BatchProcessor(patches_rgb.squeeze(1), patches_vector, refinement_config.batch_size)
 
-        logger.info(f"Processing batch {batch_start} to {batch_end}")
+        # Process batches
+        first_encounter = True
+        iou_all = None
+        mass_for_iou = None
+        total_batches = (patches_vector.shape[0] + refinement_config.batch_size - 1) // refinement_config.batch_size
 
-        # Get batch data
-        rasters_batch, initial_vector = batch_processor.get_batch_data(batch_indices)
+        logger.info(f"Processing {total_batches} batches of size {refinement_config.batch_size}",
+                   extra={"total_batches": total_batches, "batch_size": refinement_config.batch_size})
 
-        # Initialize lines with visibility threshold
-        removed_lines = initial_vector[..., -1] < refinement_config.line_visibility_threshold * h
-        rand_x1 = torch.rand_like(initial_vector[removed_lines, [0]]) * w
-        rand_y1 = torch.rand_like(initial_vector[removed_lines, [1]]) * h
-        initial_vector[removed_lines, [0]] = rand_x1
-        initial_vector[removed_lines, [2]] = rand_x1 + 1
-        initial_vector[removed_lines, [1]] = rand_y1
-        initial_vector[removed_lines, [3]] = rand_y1 + 1
-        initial_vector[removed_lines, [4]] = refinement_config.initial_probability
-        initial_vector = initial_vector[..., :5].numpy()
+        for batch_idx, batch_start in enumerate(range(0, patches_vector.shape[0], refinement_config.batch_size)):
+            batch_end = min(batch_start + refinement_config.batch_size, patches_vector.shape[0])
+            batch_indices = list(range(batch_start, batch_end))
 
-        # Initialize optimization loop
-        opt_loop = OptimizationLoop(rasters_batch, initial_vector, device, options.rendering_type, logger)
+            batch_logger = logger.with_context(batch=batch_idx, batch_start=batch_start, batch_end=batch_end)
 
-        # Register signal handler for graceful interruption
-        its_time_to_stop = [False]
-        register_sigint_flag(its_time_to_stop)
+            # Skip empty batches
+            batch_rgb = patches_rgb.squeeze(1)[batch_indices]
+            if torch.mean(batch_rgb) == 0:
+                batch_logger.debug("Skipping empty batch")
+                continue
 
-        # Optimization loop
-        iou_mass = []
-        mass_for_iou_one = []
+            batch_logger.info(f"Processing batch {batch_idx + 1}/{total_batches}")
 
-        for i in tqdm(range(options.diff_render_it)):
-            if not opt_loop.optimize_step(i) or its_time_to_stop[0]:
-                break
+            # Get batch data
+            rasters_batch, initial_vector = batch_processor.get_batch_data(batch_indices)
 
-            # Log progress
-            opt_loop.log_progress(i, patches_rgb_im, batch_indices, iou_mass, mass_for_iou_one)
+            # Initialize lines with visibility threshold
+            removed_lines = initial_vector[..., -1] < refinement_config.line_visibility_threshold * h
+            rand_x1 = torch.rand_like(initial_vector[removed_lines, [0]]) * w
+            rand_y1 = torch.rand_like(initial_vector[removed_lines, [1]]) * h
+            initial_vector[removed_lines, [0]] = rand_x1
+            initial_vector[removed_lines, [2]] = rand_x1 + 1
+            initial_vector[removed_lines, [1]] = rand_y1
+            initial_vector[removed_lines, [3]] = rand_y1 + 1
+            initial_vector[removed_lines, [4]] = refinement_config.initial_probability
+            initial_vector = initial_vector[..., :5].numpy()
 
-        # Store results
-        final_lines = opt_loop.get_final_result()
-        y_pred_rend[batch_indices] = final_lines.cpu().detach()
+            # Initialize optimization loop
+            opt_loop = OptimizationLoop(rasters_batch, initial_vector, device, options.rendering_type, batch_logger)
 
-        # Accumulate IOU data
-        if first_encounter:
-            first_encounter = False
-            iou_all = np.array(iou_mass)
-            mass_for_iou = np.array(mass_for_iou_one)
+            # Register signal handler for graceful interruption
+            its_time_to_stop = [False]
+            register_sigint_flag(its_time_to_stop)
+
+            # Optimization loop
+            iou_mass = []
+            mass_for_iou_one = []
+            early_stop_threshold = 0.001  # Stop if IOU improvement < 0.1% over last 3 measurements
+            min_iterations = 20  # Run at least 20 iterations before checking early stopping
+
+            with batch_logger.timing(f"batch_{batch_idx}_optimization"):
+                for i in tqdm(range(options.diff_render_it), desc=f"Batch {batch_idx + 1}"):
+                    if not opt_loop.optimize_step(i) or its_time_to_stop[0]:
+                        batch_logger.warning("Optimization interrupted or stopped")
+                        break
+
+                    # Log progress
+                    opt_loop.log_progress(i, patches_rgb_im, batch_indices, iou_mass, mass_for_iou_one)
+
+                    # Check for early stopping based on IOU convergence
+                    if (i >= min_iterations and 
+                        (i + 1) % refinement_config.logging_interval == 0 and 
+                        len(iou_mass) >= 3):
+                        # Check if IOU improvement over last 3 measurements is minimal
+                        recent_iou = iou_mass[-3:]
+                        improvements = [recent_iou[j+1] - recent_iou[j] for j in range(len(recent_iou)-1)]
+                        avg_improvement = sum(improvements) / len(improvements) if improvements else 0
+                        
+                        if avg_improvement < early_stop_threshold:
+                            batch_logger.info(f"Early stopping at iteration {i+1}: IOU improvement {avg_improvement:.6f} < {early_stop_threshold}")
+                            break
+
+            # Store results
+            final_lines = opt_loop.get_final_result()
+            y_pred_rend[batch_indices] = final_lines.cpu().detach()
+
+            # Accumulate IOU data
+            if first_encounter:
+                first_encounter = False
+                iou_all = np.array(iou_mass)
+                mass_for_iou = np.array(mass_for_iou_one)
+            else:
+                iou_all = np.concatenate((iou_all, iou_mass), axis=1)
+                mass_for_iou = np.concatenate((mass_for_iou, mass_for_iou_one), axis=1)
+
+            batch_logger.info(f"Completed batch {batch_idx + 1}/{total_batches}")
+
+        # Post-process results
+        prd = y_pred_rend[:, :, -1].clone()
+        prd[prd > 1] = 1
+        prd[prd < refinement_config.probability_clip_min] = 0
+        y_pred_rend = torch.cat((y_pred_rend, prd.unsqueeze(2)), dim=-1)
+
+        # Save results
+        os.makedirs(options.output_dir + "arrays/", exist_ok=True)
+        if options.init_random:
+            np.save(options.output_dir + "arrays/hard_optimization_iou_random_" + name, iou_all)
+            np.save(options.output_dir + "arrays/hard_optimization_iou_mass_random_" + name, mass_for_iou)
         else:
-            iou_all = np.concatenate((iou_all, iou_mass), axis=1)
-            mass_for_iou = np.concatenate((mass_for_iou, mass_for_iou_one), axis=1)
+            np.save(options.output_dir + "arrays/hard_optimization_iou_" + name, iou_all)
+            np.save(options.output_dir + "arrays/hard_optimization_iou_mass_" + name, mass_for_iou)
 
-    # Post-process results
-    prd = y_pred_rend[:, :, -1].clone()
-    prd[prd > 1] = 1
-    prd[prd < refinement_config.probability_clip_min] = 0
-    y_pred_rend = torch.cat((y_pred_rend, prd.unsqueeze(2)), dim=-1)
-
-    # Save results
-    os.makedirs(options.output_dir + "arrays/", exist_ok=True)
-    if options.init_random:
-        np.save(options.output_dir + "arrays/hard_optimization_iou_random_" + name, iou_all)
-        np.save(options.output_dir + "arrays/hard_optimization_iou_mass_random_" + name, mass_for_iou)
-    else:
-        np.save(options.output_dir + "arrays/hard_optimization_iou_" + name, iou_all)
-        np.save(options.output_dir + "arrays/hard_optimization_iou_mass_" + name, mass_for_iou)
+        logger.log_pipeline_step("refinement", "completed", module="lines", dataset=name)
+        logger.log_performance("refinement", {
+            "total_patches": patches_vector.shape[0],
+            "primitives_per_patch": patches_vector.shape[1],
+            "iterations_per_patch": options.diff_render_it,
+            "final_iou_mean": float(np.mean(iou_all)) if iou_all is not None else None
+        })
 
     return y_pred_rend
 
@@ -207,7 +252,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--rendering_type",
         type=str,
-        default="hard",
-        help="hard - analytical rendering, bezier_splatting - fast differentiable rendering",
+        default="bezier_splatting",
+        help="hard - analytical rendering, bezier_splatting - fast differentiable rendering (recommended)",
     )
     return parser.parse_args()
