@@ -13,6 +13,19 @@ learning_rate_lines: 0.1  # lr=1e-1 for lines
 learning_rate_curves: 0.05  # lr=0.05 for curves
 max_reinit_iter: 100
 optimization_iters_n: 100
+batch_size: 300  # for processing patches in batches
+
+# Thresholds and probabilities
+line_visibility_threshold: 0.5  # 0.5 * h for removed lines
+initial_probability: 0.00390625  # 2**-8
+width_min_threshold: 0.25  # 1/4
+iou_stop_threshold: 0.98  # stop optimization if IOU > 0.98
+probability_clip_min: 0.3  # prd < 0.3 = 0
+
+# Iteration intervals
+reinit_interval: 20  # reinit every 20 iterations
+logging_interval: 20  # log every 20 iterations
+snap_interval: 20  # snap lines every 20 iterations
 
 # Energy computation parameters
 energy:

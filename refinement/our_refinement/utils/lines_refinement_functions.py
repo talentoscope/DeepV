@@ -22,8 +22,18 @@ from util_files.data.graphics_primitives import (
     PT_LINE, PT_QBEZIER, PT_CBEZIER, PT_ARC, repr_len_by_type
 )
 
-h, w = 64, 64
-padding = 3
+# Load config for magic numbers
+try:
+    from omegaconf import OmegaConf
+    config = OmegaConf.load(os.path.join(os.path.dirname(__file__), '../../../config/refinement/default.yaml'))
+    h = config.render_res
+    w = config.render_res
+    padding = config.padding
+except:
+    # Fallback to hardcoded values
+    h, w = 64, 64
+    padding = 3
+
 padded_h = h + padding * 2
 padded_w = w + padding * 2
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -329,7 +339,18 @@ def render_lines_pt(lines_batch: torch.Tensor, samples: torch.Tensor = None, uin
 
 
 def render_lines_with_type(lines_batch: torch.Tensor, rendering_type: str = "hard", supersampling: int = 4, uint: bool = False) -> Union[torch.Tensor, np.ndarray]:
-    """Render lines using the specified rendering type."""
+    """
+    Render line primitives using the specified rendering method.
+
+    Args:
+        lines_batch: Tensor of shape (batch, N, 5) with [x1, y1, x2, y2, width] for each line.
+        rendering_type: Rendering method - "hard" for analytical or "bezier_splatting" for differentiable.
+        supersampling: Supersampling factor for anti-aliasing (used in bezier_splatting).
+        uint: If True, return uint8 images (0-255), else float (0-1).
+
+    Returns:
+        Rendered images as tensor (if uint=False) or numpy array (if uint=True).
+    """
     if rendering_type == "bezier_splatting":
         return render_lines_bezier_splatting(lines_batch, supersampling=supersampling, uint=uint)
     else:
@@ -828,17 +849,17 @@ class MeanFieldEnergyComputer:
 
 
 def mean_field_energy_lines(
-    lines_batch,
-    rasters_batch,
-    empty_charge=0,
-    close_range_weight=2 * (1 / 0.5),
-    elementary_halfwidth=1 / 2,
-    visibility_padding=2,
-    division_epsilon=1e-12,
-    r_close=1,
-    r_far=32,
-    far_weight=1/50,
-):
+    lines_batch: torch.Tensor,
+    rasters_batch: torch.Tensor,
+    empty_charge: float = 0,
+    close_range_weight: float = 2 * (1 / 0.5),
+    elementary_halfwidth: float = 1 / 2,
+    visibility_padding: int = 2,
+    division_epsilon: float = 1e-12,
+    r_close: float = 1,
+    r_far: float = 32,
+    far_weight: float = 1/50,
+) -> torch.Tensor:
     """
     Compute mean field energy for lines batch using MeanFieldEnergyComputer.
 
@@ -929,8 +950,16 @@ def mean_vector_field_energy_lines(lines_batch, supersampling_strategy=RegularSu
 
 
 def size_energy(
-    lines_batch, rasters_batch, empty_charge=0, elementary_halfwidth=1 / 2, visibility_padding=2, division_epsilon=1e-12, r_close=1, r_far=32, far_weight=1/50
-):
+    lines_batch: torch.Tensor,
+    rasters_batch: torch.Tensor,
+    empty_charge: float = 0,
+    elementary_halfwidth: float = 1 / 2,
+    visibility_padding: int = 2,
+    division_epsilon: float = 1e-12,
+    r_close: float = 1,
+    r_far: float = 32,
+    far_weight: float = 1/50
+) -> torch.Tensor:
     r"""...
     Algorithm is (for each batch):
     1. Render each line on binary supersample grid
@@ -1441,19 +1470,19 @@ def collapse_redundant_lines(cx, cy, theta, length, width, patches_to_consider, 
 
 
 def constrain_parameters(
-    cx,
-    cy,
-    theta,
-    length,
-    width,
-    canvas_width,
-    canvas_height,
-    size_optimizer,
-    padding=3 - 2,
-    min_linear=2**-8,
-    dwarfness_ratio=1,
-    division_epsilon=1e-12,
-):
+    cx: torch.Tensor,
+    cy: torch.Tensor,
+    theta: torch.Tensor,
+    length: torch.Tensor,
+    width: torch.Tensor,
+    canvas_width: int,
+    canvas_height: int,
+    size_optimizer: NonanAdam,
+    padding: int = 3 - 2,
+    min_linear: float = 2**-8,
+    dwarfness_ratio: int = 1,
+    division_epsilon: float = 1e-12,
+) -> None:
     r"""
     1. Constrain width and length to be non less than `min_linear` which is nonzero
        to prevent 'dying' of the lines (any position of a zero-sized line is optimal)

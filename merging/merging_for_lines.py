@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Tuple, Any
 from rtree import index
 
 from merging.utils.merging_functions import (
@@ -11,17 +12,35 @@ from merging.utils.merging_functions import (
 )
 
 
-def postprocess(y_pred_render, patches_offsets, input_rgb, cleaned_image, it, options):
+def postprocess(
+    y_pred_render: torch.Tensor,
+    patches_offsets: np.ndarray,
+    input_rgb: np.ndarray,
+    cleaned_image: np.ndarray,
+    it: int,
+    options: Any
+) -> Tuple[np.ndarray, np.ndarray]:
     """
+    Postprocess refined vector predictions by merging overlapping lines and optimizing final output.
 
-    :param y_pred_render: array after refinement of size [patch_number,number_of_lines,6]
-    :param patches_offsets: array of size that [patches_number,2] containsinformaion about patches coordinate in image
-    :param input_rgb: splitted image into patches
-    :param cleaned_image: original clean image
-    :param it: current image number
-    :param options: dict with config
-    :return:
-    1)array of size [number_of line,6] with information of lines 2) rendered image after potprocessing
+    This function consolidates line primitives from multiple patches into a clean, non-redundant set
+    suitable for CAD export. It uses spatial indexing for efficient merging of close/parallel lines.
+
+    Args:
+        y_pred_render: Refined vector predictions (patches, N, 6) with [x1,y1,x2,y2,width,prob].
+        patches_offsets: Patch offsets in original image (patches, 2).
+        input_rgb: Original RGB image for final IOU optimization.
+        cleaned_image: Cleaned input image for SVG export.
+        it: Current image index for naming.
+        options: Config object with merging parameters (max_angle_to_connect, etc.).
+
+    Returns:
+        Tuple of (merged_lines, rendered_image) where merged_lines is (N, 6) array.
+
+    Notes:
+        - Uses R-tree spatial index for efficient line proximity queries.
+        - Merges lines within angular/distance thresholds to reduce redundancy.
+        - Saves SVG output to options.output_dir/merging_output/.
     """
     nump = tensor_vector_graph_numpy(y_pred_render, patches_offsets, options)
 

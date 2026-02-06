@@ -360,7 +360,30 @@ def compute_angle(line0, line1):
     return angle
 
 
-def merge_close(lines: np.ndarray, idx, widths: np.ndarray, tol: float = 1e-3, max_dist: float = 5, max_angle: float = 15, window_width: int = 100):
+def merge_close(lines: np.ndarray, idx, widths: np.ndarray, tol: float = 1e-3, max_dist: float = 5, max_angle: float = 15, window_width: int = 100) -> List[np.ndarray]:
+    """
+    Merge lines that are close, intersecting, or nearly parallel using spatial indexing.
+
+    This function identifies groups of lines that should be merged based on proximity,
+    intersection, and angular similarity, then consolidates them into single lines.
+
+    Args:
+        lines: Array of shape (N, 6) with [x1, y1, x2, y2, width, opacity].
+        idx: R-tree spatial index for efficient proximity queries.
+        widths: Array of line widths (N,).
+        tol: Tolerance for merging operations.
+        max_dist: Maximum distance between lines to consider merging.
+        max_angle: Maximum angle difference (degrees) for parallel lines.
+        window_width: Search window size for spatial queries.
+
+    Returns:
+        List of merged lines, each as [x1, y1, x2, y2, width, opacity].
+
+    Notes:
+        - Uses DFS to find connected components of mergeable lines.
+        - Skips lines shorter than 3 units.
+        - Merges groups into single representative lines.
+    """
     window = [-window_width, -window_width, window_width, window_width]
     n = len(lines)
     close = [[] for _ in range(n)]
@@ -411,7 +434,25 @@ def draw_with_skeleton(lines, drawing_scale=1, skeleton_line_width=0, skeleton_n
     )
 
 
-def maximiz_final_iou(nump, input_rgb):
+def maximiz_final_iou(nump: np.ndarray, input_rgb: np.ndarray) -> List[np.ndarray]:
+    """
+    Optimize final line set by maximizing IOU with original image through iterative removal.
+
+    This function performs a greedy optimization by removing lines that don't contribute
+    to the overall raster match, measured by MSE against the input image.
+
+    Args:
+        nump: Array of lines (N, 6) with [x1, y1, x2, y2, width, opacity].
+        input_rgb: Original RGB image for comparison.
+
+    Returns:
+        Optimized array of lines with improved IOU.
+
+    Notes:
+        - Iteratively tests removing each line and keeps removals that improve MSE.
+        - Uses skeleton rendering for line visualization.
+        - Can be computationally expensive for large line counts.
+    """
     aa = (draw_with_skeleton(nump, max_x=input_rgb.shape[1], max_y=input_rgb.shape[0]) / 255.0)[..., 0]
     k = input_rgb[..., 0] / 255.0
     mse_ref = ((np.array(aa) - np.array(k)) ** 2).mean()

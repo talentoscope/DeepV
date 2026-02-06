@@ -33,10 +33,16 @@ DeepV is a deep learning framework for converting raster technical drawings into
 
 - **Extended Primitives**: Lines, quadratic/cubic Béziers, arcs, splines
 - **Variable Length**: Up to 20 primitives per patch via autoregressive transformer
-- **CAD Export**: Direct export to DXF and SVG formats
-- **Interactive UI**: Gradio-based web interface with real-time rendering
+- **Intelligent Reconstruction**: Beyond pixel tracing—idealizes degraded scans (e.g., straightening lines, inferring symmetries, recognizing components) for professional CAD-quality output
+- **CAD Export**: Direct export to DXF and SVG formats with layers
+- **Interactive UI**: Gradio-based web interface with real-time Bézier splatting rendering
 - **Distributed Training**: Multi-GPU support with PyTorch distributed
 - **Modern Tooling**: Hydra configuration, pytest testing, pre-commit hooks
+- **Robust to Degradation**: Handles scanned books, patents, faded photocopies with noise, skew, and artifacts
+
+### Problem Statement
+
+Many valuable technical drawings exist only in raster form: scanned pages from old books, archived patents, faded photocopies, or degraded images. DeepV addresses the challenge of converting these into clean, editable CAD vectors by intelligently reconstructing and idealizing them as if redrawn professionally—enforcing geometric constraints, removing noise, and producing compact, parametric outputs suitable for modern engineering workflows.
 
 ## Repository Structure
 
@@ -99,6 +105,42 @@ brew install cairo pkg-config
 conda install cairo
 ```
 
+## Quick Start
+
+### Run the Web Demo
+
+```bash
+# Launch interactive Gradio UI
+python run_web_ui_demo.py
+```
+
+Open your browser to `http://localhost:7860` and upload a technical drawing for real-time vectorization.
+
+### Run Pipeline on Sample Data
+
+```bash
+# Process a single image
+python run_pipeline.py \
+  --model_path ./logs/models/vectorization/lines/model_lines.weights \
+  --json_path ./vectorization/models/specs/resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json \
+  --data_dir ./data/synthetic/ \
+  --primitive_type line \
+  --model_output_count 10 \
+  --overlap 0
+```
+
+### Train a Model
+
+```bash
+# Train vectorization model
+python vectorization/scripts/train_vectorization.py \
+  --config-name vectorization_config \
+  model=generic_vectorization_net \
+  data=synthetic_dataset
+```
+
+See module-specific READMEs for detailed usage.
+
 ## Benchmarking & Evaluation
 
 DeepV includes comprehensive benchmarking against state-of-the-art baselines:
@@ -135,13 +177,17 @@ See `scripts/README_benchmarking.md` for detailed usage.
 |-------|------------|----------|------|
 | Lines | Lines only | [Download](https://disk.yandex.ru/d/FKJuMvNJuy-K9g) | ~500MB |
 | Curves | Lines + Béziers | [Download](https://disk.yandex.ru/d/yOZzCSrd-QSACA) | ~750MB |
+| Variable Primitives | Lines + Béziers + Arcs + Splines | In development | ~1GB |
 
 ### Model Architecture
 
-- **Encoder**: ResNet-18 backbone with feature extraction
-- **Decoder**: Autoregressive transformer (up to 20 primitives/patch)
-- **Loss**: Supervised loss with geometric constraints
-- **Training**: Distributed training with mixed precision
+- **Encoder**: ResNet-18/34 backbone with feature extraction
+- **Decoder**: Autoregressive transformer (up to 20 primitives/patch) or LSTM variants
+- **Loss**: Supervised loss with geometric constraints; supports Hausdorff distance
+- **Training**: Distributed training with mixed precision; Hydra configs for hyperparameters
+- **Enhancements**: Bézier splatting for faster rendering; unified pipeline for line/curve processing
+
+Model specs are defined in JSON files under `vectorization/models/specs/` for easy customization.
 
 ## Notebooks
 
@@ -271,4 +317,4 @@ See `requirements.txt` for complete list.
 
 ---
 
-*DeepV is actively maintained. For questions about specific modules, see the README in each subdirectory.*
+*DeepV is actively maintained. For questions about specific modules, see the README in each subdirectory. This fork extends the original ECCV 2020 implementation with modern features like extended primitives, unified pipelines, and intelligent reconstruction for degraded scans.*

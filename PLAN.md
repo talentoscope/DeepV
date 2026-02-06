@@ -45,6 +45,7 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 ### Overall Assessment
 - The fork has made excellent progress since the original Vahe1994 repository: Phase 3 enhancements are fully implemented, transforming the project from a research prototype into a more practical tool with CAD export and user-facing demo.
 - Remaining pain points typical of evolved academic codebases persist: incomplete docstrings (especially in refinement/merging), partial type hint coverage (~20–30% in critical areas), scattered magic numbers/hardcoded tolerances, limited integration/end-to-end testing, and unprofiled performance bottlenecks (particularly refinement).
+- Current verification (February 2026) shows Phase 4 ~60% complete, with refactoring, documentation, and testing as immediate priorities; Phase 5 remains untouched.
 - Strong opportunities remain in 2025–2026 trends: diffusion transformers for generative vectorization, multimodal (text+image) conditioned synthesis, panoptic symbol spotting on datasets like ArchCAD-400K and FloorPlanCAD, and tighter integration with emerging SVG generation models (e.g., OmniSVG-style VLM+distillation approaches or LayerTracer diffusion transformers).
 - Prioritize stability/documentation/refactoring first, then leverage new datasets and generative techniques for accuracy leaps beyond traditional supervised methods.
 
@@ -170,7 +171,7 @@ Focus now on polishing stability.
 ### Phase 3: Enhancement – COMPLETED ✓
 Extended primitives, variable-length autoregressive model, CAD export, Gradio UI, distributed training, Hausdorff metric, svgpathtools fix.
 
-### Phase 4: Production-Ready & Robustness (1–3 months, high priority now)
+### Phase 4: Production-Ready & Robustness (1–3 months, high priority now) - ~60% complete
 - Comprehensive docstrings + type hints (target 80%+)
 - Refactor long refinement/merging functions
 - Full integration/end-to-end + regression tests
@@ -186,20 +187,30 @@ Extended primitives, variable-length autoregressive model, CAD export, Gradio UI
 - Community: HF model hub upload, public demo Spaces
 - Regular security/dependency maintenance
 
-### Recommended Immediate Next Steps (Priority Order)
+#### Advanced Architecture Recommendations for Intelligent Reconstruction
+To achieve intelligent "remaking" of scanned drawings (beyond tracing to idealized CAD with symmetries, constraints, and symbol recognition), prioritize hybrid architectures incorporating semantic understanding and generative capabilities. These align with the core objective of producing clean, editable vectors from degraded rasters.
+
+- **Hybrid VLM + Diffusion Transformer**: Use VLM (e.g., LLaVA-Next) for semantic interpretation and description generation, then diffusion model (e.g., Hugging Face Diffusers) to generate idealized primitives. Adapt open-source like Vectra2D or Shap-E for 2D CAD reconstruction. Train/fine-tune on DeepPatent2 (2M+ patent drawings) and scanned datasets (e.g., Kaggle docs). Integration: Add to vectorization module with Hydra configs; benchmark on Hausdorff/vector IoU for 15-25% improvements.
+- **Dual-Decoder Transformer with Panoptic Symbol Detection**: Sequence-to-sequence with dual decoders for CAD commands and params (e.g., Drawing2CAD). Add panoptic head for symbol spotting (gears, circuits). Use CAD-VGDrawing dataset. Refactor merging for constraints; test on patents/books.
+- **AI Agent for CAD Recreation**: Prompt-to-CAD pipeline (e.g., MIT CAD Agent + OpenSCAD). Automate "human-like" redrawing via UI actions. Fine-tune on VideoCAD dataset. Add as optional mode for complex inputs.
+
+Start with VLM-diffusion prototype (1-2 weeks); extend to multimodal for patents/books.
+
+### Recommended Immediate Next Steps (Priority Order) - Current Status: ~20-30% complete
 
 #### 1–2 weeks Quick Wins
-- Extract all refinement/merging magic numbers to Hydra configs
-- Add docstrings to 10–15 most complex functions
-- Extend type hints in refinement pipeline
+- Extract all refinement/merging magic numbers to Hydra configs - Done (major ones extracted, config loading added)
+- Add docstrings to 10–15 most complex functions - Done (added to render_optimization_hard, render_lines_with_type, postprocess, main (curves), merge_close, maximiz_final_iou)
+- Extend type hints in refinement pipeline - Done (added to key functions in refinement and merging modules)
+- Refactor long functions (render_optimization_hard) into classes/modules - Done (split into LineOptimizationState, BatchProcessor, OptimizationLoop classes)
 
 #### 2–6 weeks Medium Term
-- Refactor refinement long functions → classes/modules
-- Build basic end-to-end integration test suite
-- Add structured logging + exception hierarchy
+- Refactor refinement long functions → classes/modules - Not done
+- Build basic end-to-end integration test suite - Partial
+- Add structured logging + exception hierarchy - Partial
 
 #### 2–4 months Long Term
-- Reach high type-hint coverage + strict mypy
-- Full performance profiling + targeted optimizations
-- Integrate ArchCAD-400K and CAD-VGDrawing + symbol spotting evaluation
-- Explore diffusion-transformer prototype for generative mode
+- Reach high type-hint coverage + strict mypy - Not done
+- Full performance profiling + targeted optimizations - Partial
+- Integrate ArchCAD-400K and CAD-VGDrawing + symbol spotting evaluation - Not done
+- Explore diffusion-transformer prototype for generative mode - Not done

@@ -12,6 +12,28 @@ from util_files.simplification.join_qb import join_quad_beziers
 
 
 def main(options, vector_image_from_optimization=None, width_percentile=90, fit_tol=0.5, w_tol=np.inf, join_tol=0.5):
+    """
+    Postprocess refined curve primitives by merging and simplifying Bézier curves.
+
+    This function handles curve merging for quadratic Béziers, joining overlapping or nearly
+    collinear curves to reduce redundancy while preserving shape accuracy.
+
+    Args:
+        options: Config object with output_dir, sample_name, etc.
+        vector_image_from_optimization: VectorImage object from refinement stage.
+        width_percentile: Percentile of curve widths for scaling tolerances (default 90).
+        fit_tol: Fitting tolerance multiplier for curve simplification.
+        w_tol: Width tolerance multiplier for merging.
+        join_tol: Joining tolerance multiplier for connecting curves.
+
+    Returns:
+        Processed VectorImage with merged curves and saved SVG.
+
+    Notes:
+        - Tolerances are scaled by curve width percentiles for adaptive merging.
+        - Uses join_quad_beziers for intelligent curve consolidation.
+        - Saves output to options.output_dir/merging_output/.
+    """
     logger = Logger.prepare_logger(loglevel="info", logfile=None)
     if vector_image_from_optimization is None:
         raise ValueError("vector_image_from_optimization must be provided - job_tuples mode not supported")
