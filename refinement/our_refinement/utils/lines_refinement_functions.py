@@ -630,6 +630,11 @@ def line_to_point_energy(lines_batch: torch.Tensor, point_charges: torch.Tensor,
     batch_size, lines_n = lines_batch.shape[:2]
     rasters_n = point_charges.shape[-1]
 
+    # Validate shapes
+    expected_rasters_n = raster_coordinates.shape[1]
+    if rasters_n != expected_rasters_n:
+        raise ValueError(f"Shape mismatch in line_to_point_energy: point_charges last dim {rasters_n}, expected {expected_rasters_n} from raster_coordinates")
+
     # Get parameters of the lines
     x1 = lines_batch[..., 0]
     y1 = lines_batch[..., 1]
@@ -694,6 +699,11 @@ def line_to_vector_energy(lines_batch: torch.Tensor, vector_field: torch.Tensor,
 
     batch_size, lines_n = lines_batch.shape[:2]
     rasters_n = vector_field.shape[-1]
+
+    # Validate shapes
+    expected_rasters_n = raster_coordinates.shape[1]
+    if rasters_n != expected_rasters_n:
+        raise ValueError(f"Shape mismatch in line_to_vector_energy: vector_field last dim {rasters_n}, expected {expected_rasters_n} from raster_coordinates")
 
     # Get parameters of the lines
     x1 = lines_batch[..., 0]
@@ -818,6 +828,11 @@ class MeanFieldEnergyComputer:
 
         excess_raster = self._compute_excess_raster(lines_batch, rasters_batch, x1, y1, x2, y2)
         excess_raster = self._weight_visible_excess_charge(excess_raster, rasters_batch, x1, x2, y1, y2, lx, ly)
+
+        # Validate excess_raster shape
+        expected_rasters_n = raster_coordinates.shape[1]
+        if excess_raster.shape[-1] != expected_rasters_n:
+            raise ValueError(f"Shape mismatch in MeanFieldEnergyComputer.compute: excess_raster last dim {excess_raster.shape[-1]}, expected {expected_rasters_n} from raster_coordinates")
 
         # 9. For each line calculate the energy of its interaction with the excess raster field
         mean_field_energy = line_to_point_energy(lines_batch, excess_raster, division_epsilon=self.division_epsilon, R_close=self.r_close, R_far=self.r_far, far_weight=self.far_weight).sum(-1).mean()
