@@ -236,69 +236,6 @@ def download_quickdraw(output_dir: Path, test_mode: bool = False) -> Dict:
         raise
 
 
-def download_sesyd(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download SESYD synthetic floorplans."""
-    import requests
-
-    dataset_dir = output_dir / "raw" / "sesyd"
-    dataset_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"Downloading SESYD to {dataset_dir}...")
-
-    sesyd_url = "http://mathieu.delalandre.free.fr/projects/sesyd/downloads/sesyd_v1.0.zip"
-
-    if test_mode:
-        print("Test mode: downloading sample only")
-        # Create placeholder
-        metadata = {
-            "name": "SESYD",
-            "size": "1,000 synthetic floorplans",
-            "formats": ["Vector", "raster renderable"],
-            "source": "http://mathieu.delalandre.free.fr/projects/sesyd/",
-            "license": "Free",
-            "test_mode": True,
-            "note": "Test mode: full download requires accessing the SESYD website",
-        }
-        with open(dataset_dir / "metadata.json", "w") as f:
-            json.dump(metadata, f, indent=2)
-        print(f"[OK] Created metadata for SESYD at {dataset_dir}")
-        return metadata
-
-    zip_path = dataset_dir / "sesyd.zip"
-
-    try:
-        download_with_progress(sesyd_url, zip_path)
-
-        print("Extracting archive...")
-        with zipfile.ZipFile(zip_path, "r") as zip_ref:
-            zip_ref.extractall(dataset_dir)
-
-        zip_path.unlink()
-
-        print(f"[OK] Downloaded SESYD to {dataset_dir}")
-
-        metadata = {
-            "name": "SESYD",
-            "size": "1,000 synthetic floorplans",
-            "formats": ["Vector", "raster renderable"],
-            "source": "http://mathieu.delalandre.free.fr/projects/sesyd/",
-            "license": "Free",
-            "download_date": str(Path(dataset_dir).stat().st_mtime),
-            "test_mode": test_mode,
-        }
-
-        with open(dataset_dir / "metadata.json", "w") as f:
-            json.dump(metadata, f, indent=2)
-
-        return metadata
-
-    except Exception as e:
-        print(f"[ERR] Failed to download SESYD: {e}")
-        if zip_path.exists():
-            zip_path.unlink()
-        raise
-
-
 def download_impact(output_dir: Path, test_mode: bool = False) -> Dict:
     """Download IMPACT patent dataset from Hugging Face."""
     try:
@@ -960,14 +897,6 @@ DATASETS = {
         "downloader": download_quickdraw,
         "size": "~1-5 GB (subset)",
         "license": "CC BY 4.0",
-    },
-    "sesyd": {
-        "name": "SESYD",
-        "description": "1,000 synthetic floorplans (unavailable)",
-        "downloader": None,
-        "size": "~100 MB",
-        "license": "Free",
-        "note": "Original site unavailable (404). Dataset unsuitable for DeepV - contains symbol spotting data, not vector primitives.",
     },
     "impact": {
         "name": "IMPACT",

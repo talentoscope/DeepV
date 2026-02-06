@@ -1,3 +1,19 @@
+"""
+SVG Vector Data Processing Utilities
+
+This module provides utilities for processing SVG files and extracting vector primitives
+for use in vectorization training. It handles SVG parsing, patch extraction, and primitive
+parameterization using svgpathtools.
+
+Key Functions:
+- get_random_patch_from_svg: Extract random patches from SVG files with augmentation
+- sample_primitive_representation: Convert SVG paths to graphics primitives
+- to_primitive_representation: Convert individual SVG segments to primitives
+
+Used by: SVG dataset classes for training data preparation.
+Dependencies: svgpathtools for SVG parsing.
+"""
+
 import random
 import warnings
 from math import pi
@@ -26,7 +42,33 @@ def get_random_patch_from_svg(
     outline_style=None,
     all_black=False,
 ):
-    """ """
+    """Extract a random patch from an SVG file with data augmentation.
+
+    This function loads an SVG file, extracts a random rectangular patch, and applies
+    various augmentations to create diverse training data for vectorization.
+
+    Args:
+        svg_file_location (str): Path to the SVG file
+        patch_size (tuple): (width, height) of the patch in pixels
+        margin (float): Margin factor for patch extraction (affects augmentation area)
+        new_ppi_to_old_ppi (float): PPI scaling factor for coordinate transformation
+        scale_width (float): Width scaling factor for path strokes
+        rotate (bool): Whether to apply random rotation augmentation
+        per_path_translation_amplitude (complex): Translation amplitude per path
+        per_path_rotation_amplitude (float): Rotation amplitude per path in degrees
+        mutually_exclusive_transforms (bool): Whether transforms are mutually exclusive
+        jitter_translation_amplitude (complex): Jitter translation amplitude
+        jitter_radius_amplitude (float): Jitter radius scaling factor
+        jitter_rotation_amplitude (float): Jitter rotation amplitude in degrees
+        random_width (bool): Whether to randomize stroke widths
+        remove_filled (bool): Whether to remove filled paths
+        outline_filled (bool): Whether to convert filled paths to outlines
+        outline_style (dict): Stroke attributes for outlined filled paths
+        all_black (bool): Whether to make all paths black
+
+    Returns:
+        tuple: (paths, attribute_dicts, svg_attributes) for the extracted patch
+    """
     assert "patch sizes and canvas sizes are in pixels"
 
     # read svg
@@ -192,6 +234,22 @@ def sample_parametric_representation(paths, attribute_dicts, max_lines_n=None, m
 def sample_primitive_representation(
     paths, attribute_dicts, max_lines_n=None, max_arc_n=0, max_beziers_n=None, sample_primitives_randomly=True
 ):
+    """Sample graphics primitives from SVG paths for training targets.
+
+    Converts SVG path segments into graphics_primitives.Line and graphics_primitives.BezierCurve
+    objects that can be used as training targets for the vectorization network.
+
+    Args:
+        paths (list): List of svgpathtools Path objects
+        attribute_dicts (list): List of attribute dictionaries for each path
+        max_lines_n (int): Maximum number of lines to sample (None for unlimited)
+        max_arc_n (int): Maximum number of arcs (must be 0, arcs not supported)
+        max_beziers_n (int): Maximum number of Bézier curves to sample (None for unlimited)
+        sample_primitives_randomly (bool): Whether to sample randomly or take first N
+
+    Returns:
+        tuple: (lines, arcs, beziers) where each is a list of graphics_primitives objects
+    """
     assert max_arc_n == 0, (
         "Arc has rotation as its parameter, but a CNN is unlikely to learn finding such parameter from an image. "
         "Need to convert arcs to bezier curves."
@@ -264,6 +322,19 @@ def to_parametric_representation(seg, attributes):
 
 
 def to_primitive_representation(seg, attributes):
+    """Convert an SVG path segment to a graphics primitive object.
+
+    Takes an individual SVG path segment (Line, QuadraticBezier, or CubicBezier) and
+    converts it to the corresponding graphics_primitives.Line or graphics_primitives.BezierCurve
+    object with the appropriate stroke width.
+
+    Args:
+        seg: svgpathtools path segment (Line, QuadraticBezier, or CubicBezier)
+        attributes (dict): SVG attributes dictionary containing stroke-width
+
+    Returns:
+        graphics_primitives.Line or graphics_primitives.BezierCurve: The primitive object
+    """
     assert not isinstance(seg, svgpathtools.Arc), (
         "Not implemented. Arc has rotation as its parameter, but a CNN is unlikely to learn "
         "finding such parameter from an image. Need to convert arcs to bezier curves."

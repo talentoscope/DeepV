@@ -27,14 +27,6 @@
       "splits": ["train", "val", "test"],
       "format": "png",
       "ground_truth_format": "svg"
-    },
-    "precision_floorplan": {
-      "name": "Precision Floorplan Dataset",
-      "description": "High-precision architectural floorplans",
-      "path": "data/precision_floorplan",
-      "splits": ["train", "val", "test"],
-      "format": "pdf",
-      "ground_truth_format": "dxf"
     }
   },
 

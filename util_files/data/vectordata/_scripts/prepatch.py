@@ -77,11 +77,11 @@ def prepatch_pfp(data_root, patches_root, num_workers=-1):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        input_dir = "/data/svg_datasets/processed_data/precision-floorplan"
+        input_dir = "/data/svg_datasets/processed_data/default"
     else:
         input_dir = sys.argv[1]
     # prepatch_sesyd('/home/ovoinov/work/3ddl/vectorization/dataset/processed_data/sesyd',
     #                '/home/ovoinov/work/3ddl/vectorization/dataset/prepatched_data/sesyd', num_workers=-1)
     # prepatch_sesyd('/home/oyvoinov/datasets/svg_datasets/additional/sesyd_walls',
     #                '/home/oyvoinov/datasets/svg_datasets/patched/sesyd_walls', num_workers=0)
-    prepatch_pfp(input_dir, "/data/svg_datasets/patched/precision-floorplan", num_workers=-1)
+    prepatch_pfp(input_dir, "/data/svg_datasets/patched/default", num_workers=-1)
