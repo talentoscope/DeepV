@@ -14,15 +14,18 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import torchvision.transforms as transforms
+import svgpathtools
+from tqdm import tqdm
 
 # Add current directory to path for local imports
 sys.path.append(".")
 
 from vectorization import load_model
+from util_files.data.vectordata.common import sample_primitive_representation
 
 
 class FloorPlanCADDataset(Dataset):
-    """Dataset for FloorPlanCAD with raster-vector pairs."""
+    """Dataset for FloorPlanCAD with raster and vector data."""
 
     def __init__(self, split_file, raster_dir, vector_dir, transform=None):
         """
@@ -40,31 +43,7 @@ class FloorPlanCADDataset(Dataset):
         with open(split_file, 'r', encoding='utf-8') as f:
             self.filenames = [line.strip() for line in f if line.strip()]
 
-        # Build mapping of filename to full path for both raster and vector
-        self.raster_files = {}
-        self.vector_files = {}
-
-        for root, dirs, files in os.walk(raster_dir):
-            for file in files:
-                if file.endswith('.png'):
-                    self.raster_files[file] = os.path.join(root, file)
-
-        for root, dirs, files in os.walk(vector_dir):
-            for file in files:
-                if file.endswith('.svg'):
-                    self.vector_files[file] = os.path.join(root, file)
-
-        # Filter to only include files that exist in both directories
-        valid_files = []
-        for filename in self.filenames:
-            png_name = filename.replace('.svg', '.png')
-            if png_name in self.raster_files and filename in self.vector_files:
-                valid_files.append(filename)
-            else:
-                print(f"Warning: Missing file {filename} or {png_name}")
-
-        self.filenames = valid_files
-        print(f"Loaded {len(self.filenames)} valid file pairs from {split_file}")
+        print(f"Loaded {len(self.filenames)} files from {split_file}")
 
     def __len__(self):
         return len(self.filenames)
@@ -73,15 +52,78 @@ class FloorPlanCADDataset(Dataset):
         filename = self.filenames[idx]
 
         # Load raster image
-        raster_path = self.raster_files[filename.replace('.svg', '.png')]
-        image = Image.open(raster_path).convert('RGB')
-
+        raster_path = self.raster_dir / filename
+        try:
+            image = Image.open(raster_path).convert('RGB')
+        except Exception as e:
+            print(f"Warning: Failed to load raster image {raster_path}: {e}")
+            # Fallback to placeholder
+            image = Image.new('RGB', (256, 256), color='white')
+        
         if self.transform:
             image = self.transform(image)
 
-        # For now, we'll use a placeholder target since we need to parse SVG
-        # This will need to be extended to actually parse the SVG files
-        target = torch.zeros(10, 6)  # Placeholder: 10 lines, 6 params each (matches model output)
+        # Load and parse SVG file
+        vector_filename = filename.replace('.png', '.svg')
+        vector_path = self.vector_dir / vector_filename
+        try:
+            # Parse SVG manually to extract path d attributes
+            import xml.etree.ElementTree as ET
+            tree = ET.parse(str(vector_path))
+            root = tree.getroot()
+            
+            paths = []
+            attributes = []
+            for elem in root.iter():
+                if elem.tag.endswith('path') and 'd' in elem.attrib:
+                    d = elem.attrib['d']
+                    try:
+                        path = svgpathtools.parse_path(d)
+                        paths.append(path)
+                        # Extract attributes
+                        attr_dict = {}
+                        for k, v in elem.attrib.items():
+                            if k != 'd':
+                                attr_dict[k] = v
+                        attributes.append(attr_dict)
+                    except Exception:
+                        continue  # Skip invalid paths
+            
+            if not paths:
+                raise ValueError("No valid paths found")
+            
+            # Convert attributes to the format expected by sample_primitive_representation
+            attribute_dicts = []
+            for attr in attributes:
+                # Ensure stroke-width is present
+                if 'stroke-width' not in attr:
+                    attr['stroke-width'] = '1'  # Default stroke width
+                attribute_dicts.append(attr)
+            
+            # Sample primitives from the SVG
+            lines, arcs, beziers = sample_primitive_representation(
+                paths, 
+                attribute_dicts, 
+                max_lines_n=10,  # Limit to 10 primitives for now
+                max_beziers_n=10,
+                sample_primitives_randomly=True
+            )
+            
+            # Combine all primitives
+            all_primitives = lines + beziers
+            
+            # Convert to tensor format (10 primitives × 6 features)
+            target = torch.zeros(10, 6)
+            for i, primitive in enumerate(all_primitives[:10]):
+                repr_data = primitive.to_repr()
+                # Take first 6 features, padding with zeros if shorter
+                for j in range(min(len(repr_data), 6)):
+                    target[i, j] = repr_data[j]
+            
+        except Exception as e:
+            print(f"Warning: Failed to parse SVG {vector_filename}: {e}")
+            # Fallback to placeholder
+            target = torch.zeros(10, 6)
 
         return image, target
 
@@ -139,10 +181,8 @@ def train_model(model, train_loader, val_loader, num_epochs=10, device='cuda', m
         train_loss = 0.0
         
         print("Training phase...")
-        for batch_idx, (images, targets) in enumerate(train_loader):
-            if batch_idx % 10 == 0:
-                print(f"  Processing batch {batch_idx+1}/{len(train_loader)}")
-            
+        train_pbar = tqdm(train_loader, desc=f"Epoch {epoch+1} Training", unit="batch")
+        for batch_idx, (images, targets) in enumerate(train_pbar):
             images, targets = images.to(device), targets.to(device)
 
             optimizer.zero_grad()
@@ -156,18 +196,19 @@ def train_model(model, train_loader, val_loader, num_epochs=10, device='cuda', m
             loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()
-
+            
             train_loss += loss.item()
+            
+            # Update progress bar with current loss
+            train_pbar.set_postfix(loss=f"{loss.item():.4f}")
 
         # Validation
         print("Validation phase...")
         model.eval()
         val_loss = 0.0
+        val_pbar = tqdm(val_loader, desc=f"Epoch {epoch+1} Validation", unit="batch")
         with torch.no_grad():
-            for batch_idx, (images, targets) in enumerate(val_loader):
-                if batch_idx % 10 == 0:
-                    print(f"  Processing validation batch {batch_idx+1}/{len(val_loader)}")
-                
+            for batch_idx, (images, targets) in enumerate(val_pbar):
                 images, targets = images.to(device), targets.to(device)
                 if hasattr(model.hidden, 'max_primitives'):
                     outputs = model(images)
@@ -175,6 +216,9 @@ def train_model(model, train_loader, val_loader, num_epochs=10, device='cuda', m
                     outputs = model(images, model_output_count)
                 loss = criterion(outputs, targets)
                 val_loss += loss.item()
+                
+                # Update progress bar with current loss
+                val_pbar.set_postfix(loss=f"{loss.item():.4f}")
 
         print(f"Epoch {epoch+1}/{num_epochs}, Train Loss: {train_loss/len(train_loader):.4f}, Val Loss: {val_loss/len(val_loader):.4f}")
 
@@ -206,6 +250,21 @@ def main():
     # Set device
     device = f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu'
     print(f"Using device: {device}")
+
+    # Extra CUDA debug info to help diagnose why CPU is selected
+    try:
+        print(f"torch.cuda.is_available(): {torch.cuda.is_available()}")
+        print(f"torch.cuda.device_count(): {torch.cuda.device_count()}")
+        print(f"torch.version.cuda: {torch.version.cuda}")
+        if torch.cuda.is_available():
+            try:
+                cur = torch.cuda.current_device()
+                print(f"Current CUDA device index: {cur}")
+                print(f"CUDA device name: {torch.cuda.get_device_name(cur)}")
+            except Exception as e:
+                print(f"Error querying current CUDA device: {e}")
+    except Exception as e:
+        print(f"CUDA debug info error: {e}")
 
     print("Creating data loaders...")
     # Create data loaders

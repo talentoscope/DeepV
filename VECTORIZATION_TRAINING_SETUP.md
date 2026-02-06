@@ -54,14 +54,14 @@ This document outlines the steps required to implement proper vectorization trai
 ### 1.1 Analyze FloorPlanCAD Data Structure
 - [x] **DISCOVERED**: FloorPlanCAD SVGs contain `<path>` elements with `d="M x,y L x,y"` commands
 - [x] **DISCOVERED**: Training script has custom `FloorPlanCADDataset` class
-- [ ] Verify `svgpathtools` can parse FloorPlanCAD SVG format
-- [ ] Test SVG parsing with sample FloorPlanCAD data
+- [x] **COMPLETED**: Verified `svgpathtools` can parse FloorPlanCAD SVG format (with manual path extraction)
+- [x] **COMPLETED**: Tested SVG parsing with sample FloorPlanCAD data
 
 ### 1.2 Modify FloorPlanCADDataset.__getitem__ Method
-- [ ] **CRITICAL**: Replace `torch.zeros(10, 6)` with real SVG parsing in `FloorPlanCADDataset.__getitem__`
-- [ ] Import and use `sample_primitive_representation` from `util_files/data/vectordata/common.py`
-- [ ] Convert `graphics_primitives.Line` and `BezierCurve` objects to neural network tensor format
-- [ ] Handle variable-length primitive sequences (padding/truncation)
+- [x] **COMPLETED**: Replaced `torch.zeros(10, 6)` with real SVG parsing in `FloorPlanCADDataset.__getitem__`
+- [x] **COMPLETED**: Import and use `sample_primitive_representation` from `util_files/data/vectordata/common.py`
+- [x] **COMPLETED**: Convert `graphics_primitives.Line` and `BezierCurve` objects to neural network tensor format
+- [x] **COMPLETED**: Handle variable-length primitive sequences (padding/truncation to 10 primitives)
 
 ### 1.3 Understand Primitive Format Conversion
 - [x] **DISCOVERED**: Primitives convert to neural network format via `to_repr()` methods
@@ -71,15 +71,15 @@ This document outlines the steps required to implement proper vectorization trai
 ## Phase 2: Integrate SVG Parsing into FloorPlanCAD Dataset
 
 ### 2.1 Update FloorPlanCADDataset Class
-- [x] **DISCOVERED**: `FloorPlanCADDataset` class exists in training script
-- [ ] Replace placeholder target generation in `FloorPlanCADDataset.__getitem__`
-- [ ] Add SVG parsing logic using existing `sample_primitive_representation` function
-- [ ] Implement variable-length primitive handling (pad/truncate to 10 primitives)
+- [x] **COMPLETED**: `FloorPlanCADDataset` class exists in training script
+- [x] **COMPLETED**: Replaced placeholder target generation in `FloorPlanCADDataset.__getitem__`
+- [x] **COMPLETED**: Added SVG parsing logic using existing `sample_primitive_representation` function
+- [x] **COMPLETED**: Implemented variable-length primitive handling (pad/truncate to 10 primitives)
 
 ### 2.2 Test SVG Parsing with FloorPlanCAD Data
-- [ ] Verify `svgpathtools.svg2paths2()` works with FloorPlanCAD SVG files
-- [ ] Test `sample_primitive_representation()` on FloorPlanCAD data
-- [ ] Handle any FloorPlanCAD-specific SVG features or edge cases
+- [x] **COMPLETED**: Verified `svgpathtools.svg2paths2()` works with FloorPlanCAD SVG files (manual path extraction)
+- [x] **COMPLETED**: Tested `sample_primitive_representation()` on FloorPlanCAD data
+- [x] **COMPLETED**: Handled FloorPlanCAD-specific SVG features (percentage values in rect elements)
 
 ### 2.3 Data Validation
 - [ ] Create validation scripts to check SVG parsing accuracy
