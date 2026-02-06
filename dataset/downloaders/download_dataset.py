@@ -40,52 +40,87 @@ def download_with_progress(url: str, output_path: Path, chunk_size: int = 8192):
 
 
 def download_floorplancad(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download FloorPlanCAD from Hugging Face."""
+    """Download FloorPlanCAD from original Google Drive links."""
     try:
-        from huggingface_hub import snapshot_download
+        import gdown
     except ImportError:
-        raise ImportError("Install huggingface_hub: pip install huggingface_hub")
+        raise ImportError("Install gdown: pip install gdown")
 
     dataset_dir = output_dir / "raw" / "floorplancad"
     dataset_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Downloading FloorPlanCAD to {dataset_dir}...")
 
+    # Google Drive URLs from the project site
+    urls = {
+        "train1.zip": "https://drive.google.com/file/d/1HcyKt6qWeXog-tRfvEjdO3O3TN91PXGL/view?usp=share_link",
+        "train2.zip": "https://drive.google.com/file/d/1kSS7OB_EEu7VJzb0W8DK9_nu1EvshioV/view?usp=sharing",
+        "test.zip": "https://drive.google.com/file/d/1jxpYgxnLUbXEzMOsjaMPQFSuvmvHimiZ/view?usp=sharing",
+    }
+
     if test_mode:
-        allow_patterns = ["*.json", "data/train-00000-of-*.parquet"]
-        max_workers = 2
-    else:
-        allow_patterns = None
-        max_workers = 8
+        print("Test mode: downloading only train1.zip for testing")
+        urls = {"train1.zip": urls["train1.zip"]}
 
-    try:
-        snapshot_download(
-            repo_id="Voxel51/FloorPlanCAD",
-            repo_type="dataset",
-            local_dir=str(dataset_dir),
-            allow_patterns=allow_patterns,
-            max_workers=max_workers,
-        )
-        print(f"[OK] Downloaded FloorPlanCAD to {dataset_dir}")
+    downloaded_files = []
+    for name, url in urls.items():
+        zip_path = dataset_dir / name
+        if zip_path.exists():
+            print(f"Skipping {name}, already exists at {zip_path}")
+            downloaded_files.append(zip_path)
+            continue
 
-        metadata = {
-            "name": "FloorPlanCAD",
-            "size": "15,663 CAD drawings",
-            "formats": ["SVG", "PNG", "Parquet"],
-            "source": "https://huggingface.co/datasets/Voxel51/FloorPlanCAD",
-            "license": "CC BY-NC 4.0",
-            "download_date": str(Path(dataset_dir).stat().st_mtime),
-            "test_mode": test_mode,
-        }
+        print(f"Downloading {name} from {url}...")
+        try:
+            gdown.download(url, str(zip_path), quiet=False, fuzzy=True)
+            print(f"[OK] Downloaded {name} to {zip_path}")
+            downloaded_files.append(zip_path)
+        except Exception as e:
+            print(f"[ERR] Failed to download {name}: {e}")
+            raise
 
-        with open(dataset_dir / "metadata.json", "w") as f:
-            json.dump(metadata, f, indent=2)
+    # Extract the zip files
+    import shutil
+    import tarfile
+    for zip_path in downloaded_files:
+        extract_dir = dataset_dir / zip_path.stem  # e.g., train1
+        if extract_dir.exists() and any(extract_dir.iterdir()):
+            print(f"Skipping extraction of {zip_path}, {extract_dir} already exists and not empty")
+            continue
 
-        return metadata
+        print(f"Extracting {zip_path} to {extract_dir}...")
+        try:
+            shutil.unpack_archive(str(zip_path), str(extract_dir))
+            print(f"[OK] Extracted {zip_path} to {extract_dir}")
+        except shutil.ReadError:
+            # Try uncompressed tar
+            try:
+                with tarfile.open(zip_path, 'r') as tar_ref:
+                    tar_ref.extractall(extract_dir)
+                print(f"[OK] Extracted {zip_path} (tar) to {extract_dir}")
+            except Exception as e2:
+                print(f"[ERR] Failed to extract {zip_path}: {e2}")
+                raise
+        except Exception as e:
+            print(f"[ERR] Failed to extract {zip_path}: {e}")
+            raise
 
-    except Exception as e:
-        print(f"[ERR] Failed to download FloorPlanCAD: {e}")
-        raise
+    print(f"[OK] Downloaded and extracted FloorPlanCAD to {dataset_dir}")
+
+    metadata = {
+        "name": "FloorPlanCAD",
+        "size": "15,663 CAD drawings",
+        "formats": ["SVG", "PNG", "COCO"],
+        "source": "https://floorplancad.github.io/",
+        "license": "CC BY-NC 4.0",
+        "download_date": str(Path(dataset_dir).stat().st_mtime),
+        "test_mode": test_mode,
+    }
+
+    with open(dataset_dir / "metadata.json", "w") as f:
+        json.dump(metadata, f, indent=2)
+
+    return metadata
 
 
 def download_cubicasa5k(output_dir: Path, test_mode: bool = False) -> Dict:
@@ -1129,12 +1164,15 @@ RASTER_EXT = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".gif"}
 VECTOR_EXT = {".svg", ".dxf", ".dwg", ".eps", ".ps"}
 
 
-def _prune_dataset_files(dataset_dir: Path, max_items: int = 10000) -> dict:
+def _prune_dataset_files(dataset_dir: Path, max_items: int = None) -> dict:
     """Move excess raster/vector files from dataset_dir into dataset_dir/_overflow.
 
     Returns a dict with stats: {'found':n, 'kept':k, 'moved':m, 'overflow_dir':Path}
     """
     from shutil import move
+
+    if max_items is None:
+        return {"found": 0, "kept": 0, "moved": 0, "overflow_dir": None}
 
     if not dataset_dir.exists():
         return {"found": 0, "kept": 0, "moved": 0, "overflow_dir": None}
@@ -1243,7 +1281,7 @@ def download_dataset(
                 except Exception:
                     meta_max = None
 
-            use_max = max_items if max_items is not None else (meta_max or 10000)
+            use_max = max_items if max_items is not None else (meta_max or None)
             dataset_dir = output_dir / "raw" / dataset_name
             try:
                 _prune_dataset_files(dataset_dir, max_items=use_max)
@@ -1290,8 +1328,8 @@ def main():
     parser.add_argument(
         "--max-items",
         type=int,
-        default=10000,
-        help="Maximum combined raster+vector items to keep by default (move excess to _overflow)",
+        default=None,
+        help="Maximum combined raster+vector items to keep by default (move excess to _overflow). Default: no limit",
     )
     parser.add_argument(
         "--no-prune",

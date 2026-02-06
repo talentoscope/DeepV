@@ -3,6 +3,7 @@
 import pickle
 from pathlib import Path
 from typing import Dict, Any
+from tqdm import tqdm
 
 from .base import Processor
 
@@ -32,7 +33,7 @@ class MSDProcessor(Processor):
             pickle_files = list(graph_out_dir.glob("*.pickle"))
             print(f"Found {len(pickle_files)} graph_out pickle files")
 
-            for pickle_file in pickle_files[:10] if dry_run else pickle_files:  # Limit for dry run
+            for pickle_file in tqdm(pickle_files[:10] if dry_run else pickle_files[:10000], desc="Processing MSD graphs"):  # Limit to 10,000
                 plan_id = pickle_file.stem  # e.g., "0", "1", etc.
 
                 try:

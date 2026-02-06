@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from typing import Dict, Any
+from tqdm import tqdm
 
 from .base import Processor
 
@@ -24,12 +25,16 @@ class SketchGraphsProcessor(Processor):
 
         svg_count = 0
         png_count = 0
+        total_processed = 0
+        total_limit = 10000
 
         # Look for .npy sequence files
         npy_files = list(input_dir.glob("*.npy"))
         print(f"Found {len(npy_files)} .npy sequence files")
 
-        for npy_file in npy_files[:1] if dry_run else npy_files:  # Limit for dry run
+        npy_files_to_process = npy_files[:1] if dry_run else npy_files
+
+        for npy_file in tqdm(npy_files_to_process, desc="Processing SketchGraphs files"):
             split_name = npy_file.stem  # e.g., "sg_t16_train", "sg_t16_validation", etc.
             print(f"Processing {split_name}...")
 
@@ -44,8 +49,8 @@ class SketchGraphsProcessor(Processor):
 
                 print(f"Loaded {len(sequences)} sequences from {split_name}")
 
-                # Process a subset of sequences (first 100 per file for dry run, more for full run)
-                max_sequences = 100 if dry_run else min(1000, len(sequences))
+                # Process sequences up to the total limit
+                max_sequences = 100 if dry_run else min(total_limit - total_processed, len(sequences))
 
                 for i in range(max_sequences):
                     sequence = sequences[i]
@@ -75,6 +80,8 @@ class SketchGraphsProcessor(Processor):
                     except Exception as e:
                         print(f"Error processing sequence {i}: {e}")
                         continue
+
+                total_processed += max_sequences
 
             except Exception as e:
                 print(f"Error processing {npy_file}: {e}")

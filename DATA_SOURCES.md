@@ -34,30 +34,12 @@ These datasets often include real-world variations like noise, distortions, or m
 
 - **FloorPlanCAD**  
   Size: 15,663 CAD drawings (expanded from ~10k).  
-  Formats: SVG vectors with PNG rasterizations; COCO annotations. Parquet (auto-converted).  
+  Formats: Original dataset: SVG vectors with PNG rasterizations and COCO annotations. Hugging Face version: PNG images with FiftyOne/COCO-style annotations (bounding boxes, segmentation masks). Parquet (auto-converted).  
   Features: 30+ categories (walls, symbols); panoptic spotting; residential/commercial/hospitals; 3D derivable. Supports object detection, instance/semantic segmentation. Privacy-protected (cropped, text removed).  
-  Access: [Hugging Face](https://huggingface.co/datasets/Voxel51/FloorPlanCAD); project site [floorplancad.github.io](https://floorplancad.github.io/).  
+  Access: [Hugging Face](https://huggingface.co/datasets/Voxel51/FloorPlanCAD) (FiftyOne format, PNG + annotations); project site [floorplancad.github.io](https://floorplancad.github.io/) (original SVGs via Google Drive).  
   License: CC BY-NC 4.0.  
-  Suitability: CAD vectorization benchmark; raster derivable. Preprocessing: Patch large drawings. Last updated: November 2025 (FiftyOne dataset).  
-  **Status**: ✅ Implemented in DeepV pipeline (2,998 PNG files processed).
-
-- **ArchCAD-400K** (UNSUITABLE for DeepV)  
-  Size: 413,062 chunks from 5,538 drawings (~26x larger than FloorPlanCAD); 40k samples on HF.  
-  Formats: SVG vectors (labeled/instances/RGB), raster aligned, JSON, Q&A, point clouds.  
-  Features: Multimodal; 30+ categories; diverse buildings/scales; panoptic (semantic/instance); vectorized annotation workflow. Each sample corresponds to a 14m × 14m area.  
-  Access: [Hugging Face](https://huggingface.co/datasets/jackluoluo/ArchCAD) (requires approval for non-commercial use); [GitHub](https://github.com/ArchiAI-LAB/ArchCAD); paper [arXiv:2503.22346](https://arxiv.org/abs/2503.22346).  
-  License: CC BY-NC 4.0.  
-  Suitability: Large-scale end-to-end vectorization; precise primitives. Preprocessing: Auto + human correction.  
-  Reason unsuitable: Requires manual approval for access on Hugging Face, not publicly downloadable without gatekeeping.
-
-- **ABC** (UNSUITABLE for DeepV)  
-  Size: 1M CAD models (~10k with vector projections/drawings).  
-  Formats: Parametric curves/surfaces (Step, Parasolid, Features YAML), OBJ meshes, PNG images; vector boundaries derivable.  
-  Features: Explicitly parametrized curves and surfaces; ground truth for differential quantities, patch segmentation, geometric features. For geometric deep learning.  
-  Access: [GitHub](https://github.com/deep-geometry/abc-dataset); [Website](https://deep-geometry.github.io/abc-dataset/); paper [arXiv:1812.06216](https://arxiv.org/pdf/1812.06216.pdf).  
-  License: Research (Onshape Terms for data).  
-  Suitability: Mechanical curves/lines; parametric CAD primitives. Preprocessing: Extract 2D projections from boundaries.  
-  Reason unsuitable: Download servers (NYU archive) are currently inaccessible, preventing automated acquisition.
+  Suitability: CAD vectorization benchmark; raster derivable from annotations. Preprocessing: Patch large drawings; parse annotations for vector primitives. Last updated: November 2025 (FiftyOne dataset).  
+  **Status**: ✅ Fully processed for DeepV vectorization training. Cleaned dataset available: 14,625 SVG vectors (black-on-white, text removed) in `data/vector/floorplancad/` and corresponding 1000x1000 PNG rasters in `data/raster/floorplancad/`. Raw data in `data/raw/floorplancad/`.
 
 - **ResPlan**  
   Size: 17,000 residential floorplans.  
@@ -261,6 +243,22 @@ These datasets lack vector geometric primitives or are otherwise unsuitable for 
   Access: [GitHub](https://github.com/ghadinehme/VideoCAD); [Harvard Dataverse](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/WX8PCK).  
   License: Open.  
   Suitability: **NOT SUITABLE** - Contains videos of CAD UI interactions and 3D CAD models for behavior cloning and CAD generation, not 2D raster images of technical drawings for vectorization.
+
+- **ArchCAD-400K** (UNSUITABLE for DeepV)  
+  Size: 413,062 chunks from 5,538 drawings (~26x larger than FloorPlanCAD); 40k samples on HF.  
+  Formats: SVG vectors (labeled/instances/RGB), raster aligned, JSON, Q&A, point clouds.  
+  Features: Multimodal; 30+ categories; diverse buildings/scales; panoptic (semantic/instance); vectorized annotation workflow. Each sample corresponds to a 14m × 14m area.  
+  Access: [Hugging Face](https://huggingface.co/datasets/jackluoluo/ArchCAD) (requires approval for non-commercial use); [GitHub](https://github.com/ArchiAI-LAB/ArchCAD); paper [arXiv:2503.22346](https://arxiv.org/abs/2503.22346).  
+  License: CC BY-NC 4.0.  
+  Suitability: **NOT SUITABLE** - Requires manual approval for access on Hugging Face, not publicly downloadable without gatekeeping.
+
+- **ABC** (UNSUITABLE for DeepV)  
+  Size: 1M CAD models (~10k with vector projections/drawings).  
+  Formats: Parametric curves/surfaces (Step, Parasolid, Features YAML), OBJ meshes, PNG images; vector boundaries derivable.  
+  Features: Explicitly parametrized curves and surfaces; ground truth for differential quantities, patch segmentation, geometric features. For geometric deep learning.  
+  Access: [GitHub](https://github.com/deep-geometry/abc-dataset); [Website](https://deep-geometry.github.io/abc-dataset/); paper [arXiv:1812.06216](https://arxiv.org/pdf/1812.06216.pdf).  
+  License: Research (Onshape Terms for data).  
+  Suitability: **NOT SUITABLE** - Download servers (NYU archive) are currently inaccessible, preventing automated acquisition.
 
 ### Synthetic/Processed Datasets
 

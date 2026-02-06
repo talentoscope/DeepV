@@ -3,6 +3,8 @@ import shutil
 from .base import Processor
 from typing import Dict
 import base64
+import random
+from tqdm import tqdm
 
 
 class FloorPlanCADProcessor(Processor):
@@ -82,23 +84,28 @@ class FloorPlanCADProcessor(Processor):
             else:
                 # Fallback to existing SVGs/PNGs if no Parquet or samples.json
                 svgs = list(raw_dir.rglob('*.svg'))
-                pngs = list(raw_dir.rglob('*.png'))
+                # Filter to only SVGs that have corresponding PNGs
+                svgs_with_png = [s for s in svgs if s.with_suffix('.png').exists()]
                 if dry_run:
                     return {
                         'dataset': 'floorplancad',
                         'svg_count': len(svgs),
-                        'png_count': len(pngs),
+                        'png_count': len(svgs_with_png),
                         'vec_dir': str(vec_dir),
                         'ras_dir': str(ras_dir),
                         'dry_run': True,
                     }
                 vec_dir.mkdir(parents=True, exist_ok=True)
                 ras_dir.mkdir(parents=True, exist_ok=True)
-                for s in svgs:
+                # Limit to 10,000 random samples with PNGs
+                random.shuffle(svgs_with_png)
+                selected_svgs = svgs_with_png[:10000]  # Limit to 10,000
+                for s in tqdm(selected_svgs, desc="Copying SVGs and PNGs"):
                     shutil.copy2(s, vec_dir / s.name)
-                for p in pngs:
-                    shutil.copy2(p, ras_dir / p.name)
-                return {'dataset': 'floorplancad', 'svg_count': len(svgs), 'png_count': len(pngs)}
+                    # Copy corresponding PNG
+                    png_path = s.with_suffix('.png')
+                    shutil.copy2(png_path, ras_dir / png_path.name)
+                return {'dataset': 'floorplancad', 'selected_samples': len(selected_svgs)}
 
         # Load dataset
         dataset = load_dataset("parquet", data_files=[str(p) for p in parquet_files])

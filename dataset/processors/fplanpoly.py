@@ -2,6 +2,7 @@ from pathlib import Path
 import shutil
 from .base import Processor
 from typing import Dict
+from tqdm import tqdm
 
 
 class FPLANPOLYProcessor(Processor):
@@ -30,6 +31,8 @@ class FPLANPOLYProcessor(Processor):
         if symbols_dir.exists():
             dxf_files.extend(list(symbols_dir.glob('*.dxf')))
 
+        dxf_files = dxf_files[:10000]  # Limit to 10,000
+
         if dry_run:
             return {
                 'dataset': 'fplanpoly',
@@ -42,7 +45,7 @@ class FPLANPOLYProcessor(Processor):
 
         dxf_copied = 0
 
-        for dxf_file in dxf_files:
+        for dxf_file in tqdm(dxf_files, desc="Copying FPLANPOLY DXFs"):
             # Use the filename as-is (they're already well-named)
             dest_path = vec_dir / dxf_file.name
 

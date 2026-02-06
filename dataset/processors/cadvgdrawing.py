@@ -2,6 +2,7 @@ from pathlib import Path
 import shutil
 from .base import Processor
 from typing import Dict
+from tqdm import tqdm
 
 
 class CADVGDrawingProcessor(Processor):
@@ -25,7 +26,7 @@ class CADVGDrawingProcessor(Processor):
         # Filter out any non-SVG files and ensure we're in the svg_raw directory
         svg_files = [
             f for f in svg_files if f.suffix.lower() == ".svg" and "svg_raw" in str(f)
-        ]
+        ][:10000]  # Limit to 10,000
 
         if dry_run:
             return {
@@ -41,7 +42,7 @@ class CADVGDrawingProcessor(Processor):
 
         svg_copied = 0
 
-        for svg_file in svg_files:
+        for svg_file in tqdm(svg_files, desc="Copying CADVGDrawing SVGs"):
             # Create a flattened filename from the path
             # e.g., svg_raw/0000/00000007/00000007_Front.svg -> 00000007_Front.svg
             parts = svg_file.parts

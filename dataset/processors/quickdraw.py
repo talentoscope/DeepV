@@ -43,7 +43,7 @@ class QuickDrawProcessor(Processor):
         print(f"Found {len(ndjson_files)} NDJSON files and {len(parquet_files)} Parquet files")
 
         # Process NDJSON files (simplified format)
-        max_drawings = 100 if dry_run else 1000  # Reasonable limit for actual processing
+        max_drawings = 100 if dry_run else 10000  # Limit to 10,000 drawings
         drawings_processed = 0
 
         for ndjson_file in ndjson_files:

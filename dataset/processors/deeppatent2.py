@@ -26,6 +26,11 @@ class DeepPatent2Processor(Processor):
         # Filter out metadata.json files
         jsons = [j for j in jsons if j.name != "metadata.json"]
 
+        # Limit to 10,000 samples
+        max_samples = 10000
+        pngs = pngs[:max_samples]
+        jsons = jsons[:max_samples]
+
         if dry_run:
             return {
                 "dataset": "deeppatent2",

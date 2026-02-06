@@ -38,7 +38,7 @@ class ResPlanProcessor(Processor):
 
                 print(f"Loaded {len(data)} floorplans from pickle file")
 
-                for i, plan in enumerate(data[:10] if dry_run else data):  # Limit for dry run
+                for i, plan in enumerate(data[:10] if dry_run else data[:10000]):  # Limit to 10,000
                     plan_id = f"plan_{i:05d}"
 
                     # Create SVG from geometry data

@@ -50,7 +50,7 @@ class CubiCasa5KProcessor(Processor):
         print(f"Found {len(floorplan_dirs)} floorplan directories")
 
         # Process floorplans (limit for dry run)
-        max_floorplans = 5 if dry_run else float('inf')
+        max_floorplans = 5 if dry_run else 10000
 
         for i, floorplan_dir in enumerate(floorplan_dirs):
             if i >= max_floorplans:
