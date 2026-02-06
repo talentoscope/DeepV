@@ -22,9 +22,9 @@ Short, actionable guidance to get an AI coding agent productive quickly in this 
 
 ```bash
 python run_pipeline.py \
-  --model_path /logs/models/vectorization/lines/model_lines.weights \
-  --json_path /code/vectorization/models/specs/resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json \
-  --data_dir /data/synthetic/ \
+  --model_path ./logs/models/vectorization/lines/model_lines.weights \
+  --json_path ./vectorization/models/specs/resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json \
+  --data_dir ./data/synthetic/ \
   --primitive_type line \
   --model_output_count 10 \
   --overlap 0
@@ -35,15 +35,15 @@ python run_pipeline.py \
 ```bash
 python run_pipeline_hydra.py \
   pipeline.primitive_type=line \
-  model.path=/logs/models/vectorization/lines/model_lines.weights \
-  data.data_dir=/data/synthetic/
+  model.path=./logs/models/vectorization/lines/model_lines.weights \
+  data.data_dir=./data/synthetic/
 ```
 
 - Train cleaning UNet:
 
 ```bash
 python cleaning/scripts/main_cleaning.py \
-  --model UNET --datadir /data/synth/ --valdatadir /data/val/ \
+  --model UNET --datadir ./data/synth/ --valdatadir ./data/val/ \
   --n_epochs 10 --batch_size 8 --name exp1
 ```
 
@@ -56,31 +56,12 @@ python -m pip install -r requirements-dev.txt
 .\scripts\run_tests_local.ps1
 ```
 
-- Docker on Windows/WSL (example):
-
-```powershell
-# Build image
-docker build -t deepv:latest .
-
-# Run container with Windows paths
-docker run --rm -it --shm-size 128G -p 4045:4045 `
-  --mount type=bind,source="C:/path/to/DeepV",target=/code `
-  --mount type=bind,source="C:/path/to/data",target=/data `
-  --mount type=bind,source="C:/path/to/logs",target=/logs `
-  --name deepv-container deepv:latest /bin/bash
-```
-
-Inside container:
-```bash
-. /opt/.venv/vect-env/bin/activate/
-```
-
 ## Project-specific conventions & gotchas
-- Many scripts use `argparse` with defaults assuming repo mounted at `/code`, datasets at `/data`, logs at `/logs`. Prefer overriding flags rather than editing defaults.
+- Many scripts use `argparse` with defaults assuming local paths. Prefer overriding flags rather than editing defaults.
 - Patch & padding: patches are square (commonly 64px) and images are padded to multiples of 32 (see `cleaning/scripts/main_cleaning.py` and `run_pipeline.py` read/padding logic).
 - `util_files/os.py` previously shadowed stdlib `os`. Use [util_files/file_utils.py](util_files/file_utils.py) imports: `from util_files import file_utils as fu`.
 - When renaming utilities, update imports from `from util_files.os import ...` to `from util_files.file_utils import ...`.
-- Checkpoints & logging: defaults use `/logs/...` and `tensorboardx` (SummaryWriter). Always set `--output_dir` and TB dir for reproducibility.
+- Checkpoints & logging: defaults use `logs/` and `tensorboardx` (SummaryWriter). Always set `--output_dir` and TB dir for reproducibility.
 - Model specs: JSON configs under `vectorization/models/specs/` define network architectures (e.g., ResNet + Transformer decoder).
 - Primitive types: Use "line" or "curve"; curves include Béziers, arcs, splines.
 - Rendering: Uses `cairo`/`pycairo` for vector-to-raster; ensure system cairo installed.

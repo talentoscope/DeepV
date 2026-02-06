@@ -21,11 +21,11 @@ This branch contains a comprehensive set of developer-focused improvements to en
 ### Documentation & Developer Tools
 - **Environment validation**: Added `scripts/validate_env.py` to verify Python, CUDA, and key package availability
 - **Dependency management**: Added `requirements-updated.txt` with suggested package upgrades and compatibility notes
-- **Documentation updates**: Enhanced README.md and copilot instructions with Windows/WSL Docker guidance
+- **Documentation updates**: Enhanced README.md and copilot instructions with Windows guidance
 
 ### Configuration & Setup
 - **Hydra configs**: Improved configuration management for hyperparameters
-- **Docker support**: Enhanced containerization for reproducible development environments
+- **Environment support**: Enhanced setup for reproducible development environments
 
 ## Why These Changes Matter
 
@@ -95,7 +95,7 @@ python run_pipeline.py --test_mode
 - Consider adding `mypy` to CI for strict type checking
 - Evaluate incremental refactoring of long functions in `refinement/` module
 - Add performance benchmarking to CI
-- Consider adding Docker-based testing for multiple Python versions
+- Consider adding CI testing for multiple Python versions
 
 ### Testing Recommendations
 - Test on both CPU and GPU environments

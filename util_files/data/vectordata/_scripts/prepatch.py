@@ -3,7 +3,7 @@ import sys
 import numpy as np
 
 # sys.path.append('/home/oyvoinov/work/3ddl/vectorization/FloorplanVectorization')
-sys.path.append("/code")
+sys.path.append("../../../../")
 from util_files.data.vectordata.utils.prepatching import make_patches
 
 

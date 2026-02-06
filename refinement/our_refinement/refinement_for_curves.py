@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from tqdm import trange
 
-sys.path.append("/code")
+sys.path.append(".")
 from util_files.evaluation_utils import vector_image_from_patches
 from util_files.optimization.optimizer.adam import Adam
 from util_files.optimization.optimizer.logging import Logger

@@ -30,7 +30,7 @@ Hydra provides structured configuration management with:
 
 ```
 config/
-├── config.yaml              # Main configuration (Docker/production defaults)
+├── config.yaml              # Main configuration
 ├── local.yaml               # Local development overrides
 ├── pipeline/
 │   ├── default.yaml         # Pipeline parameters
@@ -47,7 +47,7 @@ config/
 ├── refinement/
 │   └── default.yaml         # Refinement optimization settings
 └── paths/
-    ├── default.yaml         # Docker/container paths
+    ├── default.yaml         # Path configurations
     └── local.yaml           # Local development paths
 ```
 
@@ -139,7 +139,7 @@ python run_pipeline_hydra.py --multirun \
 ## Configuration Files
 
 ### Main Configuration (`config.yaml`)
-Primary configuration with production/Docker defaults:
+Primary configuration with production defaults:
 
 ```yaml
 # Example structure
@@ -196,7 +196,7 @@ json_path: /code/vectorization/models/specs/resnet18_blocks3_bn_256__c2h__trans_
 - **Inheritance**: Child configs inherit from parents
 
 ### Environment Handling
-- **Path management**: Different paths for local vs Docker
+- **Path management**: Different paths for local vs production
 - **Device configuration**: GPU/CPU settings per environment
 - **Resource allocation**: Memory and compute settings
 
@@ -295,7 +295,7 @@ python run_pipeline_hydra.py pipeline.primitive_type=curve
 
 **Path resolution issues**:
 - Ensure `paths/local.yaml` exists for local development
-- Check Docker volume mounts for containerized runs
+- Check path mounts for production runs
 - Verify absolute paths in production configs
 
 ### Debugging
@@ -318,8 +318,8 @@ print(cfg.model)
 - Check relative paths in `paths/local.yaml`
 - Verify local GPU availability
 
-**Docker/production**:
-- Default config uses container paths
+**Production**:
+- Default config uses production paths
 - Check volume mounts
 - Verify GPU passthrough
 

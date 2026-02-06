@@ -132,3 +132,6 @@ dmypy.json
 
 # Dataset files (large files, should not be committed)
 data/
+
+# Logs directory
+logs/

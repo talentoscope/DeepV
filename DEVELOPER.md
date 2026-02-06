@@ -31,7 +31,6 @@ python -m pip install -r requirements-dev.txt
 - The repository targets local development; heavy ML packages (PyTorch, torchvision) are optional for quick iteration
 - Tests skip heavy ML components when packages aren't available
 - For full experiments, install PyTorch matching your CUDA configuration from [pytorch.org](https://pytorch.org/get-started/locally/)
-- Use provided `docker/Dockerfile` for reproducible environments
 
 ## Development Environment
 

@@ -250,7 +250,7 @@ def parse_args():
     parser.add_argument("-c", "--curve_count", type=int, default=10, help="curve count in patch [default: 10]")
     parser.add_argument("--primitive_type", type=str, default="line", help="line or curve")
     parser.add_argument(
-        "--output_dir", type=str, default="/logs/outputs/vectorization/lines/", help="dir to folder for output"
+        "--output_dir", type=str, default="logs/outputs/vectorization/lines/", help="dir to folder for output"
     )
     parser.add_argument("--diff_render_it", type=int, default=400, help="iteration count")
     parser.add_argument(
@@ -275,13 +275,13 @@ def parse_args():
     parser.add_argument(
         "--model_path",
         type=str,
-        default="/logs/models/vectorization/lines/model_lines.weights",
+        default="logs/models/vectorization/lines/model_lines.weights",
         help="Path to trained model",
     )
     parser.add_argument(
         "--json_path",
         type=str,
-        default=("/code/vectorization/models/specs/"
+        default=("vectorization/models/specs/"
                  "resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json"),
         help="Path to JSON model specification file",
     )

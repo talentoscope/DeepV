@@ -419,7 +419,7 @@ def parse_args():
         "and --tboard-dir are formed automatically [default: False].",
     )
     parser.add_argument(
-        "--log-dir-prefix", dest="logs_dir", default="/logs", help="path to root of logging location [default: /logs]."
+        "--log-dir-prefix", dest="logs_dir", default="logs", help="path to root of logging location [default: logs]."
     )
     parser.add_argument(
         "-m", "--init-model-file", dest="init_model_filename", help="Path to initializer model file [default: none]."

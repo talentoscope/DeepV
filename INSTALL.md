@@ -9,13 +9,12 @@
 - [Development Setup](#development-setup)
 - [Running Tests](#running-tests)
 - [Running the Pipeline](#running-the-pipeline)
-- [Docker Installation](#docker-installation)
 - [Troubleshooting](#troubleshooting)
 
 ## Prerequisites
 
 - **Python**: 3.10 or later
-- **Operating System**: Windows/Linux/macOS (WSL2 recommended on Windows)
+- **Operating System**: Windows/Linux/macOS
 - **Disk Space**: ~2GB for dependencies and models
 - **RAM**: 8GB+ recommended for training, 4GB minimum
 
@@ -147,23 +146,6 @@ python run_web_ui_demo.py --image sample.png
 ```
 
 See `DEVELOPER.md` for detailed usage examples.
-
-## Docker Installation
-
-For isolated environments:
-
-```bash
-# Build Docker image
-docker build -t deepv:latest .
-
-# Run container
-docker run --rm -it --shm-size 128G \
-  --mount type=bind,source="$(pwd)",target=/code \
-  --name deepv-container deepv:latest /bin/bash
-
-# Activate environment inside container
-. /opt/.venv/vect-env/bin/activate/
-```
 
 ## Troubleshooting
 

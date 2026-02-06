@@ -10,7 +10,7 @@ import numpy as np
 import torch
 
 # Add project root to path
-sys.path.insert(0, '/code')
+sys.path.insert(0, '.')
 
 
 class UnifiedPipeline:
