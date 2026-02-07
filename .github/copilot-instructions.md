@@ -5,14 +5,14 @@ Short, actionable guidance to get an AI coding agent productive quickly in this 
 ## Big picture
 - **Core mission**: Convert degraded raster technical drawings (scanned books, patents, faded photocopies, architectural plans) into clean, editable CAD-quality vector representations through intelligent reconstruction—not just pixel tracing, but idealizing geometry by enforcing constraints, removing noise, and inferring design intent.
 - **Pipeline modules**: **cleaning → vectorization → refinement → merging**. Flow: raster image → cleaning (denoise/pad/patchify) → vectorization (predict primitives per patch) → refinement (differentiable optimization) → merging (consolidate primitives, export DXF/SVG).
-- **Current phase**: Phase 4 (Production-Ready & Robustness) ~70% complete. Phase 3 enhancements (CAD export, Gradio UI, Bézier splatting) fully implemented. Focus now: documentation, refactoring, testing, and **closing the 13x performance gap between synthetic and real data**.
+- **Current phase**: Phase 4 (Production-Ready & Robustness) ~70% complete. Phase 3 enhancements (CAD export, Gradio UI, Bézier splatting) fully implemented. Focus now: documentation, refactoring, testing, and **improving FloorPlanCAD performance through architecture changes**.
 - Implemented in PyTorch; datasets & preprocessing live in `dataset/`; demos and experiments in `notebooks/`.
 - Supports extended primitives: lines, quadratic/cubic Béziers, arcs, splines with variable counts (up to 20 per patch).
 - Configuration managed via Hydra (see `config/`); supports both argparse (legacy) and Hydra configs.
 - Unified pipeline interface in `pipeline_unified.py` consolidates line/curve processing.
 
 ## Critical context (READ FIRST)
-**MAJOR PERFORMANCE GAP**: Synthetic data performs well (IoU: 0.927, Overall: 0.603/1.000), but **real FloorPlanCAD data is 13x worse** (IoU: 0.010, Overall: 0.043/1.000). This is the #1 priority issue. Real data fails at geometric accuracy, visual quality, and CAD compliance. See [PLAN.md](PLAN.md) for baseline metrics and [TODO.md](TODO.md) for improvement strategies.
+**MAJOR PERFORMANCE ISSUE**: FloorPlanCAD dataset shows poor performance (IoU: 0.010, Overall: 0.043/1.000) with high over-segmentation (~5120 primitives per image). This is the #1 priority issue. Focus on architecture improvements and training optimization. See [PLAN.md](PLAN.md) for baseline metrics and [TODO.md](TODO.md) for improvement strategies.
 
 **Recent wins** (celebrate these!):
 - 90% speedup in greedy merging algorithm (53s → 5s)
@@ -39,7 +39,7 @@ Short, actionable guidance to get an AI coding agent productive quickly in this 
 python run_pipeline.py \
   --model_path ./logs/models/vectorization/lines/model_lines.weights \
   --json_path ./vectorization/models/specs/resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json \
-  --data_dir ./data/synthetic/ \
+  --data_dir ./data/raster/floorplancad/ \
   --primitive_type line \
   --model_output_count 10 \
   --overlap 0
@@ -51,7 +51,7 @@ python run_pipeline.py \
 python run_pipeline_hydra.py \
   pipeline.primitive_type=line \
   model.path=./logs/models/vectorization/lines/model_lines.weights \
-  data.data_dir=./data/synthetic/
+  data.data_dir=./data/raster/floorplancad/
 ```
 
 - Train cleaning UNet:
@@ -80,7 +80,7 @@ python -m pip install -r requirements-dev.txt
 - Model specs: JSON configs under `vectorization/models/specs/` define network architectures (e.g., ResNet + Transformer decoder).
 - Primitive types: Use "line" or "curve"; curves include Béziers, arcs, splines.
 - Rendering: Uses `cairo`/`pycairo` for vector-to-raster; ensure system cairo installed.
-- **Data quality**: Synthetic data (NES) works well; real data (FloorPlanCAD) fails badly. Domain shift is the key research problem.
+- **Data quality**: FloorPlanCAD dataset works but shows poor performance (IoU: 0.010). Over-segmentation and geometric accuracy are the key improvement areas.
 - **Magic numbers**: Refinement tolerances, merging thresholds, and patch overlap are hardcoded in many places—check carefully before modifying.
 - **Tensor shapes**: Refinement has broadcasting issues—always validate tensor dimensions when modifying batch processing.
 - **Performance**: Rendering is the bottleneck (0.04-0.05s per iteration); Bézier splatting is optimized but Cairo-based operations are slow.
@@ -94,7 +94,6 @@ python -m pip install -r requirements-dev.txt
 
 ## Datasets & data processing
 - **FloorPlanCAD**: 14,625 real architectural drawings (SVG vectors + PNG rasters) in `data/vector/floorplancad/` and `data/raster/floorplancad/`. Primary benchmark dataset. **WARNING**: Model performs very poorly on this (IoU: 0.010).
-- **Synthetic data**: NES test images and generated synthetic drawings. Model performs well here (IoU: 0.927).
 - **Data pipeline**: `dataset/processors/` contains converters for various formats (CubiCasa5K, SketchGraphs, ResPlan, DeepPatent2, etc.).
 - **Ground truth**: Use `scripts/extract_floorplancad_ground_truth.py` to parse SVG ground truth for comparison.
 - **Processing**: Images are padded to multiples of 32, split into 64×64 patches with configurable overlap (default: 0).
@@ -113,7 +112,7 @@ python -m pip install -r requirements-dev.txt
 - **Refinement module** (`refinement/our_refinement/`): Long functions (400+ lines), tensor broadcasting issues, hardcoded tolerances. Recently refactored but still needs work.
 - **Merging module** (`merging/`): Separate line/curve paths with duplicated logic; magic threshold values; spatial indexing can be improved.
 - **Hardcoded paths and magic numbers**: Batch sizes, primitive counts, merging tolerances, refinement step sizes scattered throughout—make config-driven when changing behavior.
-- **Real data performance**: Model trained primarily on synthetic data; domain adaptation is the key open problem for production use.
+- **FloorPlanCAD performance**: Model needs training on FloorPlanCAD data; over-segmentation and geometric accuracy are the key improvement areas.
 - **Error handling**: Many functions lack proper exception handling; tensor shape mismatches can cause obscure errors.
 - **Type hints**: Only ~20-30% coverage in critical areas; gradual typing improvements ongoing.
 - **Documentation**: ~70% of functions missing docstrings, especially in refinement/merging modules.
@@ -131,8 +130,8 @@ python -m pip install -r requirements-dev.txt
 - For new features: check Hydra configs first, then argparse fallbacks. Use unified pipeline for line/curve agnostic code.
 
 ## Improving real-world performance (key research directions)
-The synthetic→real data gap is the main open problem. Consider these approaches:
-- **Domain adaptation**: Fine-tune on small real dataset; use adversarial training; synthetic data augmentation (scanning artifacts, noise, blur).
+The FloorPlanCAD performance gap is the main open problem. Consider these approaches:
+- **Architecture improvements**: Switch to Non-Autoregressive Transformer to reduce over-segmentation; train directly on FloorPlanCAD data.
 - **Geometric constraints**: Enforce parallelism, perpendicularity, equal spacing during refinement; add architectural priors (walls meet at right angles, rooms are rectangular).
 - **Multi-scale processing**: Hierarchical vectorization for complex drawings; coarse-to-fine refinement; context-aware primitive detection.
 - **Better loss functions**: Perceptual losses (LPIPS); geometric losses (parallelism, symmetry); CAD-specific losses (angle snapping, grid alignment).

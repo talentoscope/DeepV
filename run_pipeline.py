@@ -136,7 +136,16 @@ def vector_estimation(patches_rgb, model, device, it, options):
             # Check if model supports variable length output
             if hasattr(model.hidden, 'max_primitives'):
                 # Variable length model - no need for model_output_count
-                batch_output = model(patch_images[it_start:it_batches].to(device).float()).detach().cpu().numpy()
+                model_output = model(patch_images[it_start:it_batches].to(device).float())
+                
+                # Handle different model output formats
+                if isinstance(model_output, tuple):
+                    # Non-autoregressive model returns (predictions, counts)
+                    predictions, counts = model_output
+                    batch_output = predictions.detach().cpu().numpy()
+                else:
+                    # Autoregressive model returns predictions only
+                    batch_output = model_output.detach().cpu().numpy()
             else:
                 # Fixed length model - use model_output_count
                 batch_output = model(

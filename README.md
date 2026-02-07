@@ -62,10 +62,9 @@ Many valuable technical drawings exist only in raster form: scanned pages from o
 **Development Phase**: Phase 4 (Production-Ready & Robustness) - ~70% complete
 
 **Performance Overview**:
-- ✅ **Synthetic data**: Strong performance (IoU: 0.927, Dice: 0.962) with fast processing
-- ⚠️ **Real-world data**: Significant performance gap (IoU: 0.010) - active research priority
+- ✅ **FloorPlanCAD Dataset**: Current baseline (IoU: 0.010, Dice: 0.020) with room for improvement
 - ⚡ **Speed**: 70% overall pipeline speedup achieved (77s → 23s per image)
-- 🎯 **Focus**: Closing the synthetic→real performance gap through domain adaptation and geometric constraints
+- 🎯 **Focus**: Improving FloorPlanCAD performance through architecture changes and training
 
 See [PLAN.md](PLAN.md) for detailed metrics and improvement roadmap.
 
@@ -148,7 +147,7 @@ Open your browser to `http://localhost:7860` and upload a technical drawing for 
 python run_pipeline.py \
   --model_path ./logs/models/vectorization/lines/model_lines.weights \
   --json_path ./vectorization/models/specs/resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json \
-  --data_dir ./data/synthetic/ \
+  --data_dir ./data/raster/floorplancad/ \
   --primitive_type line \
   --model_output_count 10 \
   --overlap 0
@@ -173,11 +172,11 @@ DeepV includes comprehensive benchmarking against state-of-the-art baselines:
 ### Quick Benchmark
 
 ```bash
-# Evaluate on synthetic dataset
+# Evaluate on FloorPlanCAD dataset
 python scripts/benchmark_pipeline.py \
   --data-root /path/to/datasets \
   --deepv-model-path /path/to/model \
-  --datasets synthetic
+  --datasets floorplancad
 
 # Compare against baselines
 python scripts/benchmark_pipeline.py \
@@ -329,7 +328,7 @@ See `requirements.txt` for complete list.
 
 ### Current Limitations
 
-1. **Real-world Performance Gap**: Model performs significantly better on synthetic data than real scanned drawings. Domain adaptation is an active research priority.
+1. **FloorPlanCAD Performance**: Model shows poor performance on FloorPlanCAD dataset (IoU: 0.010). Architecture improvements and training are active priorities.
 2. **Degradation Handling**: Heavy noise, severe skew, or extreme blur may require preprocessing or cleaning module improvements.
 3. **Complex Layouts**: Very dense or overlapping primitives may cause merging issues.
 4. **Color Drawings**: Current implementation converts to grayscale; color information is not preserved.

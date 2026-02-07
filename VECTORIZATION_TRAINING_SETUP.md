@@ -1,17 +1,19 @@
-# Vectorization Training Setup Checklist
+# Vectorization Training Setup Checklist (ARCHIVED)
 
-This document outlines the steps required to implement proper vectorization training by replacing placeholder targets with real SVG-parsed vector primitives.
+*This document outlines the historical steps taken to implement proper vectorization training by replacing placeholder targets with real SVG-parsed vector primitives. The infrastructure is now fully implemented and working.*
 
-## 🎉 MAJOR DISCOVERY: Infrastructure Already Exists!
+## 🎉 STATUS: COMPLETED - Infrastructure Fully Implemented
 
-**After codebase exploration, it was discovered that the SVG parsing and primitive extraction infrastructure is already fully implemented and working:**
+**As of February 2026, the SVG parsing and primitive extraction infrastructure is fully implemented and integrated:**
 
-- ✅ **Dataset Classes**: `util_files/data/vectordata/datasets.py` has SVG dataset infrastructure
+- ✅ **Dataset Classes**: `util_files/data/vectordata/datasets.py` has working SVG dataset infrastructure
 - ✅ **Export Functions**: `cad/export.py` can export primitives to SVG/DXF formats
+- ✅ **Training Integration**: FloorPlanCAD training script uses real SVG parsing instead of placeholder targets
+- ✅ **Model Training**: Vectorization models can be trained on FloorPlanCAD data with real ground truth
 
-**The training script has its own `FloorPlanCADDataset` class that needs to be modified to use the existing SVG parsing infrastructure.**
+**Current Focus**: Architecture improvements (Non-Autoregressive Transformer) to address over-segmentation issues, not training setup.
 
-**The main remaining task is integrating the existing SVG parsing functions into the `FloorPlanCADDataset.__getitem__` method instead of using placeholder `torch.zeros()` targets.**
+---
 
 ---
 

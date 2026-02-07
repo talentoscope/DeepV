@@ -2,35 +2,36 @@
 
 *Updated February 2026 - Comprehensive development roadmap for DeepV vectorization framework*
 
-## 🔴 CRITICAL PRIORITY: Synthetic→Real Performance Gap
+## 🔴 CRITICAL PRIORITY: FloorPlanCAD Performance Improvement
 
-**THE BLOCKING ISSUE**: DeepV performs 13x worse on real data than synthetic data. This is the #1 priority that must be addressed before other features.
+**THE BLOCKING ISSUE**: DeepV performs very poorly on FloorPlanCAD (the primary available dataset). This is the #1 priority that must be addressed before other features.
 
 | Dataset | IoU | Dice | SSIM | Overall Score |
 |---------|-----|------|------|---------------|
-| **NES Synthetic** (good) | 0.927 | 0.962 | 0.135 | 0.603/1.0 |
-| **FloorPlanCAD Real** (bad) | 0.010 | 0.020 | 0.006 | 0.043/1.0 |
-| **Performance Gap** | **92x worse** | **48x worse** | **23x worse** | **14x worse** |
+| **FloorPlanCAD** | 0.010 | 0.020 | 0.006 | 0.043/1.0 |
 
-**Root Cause**: Model trained primarily on synthetic data; lacks robustness to real-world scanning artifacts, degradation, and domain shift.
+**Root Cause**: Model was trained on synthetic data (not currently available); lacks robustness to real-world FloorPlanCAD scanning artifacts, degradation, and architectural domain specifics.
 
-**Impact**: Pipeline is NOT production-ready for real scanned drawings, patents, or blueprints.
+**Impact**: Pipeline is NOT production-ready for real scanned floor plans, patents, or blueprints.
 
 **Action Items** (see [PLAN.md](PLAN.md) for details):
-- [ ] **Domain Adaptation**: Fine-tune on real FloorPlanCAD subset with progressive unfreezing
-- [ ] **Data Augmentation**: Add realistic scanning artifacts, blur, noise, fading to synthetic training data
+- [ ] **Architecture Improvement**: Implement Non-Autoregressive Transformer for reduced over-segmentation (HIGH PRIORITY - Start Here)
+- [ ] **Training on FloorPlanCAD**: Train/fine-tune model directly on FloorPlanCAD data with domain-specific augmentations
 - [ ] **Geometric Regularization**: Enforce parallelism, perpendicularity, angle snapping during refinement
-- [ ] **Architectural Priors**: Add grid alignment, symmetry detection, right-angle constraints for floor plans
+- [ ] **Data Augmentation**: Add realistic scanning artifacts, blur, noise, fading to FloorPlanCAD training data
 - [ ] **Loss Function Improvements**: Add perceptual loss (LPIPS), geometric losses, CAD-specific penalties
-- [ ] **Adversarial Training**: Domain adaptation between synthetic and real distributions if resources permit
 
 **Success Criteria**:
-- FloorPlanCAD IoU improves from 0.010 → 0.5+ (minimum 50x improvement)
-- CAD angle compliance improves from 10.4% → 70%+
-- SSIM improves from 0.006 → 0.5+
-- Maintain synthetic data performance (IoU 0.927)
+- **Phase 1 (Architecture)**: Non-autoregressive decoder implemented and trains successfully on FloorPlanCAD data
+- **Phase 2 (Performance)**: Primitive count reduces by 20-40% (from ~5120 to ~3000-4000 avg) while maintaining IoU ≥0.010
+- **Phase 3 (Quality)**: FloorPlanCAD IoU improves from 0.010 → 0.5+ (minimum 50x improvement), CAD angle compliance improves from 10.4% → 70%+, SSIM improves from 0.006 → 0.5+
 
 **DO NOT PROCEED** with advanced features, optimizations, or deployment until this issue is resolved.
+
+**Implementation Timeline** (6-8 days total):
+- **Days 1-2**: Architecture design and loss function updates ✅ COMPLETED
+- **Days 3-5**: Training setup and baseline training on FloorPlanCAD
+- **Days 6-8**: Integration testing and performance validation
 
 ---
 
@@ -125,27 +126,32 @@
 - [ ] **Multi-Scale Evaluation**: Hierarchical quality assessment across different scales
 
 #### Baseline Establishment & Research
-- [x] **NES Test Image Baseline**: Complete comprehensive analysis (IoU: 0.927, SSIM: 0.135, CAD compliance: 11.8%, Overall: 0.603/1.000) ✅
+- [x] **FloorPlanCAD Batch Analysis**: Complete comprehensive analysis on 10 random images (IoU: 0.010, SSIM: 0.006, CAD compliance: 10.4%, Overall: 0.043/1.000) ✅
 - [x] **Analysis Report Generation**: JSON report saved to `logs/outputs/single_test/comprehensive_analysis.json` ✅
 - [ ] Analyze FloorPlanCAD validation set for comprehensive baseline metrics
 - [ ] Research recent vectorization literature for improvement strategies
 - [ ] Identify specific error patterns (over-segmentation, geometric distortions, missing primitives)
+- [ ] **Implement Non-Autoregressive Transformer Architecture**: Switch vectorization decoder to parallel prediction model (OmniSVG/StarVector inspired) to reduce over-segmentation. Target 20-40% primitive count reduction while maintaining IoU. Update [vectorization/modules/transformer.py](vectorization/modules/transformer.py), model specs, and loss functions. Train baseline on FloorPlanCAD training data (20 epochs, LR 1e-4), then fine-tune on validation set.
+  - [x] **Architecture Design (1-2 days)**: Analyze current autoregressive decoder in [vectorization/modules/transformer.py](vectorization/modules/transformer.py), design parallel prediction head with primitive count estimator, update model specs in [vectorization/models/specs/](vectorization/models/specs/)
+  - [x] **Loss Function Updates (1 day)**: Modify [util_files/loss_functions/supervised.py](util_files/loss_functions/supervised.py) to handle parallel predictions, add count prediction loss component, ensure backward compatibility
+  - [ ] **Training Setup (2-3 days)**: Create FloorPlanCAD training script using existing data loaders, set up 20-epoch baseline training (LR 1e-4) on FloorPlanCAD train split, implement validation monitoring for primitive count reduction
+  - [ ] **Integration & Testing (2 days)**: Update pipeline integration in [pipeline_unified.py](pipeline_unified.py), add unit tests for new decoder components, validate primitive count reduction (target: 3000-4000 primitives vs current 5120)
 
-### Current Performance Baseline (NES Test Image - February 2025)
-**Geometric Accuracy**: Excellent (IoU: 0.927, Dice: 0.962, Chamfer: 6.59px)  
-**Visual Quality**: Poor (SSIM: 0.135, MSE: 4259.22, MAE: 19.40)  
-**CAD Compliance**: Very low (11.8% angle compliance, only 40/339 primitives)  
-**Structural Preservation**: Mixed (339 primitives, high parallelism 99.8%, axis-aligned: 5.9%)  
-**Error Patterns**: Low over-segmentation (10th percentile), minimal connectivity (0.1%)  
-**Overall Score**: 0.603/1.000 (needs significant improvement in visual quality and CAD compliance)
+### Current Performance Baseline (FloorPlanCAD - February 2026)
+**Geometric Accuracy**: Very poor (IoU: 0.010, Dice: 0.020, Chamfer: 36.76px)  
+**Visual Quality**: Extremely poor (SSIM: 0.006, MSE: 32725, MAE: 140)  
+**CAD Compliance**: Very low (10.4% angle compliance, only 104/5120 primitives)  
+**Structural Preservation**: Poor (5120 primitives, low parallelism 14.4%, axis-aligned: 1.5%)  
+**Error Patterns**: High over-segmentation (10%), massive missing primitives (54%), excessive extras (99%)  
+**Overall Score**: 0.043/1.000 (needs significant improvement in all areas)
 
 #### FloorPlanCAD Validation Results (February 2026)
-**Geometric Accuracy**: Very poor (IoU: 0.010, Dice: 0.020, Chamfer: 36.76px) - 92x worse than NES!  
-**Visual Quality**: Extremely poor (SSIM: 0.006, MSE: 32725, MAE: 140) - 22x worse than NES  
+**Geometric Accuracy**: Very poor (IoU: 0.010, Dice: 0.020, Chamfer: 36.76px)  
+**Visual Quality**: Extremely poor (SSIM: 0.006, MSE: 32725, MAE: 140)  
 **CAD Compliance**: Very low (10.4% angle compliance, only 104/5120 primitives)  
 **Structural Preservation**: Poor (5120 primitives, low parallelism 14.4%, axis-aligned: 1.5%, connectivity: 2.8%)  
 **Error Patterns**: High over-segmentation (10%), massive missing primitives (54%), excessive extras (99%)  
-**Overall Score**: 0.043/1.000 (13x worse than NES baseline!)
+**Overall Score**: 0.043/1.000
 
 **Vector-to-Vector Ground Truth Comparison** (NEW - February 2026):
 **Ground Truth Primitives**: 6 structural wall lines from FloorPlanCAD SVG
@@ -155,7 +161,7 @@
 **Length Error**: Mean difference 29.7px, MAE 43.4px
 **Quality Score with Ground Truth**: 0.097/1.000 (2.3x improvement over self-comparison)
 
-**Key Finding**: DeepV performs dramatically worse on real FloorPlanCAD data vs synthetic NES data. Major gaps in geometric accuracy, visual quality, and structural validity require urgent attention for real-world CAD applications. Ground truth comparison reveals 410x over-segmentation and significant geometric distortions.
+**Key Finding**: DeepV performs poorly on FloorPlanCAD data with major gaps in geometric accuracy, visual quality, and structural validity. Ground truth comparison reveals 410x over-segmentation and significant geometric distortions. Architecture improvements and training on FloorPlanCAD data are urgently needed.
 
 #### Research-Based Improvements Implementation
 - [ ] Implement multi-scale processing for complex technical drawings

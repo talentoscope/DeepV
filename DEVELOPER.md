@@ -17,10 +17,10 @@
 
 **Top Priorities (February 2026):**
 
-1. **🔴 Critical Issue**: Real-world data performance gap
-   - Synthetic data works well (IoU: 0.927)
-   - Real FloorPlanCAD data performs 13x worse (IoU: 0.010)
-   - Primary focus: domain adaptation, geometric constraints, better losses
+1. **🔴 Critical Issue**: FloorPlanCAD Performance Improvement
+   - Current performance: IoU 0.010, high over-segmentation (~5120 primitives)
+   - Primary focus: Architecture improvements (Non-Autoregressive Transformer), training on FloorPlanCAD data
+   - Target: 20-40% primitive reduction, 50x IoU improvement
 
 2. **Documentation & Type Safety**: 
    - ~70% of functions missing docstrings (especially refinement/merging)
@@ -45,7 +45,7 @@
 - Comprehensive metrics framework implemented
 
 **Where to Contribute:**
-- Domain adaptation research (synthetic→real gap)
+- Architecture research (Non-Autoregressive Transformer for primitive reduction)
 - Docstring additions (focus: refinement/merging)
 - Integration tests for full pipeline
 - Type hint improvements
@@ -218,10 +218,11 @@ DeepV processes images through four main stages:
 3. **Refinement**: Differentiable optimization with Bézier splatting rendering
 4. **Merging**: Primitive consolidation and CAD export (DXF/SVG)
 
-**Key Insight**: The pipeline works well on synthetic data but struggles with real-world scanned images. When developing:
-- Test on both synthetic (NES) and real (FloorPlanCAD) datasets
+**Key Insight**: The pipeline needs improvement on FloorPlanCAD data. When developing:
+- Test on FloorPlanCAD dataset to validate improvements
 - Monitor IoU, Dice coefficient, SSIM, and CAD compliance metrics
 - Use `scripts/comprehensive_analysis.py` for full quality assessment
+- Focus on reducing over-segmentation (current: ~5120 primitives)
 
 ### Performance Characteristics
 
@@ -374,15 +375,11 @@ from util_files import file_utils as fu
 
 ### Working with Datasets
 
-**FloorPlanCAD** (14,625 real drawings):
+**FloorPlanCAD** (14,625 real drawings - primary dataset):
 - Location: `data/vector/floorplancad/` (SVG) and `data/raster/floorplancad/` (PNG)
-- Status: Pre-processed and ready
-- Warning: Model performs poorly on this dataset (active research area)
-
-**Synthetic Data** (NES test images):
-- Location: `data/synthetic/`
-- Status: Model performs well here
-- Use for initial testing and validation
+- Status: Pre-processed and ready for training/evaluation
+- Current performance: IoU 0.010, high over-segmentation (~5120 primitives)
+- Focus: Architecture improvements and training optimization
 
 **Creating Custom Splits**:
 ```bash
@@ -397,7 +394,7 @@ python scripts/comprehensive_analysis.py --results-dir logs/outputs/test_nes
 ```
 
 **Key Metrics to Watch**:
-- **IoU (Intersection over Union)**: Geometric overlap; target >0.8 (currently 0.927 synthetic, 0.010 real)
+- **IoU (Intersection over Union)**: Geometric overlap; target >0.5 (currently 0.010 on FloorPlanCAD)
 - **Dice Coefficient**: Similar to IoU; target >0.9
 - **SSIM (Structural Similarity)**: Visual quality; target >0.7 (currently low)
 - **CAD Angle Compliance**: Percentage at standard angles (0\u00b0, 90\u00b0, etc.); target >80%

@@ -53,7 +53,7 @@ python scripts/validate_env.py
 ### Basic Benchmark Run
 
 ```bash
-# Benchmark DeepV on a single dataset
+# Benchmark DeepV on FloorPlanCAD dataset
 python scripts/benchmark_pipeline.py \
   --data-root /path/to/datasets \
   --deepv-model-path /path/to/deepv/model \
@@ -69,14 +69,13 @@ python scripts/benchmark_pipeline.py \
   --data-root /datasets \
   --deepv-model-path /models/deepv \
   --output-dir benchmark_results \
-  --datasets floorplancad archcad synthetic \
-  --models deepv_current vectorgraphnet deepsvg
+  --datasets floorplancad archcad
 ```
 
 ### Generate Synthetic Data
 
 ```bash
-# Create synthetic evaluation dataset
+# Create synthetic evaluation dataset (if needed for augmentation)
 python scripts/benchmark_pipeline.py \
   --generate-synthetic \
   --synthetic-samples 1000 \

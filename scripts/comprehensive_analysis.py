@@ -87,8 +87,11 @@ class ComprehensiveQualityAnalyzer:
                 raise FileNotFoundError("Original image not found. Please specify --original path")
 
         # Load rendered output
+        image_name = os.path.splitext(os.path.basename(original_path))[0] if original_path else "test"
         # Try multiple possible locations for rendered image
         render_paths = [
+            output_path / f"{image_name}.png",
+            output_path / "final_renders" / f"{image_name}.png",
             output_path / "final_renders" / "test.png",
             output_path / "final_renders" / "0490-0079.png",  # Specific to our test
             output_path / "0490-0079.png",  # Direct in output dir
@@ -108,9 +111,11 @@ class ComprehensiveQualityAnalyzer:
         # Load vectors
         # Try multiple possible locations for vector data
         vector_paths = [
-            Path(output_dir.replace('merging_output', 'arrays')) / "hard_optimization_iou_mass_0490-0079.png.npy",
+            output_path / f"{image_name}.png.npy",
+            Path(output_dir.replace('merging_output', 'arrays')) / f"hard_optimization_iou_mass_{image_name}.png.npy",
             output_path / "0490-0079.png.npy",
             output_path / "test.png.npy",
+            Path(output_dir.replace('merging_output', 'arrays')) / "hard_optimization_iou_mass_0490-0079.png.npy",
             Path(output_dir.replace('merging_output', 'arrays')) / "hard_optimization_iou_0490-0079.png.npy",
         ]
         

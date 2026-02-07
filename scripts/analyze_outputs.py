@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import runpy
+import sys
 from pathlib import Path
 
 import torch
@@ -79,6 +80,7 @@ def main():
         json.dump(summary, f, indent=2)
 
     logger.info(f"Analysis summary written to {out_path}")
+    sys.exit(0)
 
 
 if __name__ == '__main__':

@@ -43,20 +43,22 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 - Modern tooling: pre-commit hooks (black, flake8, mypy), pytest suite (14+ tests), Hydra configuration, poetry/pyproject.toml management
 - **Recent optimization wins**: 90% merging speedup, 387x faster Bézier splatting, 70% overall pipeline improvement
 
-### Critical Challenge: Synthetic-to-Real Performance Gap
+### Critical Challenge: Current Performance on FloorPlanCAD Dataset
 
-**THE #1 PRIORITY ISSUE**: There is a 13x performance gap between synthetic and real-world data:
+**THE #1 PRIORITY ISSUE**: Model performance on FloorPlanCAD (the primary available dataset) is poor and needs significant improvement:
 
-| Metric | NES Synthetic | FloorPlanCAD Real | Gap |
-|--------|---------------|-------------------|-----|
-| IoU | 0.927 | 0.010 | **13x worse** |
-| Dice | 0.962 | 0.020 | **48x worse** |
-| SSIM | 0.135 | 0.006 | **23x worse** |
-| Overall Score | 0.603/1.0 | 0.043/1.0 | **14x worse** |
+| Metric | Current FloorPlanCAD Performance | Target Improvement |
+|--------|----------------------------------|-------------------|
+| IoU | 0.010 | 0.5+ (50x improvement) |
+| Dice | 0.020 | 0.6+ |
+| SSIM | 0.006 | 0.5+ |
+| CAD Compliance | 10.4% | 70%+ |
+| Primitive Count | 5120 avg | 20-40% reduction |
+| Overall Score | 0.043/1.0 | 0.6+/1.0 |
 
-**Root Cause**: Model trained primarily on synthetic data; lacks robustness to real-world scanning artifacts, degradation, and domain shift.
+**Root Cause**: Model was trained on synthetic data (not currently available); lacks robustness to real-world FloorPlanCAD scanning artifacts, degradation, and architectural domain specifics.
 
-**Impact**: Pipeline performs well in controlled settings but fails on production use cases (scanned blueprints, archived patents, faded drawings).
+**Impact**: Pipeline is NOT production-ready for real scanned floor plans, patents, or blueprints.
 
 **Solution Path** (see sections below):
 - Domain adaptation techniques (adversarial training, fine-tuning on real data)
@@ -94,6 +96,9 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 - Add hyperparameter search integration (Optuna/Ray Tune) for sequence length, loss weights.
 - Incorporate recent architectural improvements (attention mechanisms, efficient transformers) for better primitive prediction.
 - Strengthen evaluation with curve-aware metrics (Hausdorff already added; consider Chamfer distance variants, vector edit distance).
+
+**Recommended Architecture Change (2026):**
+Switch to a Non-Autoregressive Transformer Decoder (inspired by OmniSVG/StarVector research) to reduce over-segmentation. This parallel prediction model predicts all primitives simultaneously with a count predictor, encouraging fewer primitives (target: 20-40% reduction) while maintaining IoU. Integrate by adding a new decoder class in [vectorization/modules/transformer.py](vectorization/modules/transformer.py), updating model specs in [vectorization/models/specs/](vectorization/models/specs/), and modifying loss in [util_files/loss_functions/supervised.py](util_files/loss_functions/supervised.py). Train baseline on FloorPlanCAD training data (20 epochs, LR 1e-4), then fine-tune on validation set.
 
 ### Refinement Module
 **Purpose:** Differentiable optimization of predicted primitives to match raster target.
@@ -184,21 +189,14 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 
 #### Current Performance Baselines (February 2026)
 
-**NES Synthetic Data (Strong Performance):**
-- **Overall Score**: 0.603/1.000
-- **Geometric Accuracy**: Excellent (IoU: 0.927, Dice: 0.962, Chamfer: 6.68px)
-- **Visual Quality**: Poor (SSIM: 0.135, MSE: 4259, PSNR: ~5.8dB)
-- **CAD Compliance**: Low (11.8% angle compliance, 6% axis-aligned)
-- **Structural**: Good (339 primitives, 99.8% parallelism, low error rates)
-
-**FloorPlanCAD Real Data (Poor Performance):**
-- **Overall Score**: 0.043/1.000 (13x worse than NES!)
+**FloorPlanCAD Dataset (Primary Dataset - Current Performance):**
+- **Overall Score**: 0.043/1.000
 - **Geometric Accuracy**: Very poor (IoU: 0.010, Dice: 0.020, Chamfer: 36.76px)
 - **Visual Quality**: Extremely poor (SSIM: 0.006, MSE: 32725, PSNR: ~3.0dB)
 - **CAD Compliance**: Low (10.4% angle compliance, 1.5% axis-aligned)
-- **Structural**: Poor (5120 primitives, 14.4% parallelism, high error rates: 54% missing, 99% extras)
+- **Structural**: Poor (5120 primitives avg, 14.4% parallelism, high error rates: 54% missing, 99% extras)
 
-**Key Finding**: Major performance gap between synthetic and real data. Urgent need for improvements targeting geometric accuracy, visual quality, and CAD compliance for real-world applications.
+**Key Finding**: Current model performance on FloorPlanCAD is inadequate for production use. Urgent need for architecture improvements and training on FloorPlanCAD data to achieve geometric accuracy, visual quality, and CAD compliance.
 
 #### Output Quality Analysis Framework (NEW - February 2026)
 **Purpose:** Establish systematic, computable methods to evaluate vectorization quality and drive iterative improvements.
@@ -356,3 +354,7 @@ Focus on architectural drawings and technical diagrams with emphasis on geometri
 ---
 
 **Bottom Line**: Don't work on advanced features or optimizations until real-world data performance is acceptable. The synthetic→real gap is the blocking issue preventing production deployment.
+
+## Future Enhancements (Nice-to-Haves)
+
+Detailed proposals for advanced improvements inspired by recent research (e.g., ViTs, diffusion models, GNNs) have been moved to [FUTURE_ENHANCEMENTS.md](FUTURE_ENHANCEMENTS.md) for reference. These include modernizing the architecture for potential 10-20% accuracy gains but are deferred until current roadmap priorities are met.

@@ -39,8 +39,7 @@ config/
 │   ├── default.yaml         # Model architecture and paths
 │   └── specs.yaml           # Model specifications
 ├── data/
-│   ├── default.yaml         # Dataset paths and settings
-│   └── synthetic.yaml       # Synthetic data parameters
+│   └── default.yaml         # Dataset paths and settings
 ├── training/
 │   ├── default.yaml         # Training hyperparameters
 │   └── schedules.yaml       # Learning rate schedules

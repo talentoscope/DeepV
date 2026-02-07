@@ -50,12 +50,19 @@ class GenericVectorizationNet(ParameterizedModule):
         x = self.fc_from_conv(x)
         x = x.reshape([x.shape[0], x.shape[1], -1]).transpose(1, 2)  # [b, h * w, c]
         if hasattr(self.hidden, 'max_primitives'):
-            # Variable length decoder
-            x = self.hidden(x)
+            # Variable length or non-autoregressive decoder
+            hidden_out = self.hidden(x)
         else:
             # Fixed length decoder
-            x = self.hidden(x, n)
-        x = self.fc_from_hidden(x)
+            hidden_out = self.hidden(x, n)
+
+        if isinstance(hidden_out, tuple):
+            primitives, counts = hidden_out
+            primitives = self.fc_from_hidden(primitives)
+            primitives = self.output(primitives)
+            return primitives, counts
+
+        x = self.fc_from_hidden(hidden_out)
         x = self.output(x)
         return x
 

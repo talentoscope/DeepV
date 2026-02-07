@@ -137,8 +137,68 @@ class VariableLengthTransformerDecoder(TransformerBase):
         return torch.cat(outputs, dim=1)
 
 
+class NonAutoregressiveTransformerDecoder(TransformerBase):
+    def __init__(self, feature_dim=128, ffn_dim=512, n_head=8, num_layers=1, max_primitives=20, **kwargs):
+        """
+        Non-autoregressive transformer decoder that predicts all primitives simultaneously.
+        
+        :param feature_dim: Wq, Wk, Wv embedding matrixes share this dimension
+        :param ffn_dim: size of FC layers in TransformerLayers
+        :param n_head: number of heads in TransformerLayers
+        :param num_layers: number of TransformerLayers stacked together
+        :param max_primitives: maximum number of primitives to generate
+        """
+        super(NonAutoregressiveTransformerDecoder, self).__init__(
+            feature_dim=feature_dim, ffn_dim=ffn_dim, n_head=n_head, num_layers=num_layers, **kwargs
+        )
+        self.max_primitives = max_primitives
+        
+        # Output layer that predicts primitive parameters
+        self.output_proj = nn.Linear(feature_dim, feature_dim)
+        
+        # Count predictor to estimate number of primitives
+        self.count_predictor = nn.Sequential(
+            nn.Linear(feature_dim, feature_dim // 2),
+            nn.ReLU(),
+            nn.Linear(feature_dim // 2, max_primitives + 1)  # +1 for 0 to max_primitives
+        )
+
+    def forward(self, conv_features):
+        """
+        :param conv_features: [b, seq_len, c] batch of image conv features
+        :return: predictions: [b, max_primitives, feature_dim], 
+                 counts: [b, max_primitives + 1] probability distribution over count
+        """
+        batch_size = conv_features.shape[0]
+
+        # Generate positional encodings for all positions simultaneously
+        pos_encodings = get_sinusoid_encoding_table(self.max_primitives, self.feature_dim, scale=1)[None].to(conv_features.device)
+        pos_encodings = pos_encodings.expand(batch_size, -1, -1)  # [b, max_primitives, feature_dim]
+
+        # Initialize all positions with positional encodings (no autoregressive dependency)
+        h_dec = pos_encodings
+
+        # Apply transformer layers in parallel
+        decoding = self.decoder(conv_features, h_dec)  # [b, max_primitives, feature_dim]
+
+        # Project to output space
+        predictions = self.output_proj(decoding)  # [b, max_primitives, feature_dim]
+
+        # Predict primitive count using global features (average pooling)
+        global_features = torch.mean(conv_features, dim=1)  # [b, c]
+        if global_features.shape[-1] != self.feature_dim:
+            # If conv features have different dimension, add a projection
+            global_proj = nn.Linear(conv_features.shape[-1], self.feature_dim).to(conv_features.device)
+            global_features = global_proj(global_features)
+        
+        counts = self.count_predictor(global_features)  # [b, max_primitives + 1]
+
+        return predictions, counts
+
+
 transformer_module_by_kind = {
     "transformer_decoder": TransformerDecoder,
     "variable_transformer_decoder": VariableLengthTransformerDecoder,
+    "non_autoregressive_transformer_decoder": NonAutoregressiveTransformerDecoder,
     "transformer_discriminator": TransformerDiscriminator,
 }
