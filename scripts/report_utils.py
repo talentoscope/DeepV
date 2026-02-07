@@ -44,26 +44,50 @@ def load_model_output(trace_dir: Path, patch_id: str):
 
 def normalize_vectors(arr, patch_size=64):
     # arr: (N, D) where D >= 4 -> (x1,y1,x2,y2,...)
-    a = np.asarray(arr)
+    a = np.asarray(arr, dtype=float)
     if a.ndim == 1:
         a = a[None, :]
     if a.shape[1] < 4:
         return np.zeros((0, 6))
+
     N = a.shape[0]
     out = np.zeros((N, 6), dtype=float)
-    out[:, :4] = a[:, :4]
-    # width default
+
+    coords = a[:, :4].copy()
+
+    # Detect normalized coordinates in [0,1] and scale to pixel coords
+    max_coord = np.nanmax(np.abs(coords)) if coords.size > 0 else 0.0
+    if max_coord <= 1.01:
+        coords[:, [0, 2]] = coords[:, [0, 2]] * (patch_size - 1)
+        coords[:, [1, 3]] = coords[:, [1, 3]] * (patch_size - 1)
+    else:
+        # If coordinates are extremely small (e.g., 1e-6), apply a visualization
+        # fallback so lines are visible in reports rather than disappearing.
+        if max_coord > 0 and max_coord < 1e-3:
+            fallback_scale = (patch_size - 1) / max_coord
+            coords = coords * fallback_scale
+
+    # Clamp to patch bounds
+    coords = np.clip(coords, 0, patch_size - 1)
+    out[:, :4] = coords
+
+    # width handling: if provided and small (normalized), scale to reasonable pixels
     if a.shape[1] >= 5:
-        out[:, 4] = a[:, 4]
+        widths = a[:, 4].copy()
+        wmax = np.nanmax(np.abs(widths)) if widths.size > 0 else 0.0
+        if wmax <= 1.01:
+            # treat width as normalized (0..1) and scale to patch pixels
+            widths = widths * max(1.0, patch_size / 8.0)
+        out[:, 4] = widths
     else:
         out[:, 4] = 1.0
+
     # opacity/default
     if a.shape[1] >= 6:
         out[:, 5] = a[:, 5]
     else:
         out[:, 5] = 1.0
-    # clamp to patch bounds
-    out[:, :4] = np.clip(out[:, :4], 0, patch_size - 1)
+
     return out
 
 
@@ -105,6 +129,11 @@ def make_patch_composite(trace_dir: Path, patch_id: str, out_dir: Path, history_
     _ensure_dir(out_dir)
     gt = load_patch_image(trace_dir, patch_id)
     model = load_model_output(trace_dir, patch_id)
+    source_size = None
+    if gt is not None and gt.size[0] == gt.size[1]:
+        source_size = gt.size[0]
+    else:
+        source_size = patch_size
     vec = None
     if "vector" in model:
         vec = model["vector"]
@@ -112,7 +141,12 @@ def make_patch_composite(trace_dir: Path, patch_id: str, out_dir: Path, history_
         vec = model["pred"]
     if vec is None:
         vec = np.zeros((0, 6))
-    vecn = normalize_vectors(vec, patch_size=patch_size)
+    vecn = normalize_vectors(vec, patch_size=source_size)
+    if source_size != patch_size and vecn.size > 0:
+        scale = float(patch_size) / float(source_size)
+        vecn[:, [0, 2]] *= scale
+        vecn[:, [1, 3]] *= scale
+        vecn[:, 4] = np.maximum(1.0, vecn[:, 4] * scale)
     rendered_model = render_primitives_pil(vecn, size=(patch_size, patch_size))
     # ensure GT is same size as rendered images
     if gt is None:
@@ -130,14 +164,29 @@ def make_patch_composite(trace_dir: Path, patch_id: str, out_dir: Path, history_
                 final_vec = final_all[pidx]
             else:
                 final_vec = final_all
-            finaln = normalize_vectors(final_vec, patch_size=patch_size)
+            finaln = normalize_vectors(final_vec, patch_size=source_size)
+            if source_size != patch_size and finaln.size > 0:
+                scale = float(patch_size) / float(source_size)
+                finaln[:, [0, 2]] *= scale
+                finaln[:, [1, 3]] *= scale
+                finaln[:, 4] = np.maximum(1.0, finaln[:, 4] * scale)
             rendered_final = render_primitives_pil(finaln, size=(patch_size, patch_size))
         except Exception:
             rendered_final = rendered_model
     else:
         rendered_final = rendered_model
 
-    # overlay: color composite
+    # Force-resize rendered panels to ensure consistent panel pixel sizes
+    try:
+        rendered_model = rendered_model.resize((patch_size, patch_size), resample=Image.NEAREST)
+    except Exception:
+        pass
+    try:
+        rendered_final = rendered_final.resize((patch_size, patch_size), resample=Image.NEAREST)
+    except Exception:
+        pass
+
+    # overlay: color composite (three equal-width panels)
     gt_rgb = Image.new("RGB", (patch_size * 3, patch_size))
     # left: GT, mid: model, right: final
     if gt is None:
@@ -158,7 +207,7 @@ def make_patch_composite(trace_dir: Path, patch_id: str, out_dir: Path, history_
         "iou_model": iou_model,
         "iou_final": iou_final,
         "n_model_primitives": int(vecn.shape[0]),
-        "n_final_primitives": int(vecn.shape[0]),
+        "n_final_primitives": int(finaln.shape[0]) if 'finaln' in locals() else int(vecn.shape[0]),
     }
 
     # per-iteration IOU curve if history provided as (I, num_patches, num_prims, D) for this patch
