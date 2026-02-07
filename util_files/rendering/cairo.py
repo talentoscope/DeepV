@@ -55,6 +55,30 @@ def render(data, dimensions, data_representation="paths", linecaps="square", lin
         set_color_to_bg()
         ctx.paint()
 
+        # compute bounding box of input data and apply transform to fit dimensions
+        try:
+            min_x, min_y, max_x, max_y = _compute_bbox(data, data_representation)
+            bbox_w = max_x - min_x
+            bbox_h = max_y - min_y
+            if bbox_w > 0 and bbox_h > 0:
+                # leave a small padding fraction
+                pad_frac = 0.02
+                avail_w = max(width * (1 - 2 * pad_frac), 1e-6)
+                avail_h = max(height * (1 - 2 * pad_frac), 1e-6)
+                scale = min(avail_w / bbox_w, avail_h / bbox_h)
+                # center after scaling
+                disp_w = bbox_w * scale
+                disp_h = bbox_h * scale
+                dx = (width - disp_w) / 2.0
+                dy = (height - disp_h) / 2.0
+                # transform: translate to pixel center, scale, then translate bbox origin to 0
+                ctx.translate(dx, dy)
+                ctx.scale(scale, scale)
+                ctx.translate(-min_x, -min_y)
+        except Exception:
+            # any failure -> draw without transform
+            pass
+
         # draw
         set_color_to_fg()
         _render_data[data_representation](data, ctx)
@@ -115,6 +139,26 @@ def render_with_skeleton(
         # fill bg
         set_color_to_bg()
         ctx.paint()
+
+        # compute bounding box of input data and apply transform to fit dimensions
+        try:
+            min_x, min_y, max_x, max_y = _compute_bbox(data, data_representation)
+            bbox_w = max_x - min_x
+            bbox_h = max_y - min_y
+            if bbox_w > 0 and bbox_h > 0:
+                pad_frac = 0.02
+                avail_w = max(width * (1 - 2 * pad_frac), 1e-6)
+                avail_h = max(height * (1 - 2 * pad_frac), 1e-6)
+                scale = min(avail_w / bbox_w, avail_h / bbox_h)
+                disp_w = bbox_w * scale
+                disp_h = bbox_h * scale
+                dx = (width - disp_w) / 2.0
+                dy = (height - disp_h) / 2.0
+                ctx.translate(dx, dy)
+                ctx.scale(scale, scale)
+                ctx.translate(-min_x, -min_y)
+        except Exception:
+            pass
 
         # draw
         set_color_to_fg()
@@ -199,6 +243,54 @@ def draw_qbezier_vahe(ctx, bezier):
 def draw_point_vahe(ctx, point):
     ctx.arc(*point[:2], point[2] / 2, 0, np.pi * 2)
     ctx.fill()
+
+
+def _compute_bbox(data, data_representation):
+    # Return (min_x, min_y, max_x, max_y) covering all coordinates in the data.
+    xs = []
+    ys = []
+
+    def _pairs_from_iterable(it):
+        arr = np.asarray(list(it)).ravel()
+        if arr.size < 2:
+            return np.empty((0, 2))
+        n = (arr.size // 2) * 2
+        arr = arr[:n].reshape(-1, 2)
+        return arr
+
+    if data_representation == "paths":
+        for path in data:
+            for primitive in path:
+                try:
+                    coords = primitive.svg_representation()
+                except Exception:
+                    continue
+                pairs = _pairs_from_iterable(coords)
+                if pairs.size:
+                    xs.extend(pairs[:, 0].tolist())
+                    ys.extend(pairs[:, 1].tolist())
+    else:
+        # assume VAHE-like dict: primitive_type -> list of arrays
+        try:
+            for primitive_type, primitives in data.items():
+                for p in primitives:
+                    pairs = _pairs_from_iterable(np.asarray(p))
+                    if pairs.size:
+                        xs.extend(pairs[:, 0].tolist())
+                        ys.extend(pairs[:, 1].tolist())
+        except Exception:
+            # fallback: try to treat data as list of arrays
+            for p in data:
+                pairs = _pairs_from_iterable(np.asarray(p))
+                if pairs.size:
+                    xs.extend(pairs[:, 0].tolist())
+                    ys.extend(pairs[:, 1].tolist())
+
+    if len(xs) == 0 or len(ys) == 0:
+        # nothing found -> default bbox 0..1 to avoid zero division
+        return 0.0, 0.0, 1.0, 1.0
+
+    return float(min(xs)), float(min(ys)), float(max(xs)), float(max(ys))
 
 
 if HAS_GRAPHICS_PRIMITIVES:

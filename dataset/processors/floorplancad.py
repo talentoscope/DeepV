@@ -65,11 +65,13 @@ class FloorPlanCADProcessor(Processor):
                         else:
                             actions['skipped'] += 1
 
-                    # Copy PNG
+                    # Copy PNG (flatten by using only sample ID, no subdirectories)
                     if 'png' in sample:
-                        png_path_src = raw_dir / sample['png']
+                        png_path_src = Path(sample['png'])
+                        if not png_path_src.is_absolute():
+                            png_path_src = raw_dir / png_path_src
                         png_path_dst = ras_dir / f"{sample_id}.png"
-                        if not png_path_dst.exists():
+                        if not png_path_dst.exists() and png_path_src.exists():
                             shutil.copy2(png_path_src, png_path_dst)
                             actions['extracted'] += 1
                         else:
@@ -101,10 +103,12 @@ class FloorPlanCADProcessor(Processor):
                 random.shuffle(svgs_with_png)
                 selected_svgs = svgs_with_png[:10000]  # Limit to 10,000
                 for s in tqdm(selected_svgs, desc="Copying SVGs and PNGs"):
-                    shutil.copy2(s, vec_dir / s.name)
-                    # Copy corresponding PNG
+                    # Flatten nested structure by using only filename
+                    flat_name = s.name
+                    shutil.copy2(s, vec_dir / flat_name)
+                    # Copy corresponding PNG with same flat structure
                     png_path = s.with_suffix('.png')
-                    shutil.copy2(png_path, ras_dir / png_path.name)
+                    shutil.copy2(png_path, ras_dir / flat_name.replace('.svg', '.png'))
                 return {'dataset': 'floorplancad', 'selected_samples': len(selected_svgs)}
 
         # Load dataset

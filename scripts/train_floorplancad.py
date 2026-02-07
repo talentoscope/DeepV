@@ -444,6 +444,29 @@ def main():
         print(f"CUDA debug info error: {e}")
 
     print("Creating data loaders...")
+    # Normalize cache_dir: if user passed a parent cache folder, try to find the
+    # dataset-specific subfolder (e.g. data/cache/floorplancad) that actually
+    # contains train/val/test subfolders. This avoids warnings when cache is
+    # organized under a dataset name.
+    if args.cache_dir:
+        cache_train_path = os.path.join(args.cache_dir, 'train')
+        if not os.path.isdir(cache_train_path):
+            # search for a child directory that contains train/val/test
+            try:
+                children = [d for d in os.listdir(args.cache_dir) if os.path.isdir(os.path.join(args.cache_dir, d))]
+            except Exception:
+                children = []
+            found = None
+            for c in children:
+                if os.path.isdir(os.path.join(args.cache_dir, c, 'train')):
+                    found = os.path.join(args.cache_dir, c)
+                    break
+            if found:
+                print(f"Notice: remapping cache dir from {args.cache_dir} to {found} (contains train/val/test)")
+                args.cache_dir = found
+            else:
+                print(f"Warning: cache dir {args.cache_dir} does not contain a 'train' subfolder; proceeding anyway")
+
     # Create data loaders
     train_loader, val_loader, test_loader = create_data_loaders(
         args.split_dir,

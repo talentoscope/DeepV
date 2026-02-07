@@ -41,8 +41,9 @@ class CADVGDrawingProcessor(Processor):
         ras_dir.mkdir(parents=True, exist_ok=True)
 
         svg_copied = 0
+        png_count = 0
 
-        for svg_file in tqdm(svg_files, desc="Copying CADVGDrawing SVGs"):
+        for svg_file in tqdm(svg_files, desc="Processing CADVGDrawing files"):
             # Create a flattened filename from the path
             # e.g., svg_raw/0000/00000007/00000007_Front.svg -> 00000007_Front.svg
             parts = svg_file.parts
@@ -65,8 +66,25 @@ class CADVGDrawingProcessor(Processor):
                 shutil.copy2(svg_file, dest_path)
                 svg_copied += 1
 
+                # Render PNG from SVG
+                try:
+                    import cairosvg
+                    png_path = ras_dir / new_filename.replace('.svg', '.png')
+                    with open(svg_file, 'r', encoding='utf-8') as f:
+                        svg_content = f.read()
+                    cairosvg.svg2png(
+                        bytestring=svg_content.encode('utf-8'),
+                        write_to=str(png_path),
+                        output_width=1000,
+                        output_height=1000
+                    )
+                    png_count += 1
+                except Exception as e:
+                    print(f"Error rendering PNG for {new_filename}: {e}")
+
         return {
             "dataset": "cadvgdrawing",
             "svg_count": len(svg_files),
             "svg_copied": svg_copied,
+            "png_count": png_count,
         }

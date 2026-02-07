@@ -94,7 +94,7 @@ python -m pip install -r requirements-dev.txt
 
 ## Datasets & data processing
 - **FloorPlanCAD**: 14,625 real architectural drawings (SVG vectors + PNG rasters) in `data/vector/floorplancad/` and `data/raster/floorplancad/`. Primary benchmark dataset. **WARNING**: Model performs very poorly on this (IoU: 0.010).
-- **Data pipeline**: `dataset/processors/` contains converters for various formats (CubiCasa5K, SketchGraphs, ResPlan, DeepPatent2, etc.).
+- **Data pipeline**: `dataset/processors/` contains converters for various formats (CubiCasa5K, SketchGraphs, ResPlan, etc.).
 - **Ground truth**: Use `scripts/extract_floorplancad_ground_truth.py` to parse SVG ground truth for comparison.
 - **Processing**: Images are padded to multiples of 32, split into 64×64 patches with configurable overlap (default: 0).
 - **Splits**: Train/val/test splits defined in `data/splits/` as JSON files with image paths.

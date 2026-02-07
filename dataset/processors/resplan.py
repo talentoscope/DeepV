@@ -50,6 +50,20 @@ class ResPlanProcessor(Processor):
                             f.write(svg_content)
                         svg_count += 1
 
+                        # Render PNG from SVG
+                        try:
+                            import cairosvg
+                            png_path = raster_dir / f"{plan_id}.png"
+                            cairosvg.svg2png(
+                                bytestring=svg_content.encode('utf-8'),
+                                write_to=str(png_path),
+                                output_width=1000,
+                                output_height=1000
+                            )
+                            png_count += 1
+                        except Exception as e:
+                            print(f"Error rendering PNG for {plan_id}: {e}")
+
             except Exception as e:
                 print(f"Error processing pickle file: {e}")
         else:

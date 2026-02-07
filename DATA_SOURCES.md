@@ -2,6 +2,20 @@
 
 This document compiles a comprehensive list of publicly available datasets suitable for training, evaluating, or benchmarking DeepV vectorization models, with a primary focus on technical drawings (e.g., CAD, floorplans, mechanical schematics, patents). Vectorization tasks typically involve converting raster inputs (e.g., PNG scans) to vector outputs (e.g., SVG primitives, parametric sequences, graphs) or related processes like primitive extraction, symbol spotting, and generative modeling. Datasets are categorized into **real-world** (scanned or industry-sourced, often noisy) and **synthetic/processed** (generated, cleaner for augmentat...
 
+## DeepV Data Processing Philosophy
+
+**Clean Vector Ground Truth + Augmented Dirty Training Data**
+
+DeepV follows a strict preprocessing pipeline designed to create optimal training data for vectorization:
+
+1. **Extract Only Vector Primitives**: Remove all text, symbols, annotations, and non-geometric elements from source datasets
+2. **Standardize Line Properties**: Convert all lines to 0.1px thickness (ultra-thin) for consistent geometric representation
+3. **Generate Clean Vector Ground Truth**: Store pristine SVG/DXF files with only geometric primitives
+4. **Create Augmented Dirty Training Images**: Apply realistic degradation (noise, blur, compression artifacts, paper texture, scanning distortions) to simulate real-world scanned documents
+5. **Maintain Raster-Vector Alignment**: Ensure perfect correspondence between degraded training images and clean vector targets
+
+This approach ensures models learn to recover clean geometry from noisy inputs, mimicking real-world vectorization of degraded technical drawings.
+
 Inclusion criteria prioritize datasets with:
 - Raster-vector pairs or derivable alignments.
 - Relevance to technical/architectural/mechanical/patent/sketches.
@@ -12,6 +26,7 @@ For each dataset, details include size, formats, key features, access links, lic
 
 ## Table of Contents
 - [Introduction](#datasets-for-deep-vectorization)
+- [DeepV Data Processing Philosophy](#deepv-data-processing-philosophy)
 - [Evaluation Status](#evaluation-status)
 - [Suitable Datasets](#suitable-datasets)
   - [Real-World Datasets](#real-world-datasets)
@@ -38,8 +53,8 @@ These datasets often include real-world variations like noise, distortions, or m
   Features: 30+ categories (walls, symbols); panoptic spotting; residential/commercial/hospitals; 3D derivable. Supports object detection, instance/semantic segmentation. Privacy-protected (cropped, text removed).  
   Access: [Hugging Face](https://huggingface.co/datasets/Voxel51/FloorPlanCAD) (FiftyOne format, PNG + annotations); project site [floorplancad.github.io](https://floorplancad.github.io/) (original SVGs via Google Drive).  
   License: CC BY-NC 4.0.  
-  Suitability: CAD vectorization benchmark; raster derivable from annotations. Preprocessing: Patch large drawings; parse annotations for vector primitives. Last updated: November 2025 (FiftyOne dataset).  
-  **Status**: ✅ Fully processed for DeepV vectorization training. Cleaned dataset available: 14,625 SVG vectors (black-on-white, text removed) in `data/vector/floorplancad/` and corresponding 1000x1000 PNG rasters in `data/raster/floorplancad/`. Raw data in `data/raw/floorplancad/`.
+  Suitability: CAD vectorization benchmark; raster derivable from annotations. Preprocessing: Extract geometric primitives only (walls, structural elements); standardize to 0.1px lines; generate augmented dirty training images with realistic scanning artifacts. Last updated: November 2025 (FiftyOne dataset).  
+  **Status**: ✅ Fully processed for DeepV vectorization training. Cleaned dataset available: 14,625 SVG vectors (black-on-white, text removed, 0.1px lines) in `data/vector/floorplancad/` and corresponding augmented dirty PNG rasters in `data/raster/floorplancad/`. Raw data in `data/raw/floorplancad/`.
 
 - **ResPlan**  
   Size: 17,000 residential floorplans.  
@@ -47,7 +62,7 @@ These datasets often include real-world variations like noise, distortions, or m
   Features: Elements (walls, doors, windows, balconies) and spaces (rooms); connectivity graphs; realistic layouts. Unit-level; 3D convertible.  
   Access: [GitHub](https://github.com/m-agour/ResPlan) (ResPlan.zip); [arXiv (2508.14006)](https://arxiv.org/abs/2508.14006). Open-source pipeline for geometry cleaning/alignment.  
   License: MIT.  
-  Suitability: Architectural vector-graph tasks; generative. Preprocessing: Python cleaning/alignment.  
+  Suitability: Architectural vector-graph tasks; generative. Preprocessing: Extract geometric primitives (walls, structural elements); remove semantic labels; standardize to 0.1px lines; generate augmented dirty training images.  
   **Status**: ✅ Implemented in DeepV pipeline (17,107 SVG files generated).
 
 - **MSD (Modified Swiss Dwellings)**  
@@ -76,15 +91,6 @@ These datasets often include real-world variations like noise, distortions, or m
   License: CC BY-NC-SA 4.0.  
   Suitability: Noisy raster-to-vector. Preprocessing: Align pairs; parse SVG for vector primitives.  
   **Status**: ✅ Implemented in DeepV pipeline (992 PNG + 992 SVG files processed).
-
-- **DeepPatent2**  
-  Size: >2.7M technical drawings (2M full patents, 2.8M segmented figures).  
-  Formats: PNG (original/segmented), JSON (metadata/semantics), CSV (distributions). Organized by year (2007-2020).  
-  Features: Patent drawings with object names (132k unique), viewpoints (22k), captions, bounding boxes; semantic extraction via NN (e.g., "object": "chair"). Compound drawings segmented.  
-  Access: [OneDrive (2020 data - Original_2020.tar.gz)](https://olddominion-my.sharepoint.com/personal/j1wu_odu_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020%2FOriginal%5F2020%2Etar%2Egz&viewid=7828cbdf%2D98fd%2D45c8%2D9fbf%2D337e03d13638&parent=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020) or [OSF (2007 subset)](https://osf.io/kv4xa).  
-  License: CC BY-NC 2.0.  
-  Suitability: Technical/patent vectorization; coords for primitive extraction. Preprocessing: Use JSON for spatial augmentation.  
-  **Status**: ✅ Implemented in DeepV pipeline (processor creates SVG vectors from JSON bounding boxes).
 
 ### Synthetic/Processed Datasets
 
@@ -116,7 +122,7 @@ These provide controlled data for initial training or augmentation.
   Access: [Google](https://quickdraw.withgoogle.com/data).  
   License: CC BY 4.0.  
   Suitability: **Secondary dataset** - Contains genuine vector stroke sequences ((x,y) point coordinates), suitable for training stroke vectorization models, though focused on everyday objects rather than technical drawings.
-  **Status**: ✅ Implemented in DeepV pipeline (processor converts stroke sequences to SVG).
+  **Status**: ✅ Implemented in DeepV pipeline (processor converts stroke sequences to SVG). Raw data downloaded: 10 classes (~670MB NDJSON files) in `data/raw/quickdraw/`.
 
 ## Internal Dataset Pipeline
 
@@ -128,12 +134,17 @@ Dataset downloaders are located in `dataset/downloaders/`. These scripts handle 
 - `download_dataset.py`: General downloader utility for various datasets.
 
 ### Processors
-Preprocessing scripts to convert raw datasets into usable formats (SVG vectors or raster images) are in `dataset/processors/`. Each processor is typically dataset-specific.
+Preprocessing scripts to convert raw datasets into usable formats (SVG vectors or raster images) are in `dataset/processors/`. Each processor is typically dataset-specific and follows the DeepV philosophy of extracting clean geometric primitives and generating augmented dirty training images.
+
+**Processing Pipeline:**
+1. Extract geometric primitives only (lines, arcs, curves) - remove text, symbols, annotations
+2. Standardize all lines to 0.1px thickness for consistent representation
+3. Generate clean vector ground truth (SVG/DXF)
+4. Apply realistic augmentations to create dirty training images (noise, blur, compression, paper texture, scanning artifacts)
 
 - `base.py`: Base processor class with common functionality.
 - `cadvgdrawing.py`: Processor for CAD-VGDrawing dataset.
 - `cubicasa.py`: Processor for CubiCasa5K dataset.
-- `deeppatent2.py`: Processor for DeepPatent2 dataset.
 - `floorplancad.py`: Processor for FloorPlanCAD dataset.
 - `fplanpoly.py`: Processor for FPLAN-POLY dataset.
 - `msd.py`: Processor for Modified Swiss Dwellings (MSD) dataset.
@@ -144,7 +155,22 @@ Preprocessing scripts to convert raw datasets into usable formats (SVG vectors o
 ### Data Storage Structure
 All processed data is stored in the `/data/` directory with the following structure:
 - `/data/raw/dataset_name/`: Raw downloaded data.
-- `/data/vector/dataset_name/`: Vector format data (e.g., SVG).
-- `/data/raster/dataset_name/`: Raster format data (e.g., PNG).
+- `/data/vector/dataset_name/`: Clean vector ground truth (SVG/DXF) with only geometric primitives (0.1px lines).
+- `/data/raster/dataset_name/`: Augmented dirty training images (PNG) with realistic degradation artifacts.
 
-This organization ensures clean separation of data stages and facilitates pipeline reproducibility.
+This organization ensures clean separation between pristine vector targets and noisy training inputs, facilitating robust vectorization model training.
+
+## Unsuitable Datasets
+
+These datasets do not contain vector geometric primitives or derivable vector data suitable for DeepV vectorization tasks.
+
+### Real-World Datasets
+
+- **IMPACT (AI4Patents)**  
+  Size: 500,000+ design patents with 3.61 million figures.  
+  Formats: Patent images (PNG/JPG figures), CSV metadata files, text captions.  
+  Features: Design patent figures with generated captions; multimodal patent analysis dataset.  
+  Access: [Hugging Face](https://huggingface.co/datasets/AI4Patents/IMPACT); [GitHub](https://github.com/AI4Patents/IMPACT).  
+  License: CC BY-SA 4.0.  
+  Suitability: **UNSUITABLE for DeepV** - Contains design patent images and captions, but no vector geometric primitives. Focuses on product design patents (ornamental designs) rather than technical drawings requiring vectorization. Better suited for multimodal patent analysis tasks.  
+  **Status**: ❌ Evaluated February 7, 2026 - Not suitable for vectorization training.

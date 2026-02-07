@@ -146,3 +146,6 @@ models/
 
 # Tracing/report outputs
 output/
+
+# Augmentation test outputs
+aug_test/

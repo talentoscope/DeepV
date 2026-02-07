@@ -39,7 +39,6 @@ This document tracks the comprehensive refactoring and modernization work being 
 - [x] `scripts/test_evaluation.py` - Removed unused imports (os, numpy), applied black formatting for spacing and newline
 - [x] `scripts/verify_downloads.py` - Applied black formatting to fix spacing issues around operators and commas
 - [x] `scripts/run_all_downloaders_test.py` - Removed unused import and variable, applied black formatting for spacing
-- [x] `scripts/standardize_deeppatent2.py` - Applied black formatting and manually broke remaining long f-string
 - [x] `scripts/download_and_verify_floorplancad.py` - Applied black formatting to fix long line and spacing issues
 - [x] `scripts/list_floorplancad_files.py` - Applied black formatting to fix spacing issues around operators and commas
 - [x] `scripts/run_cleaning.py` - Applied black formatting to fix spacing and newline issues
@@ -228,7 +227,6 @@ This section provides a comprehensive listing of all Python files in the DeepV c
 - [x] `scripts/run_cleaning.py` - Cleaning pipeline runner
 - [x] `scripts/run_fine_tuning.py` - Fine-tuning runner
 - [x] `scripts/run_security_scan.py` - Security scanning
-- [x] `scripts/standardize_deeppatent2.py` - DeepPatent2 standardization
 - [x] `scripts/test_discover.py` - Test discovery
 - [x] `scripts/test_evaluation.py` - Test evaluation
 - [x] `scripts/validate_env.py` - Environment validation
@@ -253,7 +251,6 @@ This section provides a comprehensive listing of all Python files in the DeepV c
 - [x] `dataset/processors/base.py` - Base processor protocol
 - [x] `dataset/processors/cadvgdrawing.py` - CAD-VGDrawing processor (removed unused imports: typing.List, typing.Any, os)
 - [x] `dataset/processors/cubicasa.py` - CubiCasa5K processor (added missing imports numpy, cv2, PIL.Image; removed unused imports and variables; fixed long lines and file ending)
-- [x] `dataset/processors/deeppatent2.py` - DeepPatent2 processor (removed unused import xml.etree.ElementTree; applied black formatting to fix continuation line indents)
 - [x] `dataset/processors/floorplancad.py` - FloorPlanCAD processor (already compliant with PEP 8 standards)
 - [x] `dataset/processors/fplanpoly.py` - FPLAN-POLY processor (removed unused imports: typing.List, typing.Any, os; added file ending newline)
 - [x] `dataset/processors/msd.py` - Modified Swiss Dwellings processor (removed unused imports: typing.List, typing.Any, base64, networkx; fixed long lines by breaking f-strings and multi-line strings; added file ending newline)

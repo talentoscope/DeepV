@@ -187,100 +187,70 @@ def download_cubicasa5k(output_dir: Path, test_mode: bool = False) -> Dict:
 
 
 def download_quickdraw(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download QuickDraw subset from Hugging Face."""
-    try:
-        from huggingface_hub import snapshot_download
-    except ImportError:
-        raise ImportError("Install huggingface_hub: pip install huggingface_hub")
-
+    """Download QuickDraw subset from Google Cloud Storage."""
     dataset_dir = output_dir / "raw" / "quickdraw"
     dataset_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Downloading QuickDraw subset to {dataset_dir}...")
 
-    # Use a processed subset for practical usage
+    # QuickDraw data is available as NDJSON files from Google Cloud Storage
+    # We'll download a small subset of classes for practical use
+    base_url = "https://storage.googleapis.com/quickdraw_dataset/full/simplified"
+    
+    # Select a few representative classes for the subset
+    classes = [
+        "airplane", "apple", "bird", "cat", "dog", "fish", "house", "tree", "car", "sun"
+    ]
+    
     if test_mode:
-        allow_patterns = ["*.json", "data/train-00000-of-*.parquet"]
+        classes = classes[:2]  # Just 2 classes for testing
+        print(f"Test mode: downloading {len(classes)} classes")
     else:
-        allow_patterns = ["data/train-*.parquet"]  # Limit to train split
+        print(f"Downloading {len(classes)} classes")
 
-    try:
-        # Note: Using a smaller processed version, not the full 50M sketches
-        snapshot_download(
-            repo_id="google/quickdraw",
-            repo_type="dataset",
-            local_dir=str(dataset_dir),
-            allow_patterns=allow_patterns,
-            max_workers=4,
-        )
-        print(f"[OK] Downloaded QuickDraw to {dataset_dir}")
+    downloaded_files = []
+    
+    for class_name in classes:
+        filename = f"{class_name}.ndjson"
+        url = f"{base_url}/{filename}"
+        output_path = dataset_dir / filename
+        
+        if output_path.exists():
+            print(f"Skipping {filename} (already exists)")
+            downloaded_files.append(str(output_path))
+            continue
+            
+        try:
+            print(f"Downloading {filename}...")
+            download_with_progress(url, output_path)
+            downloaded_files.append(str(output_path))
+            print(f"✓ Downloaded {filename}")
+        except Exception as e:
+            print(f"✗ Failed to download {filename}: {e}")
+            continue
 
-        metadata = {
-            "name": "QuickDraw",
-            "size": "Subset of 50M+ vector sketches (345 classes)",
-            "formats": ["Parquet", "Stroke-3 format"],
-            "source": "https://huggingface.co/datasets/google/quickdraw",
-            "license": "CC BY 4.0",
-            "download_date": str(Path(dataset_dir).stat().st_mtime),
-            "test_mode": test_mode,
-            "note": "Downloaded processed subset from HuggingFace",
-        }
+    if not downloaded_files:
+        raise RuntimeError("Failed to download any QuickDraw files")
 
-        with open(dataset_dir / "metadata.json", "w") as f:
-            json.dump(metadata, f, indent=2)
+    print(f"[OK] Downloaded {len(downloaded_files)} QuickDraw files to {dataset_dir}")
 
-        return metadata
+    metadata = {
+        "name": "QuickDraw",
+        "size": f"{len(downloaded_files)} classes ({len(classes)} requested)",
+        "formats": ["NDJSON (stroke sequences)"],
+        "source": "https://storage.googleapis.com/quickdraw_dataset/full/simplified",
+        "license": "CC BY 4.0",
+        "download_date": str(Path(dataset_dir).stat().st_mtime),
+        "test_mode": test_mode,
+        "classes": classes,
+        "files": downloaded_files,
+        "note": "Downloaded NDJSON files from Google Cloud Storage",
+    }
 
-    except Exception as e:
-        print(f"[ERR] Failed to download QuickDraw: {e}")
-        raise
+    with open(dataset_dir / "metadata.json", "w") as f:
+        json.dump(metadata, f, indent=2)
 
-
-def download_impact(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download IMPACT patent dataset from Hugging Face."""
-    try:
-        from huggingface_hub import snapshot_download
-    except ImportError:
-        raise ImportError("Install huggingface_hub: pip install huggingface_hub")
-
-    dataset_dir = output_dir / "raw" / "impact"
-    dataset_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"Downloading IMPACT to {dataset_dir}...")
-
-    if test_mode:
-        allow_patterns = ["*.json", "data/train-00000-of-*.parquet"]
-    else:
-        allow_patterns = None
-
-    try:
-        snapshot_download(
-            repo_id="AI4Patents/IMPACT",
-            repo_type="dataset",
-            local_dir=str(dataset_dir),
-            allow_patterns=allow_patterns,
-            max_workers=4,
-        )
-        print(f"[OK] Downloaded IMPACT to {dataset_dir}")
-
-        metadata = {
-            "name": "IMPACT",
-            "size": "500k patents, 3.61M figures",
-            "formats": ["Images", "CSV", "Parquet"],
-            "source": "https://huggingface.co/datasets/AI4Patents/IMPACT",
-            "license": "Open",
-            "download_date": str(Path(dataset_dir).stat().st_mtime),
-            "test_mode": test_mode,
-        }
-
-        with open(dataset_dir / "metadata.json", "w") as f:
-            json.dump(metadata, f, indent=2)
-
-        return metadata
-
-    except Exception as e:
-        print(f"[ERR] Failed to download IMPACT: {e}")
-        raise
+    return metadata
 
 
 def download_msd(output_dir: Path, test_mode: bool = False) -> Dict:
@@ -416,224 +386,6 @@ def download_sketchgraphs(output_dir: Path, test_mode: bool = False) -> Dict:
         print("Note: Requires git installed and internet connection.")
         raise
 
-
-def download_deeppatent2(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download DeepPatent2 from OneDrive/SharePoint (manual download)."""
-    dataset_dir = output_dir / "raw" / "deeppatent2"
-    dataset_dir.mkdir(parents=True, exist_ok=True)
-
-    if test_mode:
-        print("Test mode: DeepPatent2 is very large (>100 GB)")
-        print(
-            "OneDrive link (2020 data): https://olddominion-my.sharepoint.com/personal/j1wu_odu_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020%2FOriginal%5F2020%2Etar%2Egz&viewid=7828cbdf%2D98fd%2D45c8%2D9fbf%2D337e03d13638&parent=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020"
-        )
-        print("OSF link: https://osf.io/kv4xa/ (2007 subset)")
-
-        metadata = {
-            "name": "DeepPatent2",
-            "size": ">2.7M technical drawings (2M patents)",
-            "formats": ["PNG", "JSON", "CSV"],
-            "source": "https://olddominion-my.sharepoint.com/personal/j1wu_odu_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020%2FOriginal%5F2020%2Etar%2Egz&viewid=7828cbdf%2D98fd%2D45c8%2D9fbf%2D337e03d13638&parent=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020",
-            "license": "CC BY-NC 2.0",
-            "test_mode": True,
-            "note": "Test mode: Manual download required. See OneDrive link for Original_2020.tar.gz file.",
-        }
-
-        with open(dataset_dir / "metadata.json", "w") as f:
-            json.dump(metadata, f, indent=2)
-
-        print(f"[OK] Created metadata for DeepPatent2 at {dataset_dir}")
-        return metadata
-
-    # Check if file is already downloaded
-    expected_file = dataset_dir / "Original_2020.tar.gz"
-    if expected_file.exists() and expected_file.stat().st_size > 0:
-        print(f"Found existing downloaded file: {expected_file}")
-        print("Skipping browser opening - proceeding to extraction...")
-    else:
-        # Manual download: open browser and provide instructions
-        print("DeepPatent2 requires manual download due to authentication requirements.")
-        print(f"Download directory created: {dataset_dir}")
-        print()
-        print("Opening download page in your default browser...")
-        print("Please authenticate and download the file manually.")
-        print()
-
-        # Open the download URL in the default browser
-        download_url = "https://olddominion-my.sharepoint.com/personal/j1wu_odu_edu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020%2FOriginal%5F2020%2Etar%2Egz&viewid=7828cbdf%2D98fd%2D45c8%2D9fbf%2D337e03d13638&parent=%2Fpersonal%2Fj1wu%5Fodu%5Fedu%2FDocuments%2Fdata%2F2023%2Ddeeppatent2%2F2020"
-
-        try:
-            import webbrowser
-
-            webbrowser.open(download_url)
-            print(f"Browser opened to: {download_url}")
-        except Exception as e:
-            print(f"Could not open browser automatically: {e}")
-            print(f"Please manually open: {download_url}")
-
-        print()
-        print("INSTRUCTIONS:")
-        print("1. Authenticate with Microsoft if prompted")
-        print("2. Click the download button on the OneDrive page")
-        print("3. Save the file as 'Original_2020.tar.gz' to:")
-        print(f"   {dataset_dir}")
-        print("4. After download completes, the script will detect and extract it")
-        print()
-
-        # Wait for user to download and place the file
-        print("Waiting for you to download and place the file...")
-        print("(Press Ctrl+C to cancel and run again later)")
-
-        try:
-            import time
-
-            while not expected_file.exists():
-                print(f"Checking for {expected_file.name}... (waiting 10 seconds)")
-                time.sleep(10)
-        except KeyboardInterrupt:
-            print("\nDownload cancelled. Run the script again when ready to continue.")
-            print(f"Place the downloaded file at: {expected_file}")
-            raise
-
-    print(f"Found downloaded file: {expected_file}")
-    print("Extracting...")
-
-    # Extract the tar.gz file with progress indication
-    import tarfile
-    from tqdm import tqdm
-    import os
-
-    extracted_count = 0
-    skipped_count = 0
-
-    # Extract files iteratively with progress updates
-    with tarfile.open(expected_file, "r:gz") as tar_ref:
-        print("Extracting files from archive...")
-
-        # Use tqdm without total for large archives
-        with tqdm(desc="Extracting", unit="file", unit_scale=True) as pbar:
-            for member in tar_ref:
-                # Check if file already exists
-                target_path = dataset_dir / member.name
-                if target_path.exists():
-                    # Skip if file already exists
-                    skipped_count += 1
-                    pbar.update(1)
-                    continue
-
-                # Extract the file
-                tar_ref.extract(member, dataset_dir)
-                extracted_count += 1
-                pbar.update(1)
-
-                # Periodic status update every 1000 files
-                if (extracted_count + skipped_count) % 1000 == 0:
-                    print(f"Processed {extracted_count + skipped_count} files so far...")
-
-        print(
-            f"Extraction complete: {extracted_count} files extracted, {skipped_count} files skipped (already existed)"
-        )
-
-    # Remove the compressed file
-    expected_file.unlink()
-
-    metadata = {
-        "name": "DeepPatent2",
-        "size": "2020 dataset (extracted from Original_2020.tar.gz)",
-        "formats": ["PNG", "JSON", "CSV"],
-        "source": download_url,
-        "license": "CC BY-NC 2.0",
-        "download_date": str(Path(dataset_dir).stat().st_mtime),
-        "test_mode": test_mode,
-        "download_method": "manual_browser",
-    }
-
-    with open(dataset_dir / "metadata.json", "w") as f:
-        json.dump(metadata, f, indent=2)
-
-    print(f"[OK] Downloaded and extracted DeepPatent2 2020 data to {dataset_dir}")
-    return metadata
-
-
-def download_drivaernet(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download DrivAerNet++ repository."""
-    dataset_dir = output_dir / "raw" / "drivaernet"
-    dataset_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"Downloading DrivAerNet++ metadata to {dataset_dir}...")
-
-    try:
-        repo_dir = dataset_dir / "repository"
-        if not repo_dir.exists():
-            print("Cloning DrivAerNet++ repository...")
-            subprocess.run(
-                ["git", "clone", "https://github.com/Mohamedelrefaie/DrivAerNet.git", str(repo_dir)],
-                check=True,
-                capture_output=True,
-            )
-
-        print(f"[OK] Downloaded DrivAerNet++ repository to {dataset_dir}")
-
-        metadata = {
-            "name": "DrivAerNet++",
-            "size": "8,150+ car meshes/simulations",
-            "formats": ["3D meshes", "Aerodynamic data", "Point clouds"],
-            "source": "https://github.com/Mohamedelrefaie/DrivAerNet",
-            "license": "CC BY-NC 4.0",
-            "download_date": str(Path(dataset_dir).stat().st_mtime),
-            "test_mode": test_mode,
-            "note": "Repository cloned. Dataset download instructions in repo README.",
-        }
-
-        with open(dataset_dir / "metadata.json", "w") as f:
-            json.dump(metadata, f, indent=2)
-
-        return metadata
-
-    except Exception as e:
-        print(f"[ERR] Failed to download DrivAerNet++: {e}")
-        print("Note: Requires git installed.")
-        raise
-
-
-def download_engsymbols(output_dir: Path, test_mode: bool = False) -> Dict:
-    """Download Engineering Symbols dataset."""
-    dataset_dir = output_dir / "raw" / "engsymbols"
-    dataset_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"Downloading Engineering Symbols to {dataset_dir}...")
-
-    try:
-        repo_dir = dataset_dir / "repository"
-        if not repo_dir.exists():
-            print("Cloning Engineering Symbols repository...")
-            subprocess.run(
-                ["git", "clone", "https://github.com/heyad/Eng_Diagrams.git", str(repo_dir)],
-                check=True,
-                capture_output=True,
-            )
-
-        print(f"[OK] Downloaded Engineering Symbols to {dataset_dir}")
-
-        metadata = {
-            "name": "Engineering Symbols",
-            "size": "2,432 instances (multi-class)",
-            "formats": ["Images", "Symbols"],
-            "source": "https://github.com/heyad/Eng_Diagrams",
-            "license": "Research",
-            "download_date": str(Path(dataset_dir).stat().st_mtime),
-            "test_mode": test_mode,
-        }
-
-        with open(dataset_dir / "metadata.json", "w") as f:
-            json.dump(metadata, f, indent=2)
-
-        return metadata
-
-    except Exception as e:
-        print(f"[ERR] Failed to download Engineering Symbols: {e}")
-        print("Note: Requires git installed.")
-        raise
 
 
 def download_resplan(output_dir: Path, test_mode: bool = False) -> Dict:
@@ -898,13 +650,6 @@ DATASETS = {
         "size": "~1-5 GB (subset)",
         "license": "CC BY 4.0",
     },
-    "impact": {
-        "name": "IMPACT",
-        "description": "500k patents with 3.61M figures",
-        "downloader": download_impact,
-        "size": "~10-20 GB",
-        "license": "Open",
-    },
     "msd": {
         "name": "Modified Swiss Dwellings",
         "description": "5,372 floor plans with graphs",
@@ -919,28 +664,6 @@ DATASETS = {
         "size": "~Large (repo only)",
         "license": "Open/Research",
     },
-    "deeppatent2": {
-        "name": "DeepPatent2",
-        "description": "2.7M+ technical patent drawings",
-        "downloader": download_deeppatent2,
-        "size": ">100 GB",
-        "license": "CC BY-NC 2.0",
-    },
-    "drivaernet": {
-        "name": "DrivAerNet++",
-        "description": "8,150+ car meshes/simulations",
-        "downloader": download_drivaernet,
-        "size": "~Large (repo only)",
-        "license": "CC BY-NC 4.0",
-    },
-    "engsymbols": {
-        "name": "Engineering Symbols",
-        "description": "2,432 engineering symbol instances (UNSUITABLE - raster symbol classification, not vector primitives)",
-        "downloader": download_engsymbols,
-        "size": "~Small",
-        "license": "Research",
-        "note": "UNSUITABLE for DeepV - contains 100x100 pixel binary images for CNN classification, not vector geometric primitives",
-    },
     # Additional datasets from DATA_SOURCES.md
     "cadvgdrawing": {
         "name": "CAD-VGDrawing (Drawing2CAD)",
@@ -950,78 +673,6 @@ DATASETS = {
         "license": "MIT",
         "note": "Google Drive folder: https://drive.google.com/drive/folders/1t9uO2iFh1eVDXRCKUEonKPBu8WGYA8wU",
     },
-    "deeppatent": {
-        "name": "DeepPatent",
-        "description": "350k+ patent drawings",
-        "downloader": None,
-        "size": "~Large",
-        "license": "BSD-3-Clause",
-        "note": "Download from GitHub: https://github.com/GoFigure-LANL/DeepPatent-dataset",
-    },
-    "pdtw150k": {
-        "name": "PDTW150K",
-        "description": "150k+ patents, 850k+ drawings",
-        "downloader": None,
-        "size": "~Large",
-        "license": "Open Government Data License v1.0",
-        "note": "Download from GitHub: https://github.com/ncyuMARSLab/PDTW150K",
-    },
-    "patentdesc": {
-        "name": "PatentDesc-355K",
-        "description": "355k figures from 60k+ documents",
-        "downloader": None,
-        "size": "~Large",
-        "license": "Research",
-        "note": "Download from arXiv: https://arxiv.org/abs/2501.15074",
-    },
-    "cadsketchnet": {
-        "name": "CADSketchNet",
-        "description": "1k+ annotated sketches paired with 3D CAD",
-        "downloader": None,
-        "size": "~Small",
-        "license": "Research",
-        "note": "Contact authors (Computers & Graphics paper)",
-    },
-    "videocad": {
-        "name": "VideoCAD",
-        "description": "41k+ CAD UI videos",
-        "downloader": None,
-        "size": "~Large",
-        "license": "Open",
-        "note": "Download from GitHub: https://github.com/ghadinehme/VideoCAD or Harvard Dataverse",
-    },
-    "cfp": {
-        "name": "CFP (Comprehensive Floor Plan)",
-        "description": "100k+ high-res floor plan elements",
-        "downloader": None,
-        "size": "~Large",
-        "license": "Research",
-        "note": "Contact authors - no public repo",
-    },
-    "cadbimcollection": {
-        "name": "CAD/BIM Collection",
-        "description": "4.5k IFC, 6.4k RVT, 156k DWG files",
-        "downloader": None,
-        "size": "~Very Large",
-        "license": "Varies (public)",
-        "note": "Contact authors - site unavailable",
-    },
-    "holicity": {
-        "name": "HoliCity",
-        "description": "City-scale 3D models (6,300 panoramas)",
-        "downloader": None,
-        "size": "~Very Large",
-        "license": "Commercial/Research",
-        "note": "Visit: https://holicity.io/ - requires agreement",
-    },
-    "blendednet": {
-        "name": "BlendedNet",
-        "description": "999 blended wing body geometries",
-        "downloader": None,
-        "size": "~Large",
-        "license": "Apache 2.0 variant",
-        "note": "Download from Harvard Dataverse: https://dataverse.harvard.edu/",
-    },
     "fplanpoly": {
         "name": "FPLAN-POLY",
         "description": "42 floorplans + 38 symbol models in DXF vector format",
@@ -1029,14 +680,6 @@ DATASETS = {
         "size": "~Small",
         "license": "Research",
         "note": "Highly suitable for DeepV - contains vector geometric primitives (polylines)",
-    },
-    "dld": {
-        "name": "DLD (Degraded Line Drawings)",
-        "description": "81 photos/scans of floorplans",
-        "downloader": None,
-        "size": "~Small",
-        "license": "Research",
-        "note": "Contact authors (ECCV 2020 paper)",
     },
     "resplan": {
         "name": "ResPlan",
@@ -1054,33 +697,14 @@ def list_datasets():
     print("\nAvailable datasets:")
     print("=" * 80)
 
-    # Separate auto-downloadable and manual datasets
-    auto = {}
-    manual = {}
-
+    print("\n[AUTO-DOWNLOAD] These datasets can be downloaded automatically:\n")
     for key, info in DATASETS.items():
-        if info.get("downloader") is None:
-            manual[key] = info
-        else:
-            auto[key] = info
-
-    # Auto-downloadable datasets
-    if auto:
-        print("\n[AUTO-DOWNLOAD] These datasets can be downloaded automatically:\n")
-        for key, info in auto.items():
-            print(f"{key:15} - {info['name']}")
-            print(f"{'':15}   {info['description']}")
-            print(f"{'':15}   Size: {info['size']} | License: {info['license']}\n")
-
-    # Manual download datasets
-    if manual:
-        print("\n[MANUAL DOWNLOAD] These datasets require manual download or special access:\n")
-        for key, info in manual.items():
-            print(f"{key:15} - {info['name']}")
-            print(f"{'':15}   {info['description']}")
-            print(f"{'':15}   Size: {info['size']} | License: {info['license']}")
-            if "note" in info:
-                print(f"{'':15}   Note: {info['note']}\n")
+        print(f"{key:15} - {info['name']}")
+        print(f"{'':15}   {info['description']}")
+        print(f"{'':15}   Size: {info['size']} | License: {info['license']}")
+        if "note" in info:
+            print(f"{'':15}   Note: {info['note']}")
+        print()
 
     print("\n" + "=" * 80)
     print("\nUsage: python download_dataset.py --dataset <name> --output-dir ./data")
@@ -1171,20 +795,6 @@ def download_dataset(
         return None
 
     dataset_info = DATASETS[dataset_name]
-
-    # Check if this dataset requires manual download
-    if dataset_info.get("downloader") is None:
-        print(f"\n{'='*80}")
-        print(f"Dataset: {dataset_info['name']}")
-        print(f"Description: {dataset_info['description']}")
-        print(f"License: {dataset_info['license']}")
-        print(f"{'='*80}\n")
-        print("[MANUAL DOWNLOAD REQUIRED]")
-        print(f"This dataset requires manual download.\n")
-        if "note" in dataset_info:
-            print(f"Instructions: {dataset_info['note']}")
-        print()
-        return None
 
     print(f"\n{'='*80}")
     print(f"Downloading: {dataset_info['name']}")
