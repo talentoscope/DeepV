@@ -27,6 +27,7 @@ from refinement.our_refinement.utils.lines_refinement_functions import (
 from util_files.structured_logging import get_pipeline_logger
 from util_files.metrics.iou import calc_iou__vect_image
 from util_files.structured_logging import get_pipeline_logger
+from analysis.tracing import Tracer
 
 # Load refinement config
 try:
@@ -160,8 +161,11 @@ def render_optimization_hard(
             initial_vector[removed_lines, [4]] = refinement_config.initial_probability
             initial_vector = initial_vector[..., :5].numpy()
 
+            # Initialize tracer for this batch/image if enabled
+            tracer = Tracer(enabled=getattr(options, "trace", False), base_dir=getattr(options, "trace_dir", "output/traces"), image_id=name)
+
             # Initialize optimization loop
-            opt_loop = OptimizationLoop(rasters_batch, initial_vector, device, options.rendering_type, batch_logger)
+            opt_loop = OptimizationLoop(rasters_batch, initial_vector, device, options.rendering_type, batch_logger, tracer=tracer)
 
             # Register signal handler for graceful interruption
             its_time_to_stop = [False]
@@ -199,6 +203,15 @@ def render_optimization_hard(
             final_lines = opt_loop.get_final_result()
             y_pred_rend[batch_indices] = final_lines.cpu().detach()
 
+            # Save per-primitive history if tracer enabled
+            try:
+                if tracer is not None and getattr(tracer, 'enabled', False):
+                    hist = opt_loop.get_history()
+                    if hist is not None:
+                        tracer.save_primitive_history(hist)
+            except Exception:
+                pass
+
             # Accumulate IOU data
             if first_encounter:
                 first_encounter = False
@@ -216,7 +229,7 @@ def render_optimization_hard(
         prd[prd < refinement_config.probability_clip_min] = 0
         y_pred_rend = torch.cat((y_pred_rend, prd.unsqueeze(2)), dim=-1)
 
-        # Save results
+        # Save results and metrics
         os.makedirs(options.output_dir + "arrays/", exist_ok=True)
         if options.init_random:
             np.save(options.output_dir + "arrays/hard_optimization_iou_random_" + name, iou_all)
@@ -224,6 +237,19 @@ def render_optimization_hard(
         else:
             np.save(options.output_dir + "arrays/hard_optimization_iou_" + name, iou_all)
             np.save(options.output_dir + "arrays/hard_optimization_iou_mass_" + name, mass_for_iou)
+
+        # Compute and save final metrics via tracer
+        try:
+            metrics_dict = {}
+            if iou_all is not None and len(iou_all) > 0:
+                metrics_dict["final_iou_mean"] = float(np.mean(iou_all))
+                metrics_dict["final_iou_max"] = float(np.max(iou_all))
+                metrics_dict["final_iou_min"] = float(np.min(iou_all))
+                metrics_dict["refinement_iterations"] = int(options.diff_render_it)
+            if tracer is not None and getattr(tracer, 'enabled', False):
+                tracer.save_metrics(metrics_dict)
+        except Exception:
+            pass
 
         logger.log_pipeline_step("refinement", "completed", module="lines", dataset=name)
         logger.log_performance("refinement", {

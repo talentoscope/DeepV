@@ -11,6 +11,7 @@ from merging.utils.merging_functions import (
     save_svg,
     tensor_vector_graph_numpy,
 )
+from analysis.tracing import Tracer
 
 
 def postprocess(
@@ -45,6 +46,9 @@ def postprocess(
     """
     nump = tensor_vector_graph_numpy(y_pred_render, patches_offsets, options)
 
+    # Initialize tracer for merging if enabled
+    tracer = Tracer(enabled=getattr(options, "trace", False), base_dir=getattr(options, "trace_dir", "output/traces"), image_id=options.image_name[it])
+
     lines = nump.copy()
     lines = np.array(lines)
     lines = lines[lines[:, 1].argsort()[::-1]]
@@ -64,12 +68,27 @@ def postprocess(
             max_angle=options.max_angle_to_connect,
             window_width=30,  # Reduced from 200 to 30 for better performance
             max_dist=5,  # Fixed: was using angle instead of distance
+            tracer=tracer,
         )
     )
     save_svg(result, cleaned_image.shape, options.image_name[it], options.output_dir + "merging_output/")
-    result_tuning = np.array(maximiz_final_iou(result, input_rgb))
+    result_tuning = np.array(maximiz_final_iou(result, input_rgb, tracer=tracer))
     save_svg(result_tuning, cleaned_image.shape, options.image_name[it], options.output_dir + "iou_postprocess/")
     result_tuning = lines_matching(result_tuning, frac=0.07)
+    # Save final merge provenance summary and metrics
+    try:
+        if tracer.enabled:
+            prov = {"pre_merge_count": int(len(nump)), "post_merge_count": int(len(result_tuning))}
+            tracer.save_provenance(prov)
+            # Compute and save final metrics
+            metrics_dict = {
+                "pre_merge_lines": int(len(nump)),
+                "post_merge_lines": int(len(result_tuning)),
+                "merge_compression_ratio": float(len(result_tuning) / max(len(nump), 1))
+            }
+            tracer.save_metrics(metrics_dict)
+    except Exception:
+        pass
     tuned_image = save_svg(
         result_tuning, cleaned_image.shape, options.image_name[it], options.output_dir + "lines_matching/"
     )

@@ -143,3 +143,6 @@ logs/
 
 # Models (local model files)
 models/
+
+# Tracing/report outputs
+output/

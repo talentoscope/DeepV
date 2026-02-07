@@ -157,7 +157,7 @@ class OptimizationLoop:
     """Manages the main optimization loop for line refinement."""
 
     def __init__(self, rasters_batch: torch.Tensor, initial_vector: np.ndarray,
-                 device: torch.device, rendering_type: str, logger: StructuredLogger):
+                 device: torch.device, rendering_type: str, logger: StructuredLogger, tracer=None):
         """
         Initialize optimization loop.
 
@@ -172,6 +172,7 @@ class OptimizationLoop:
         self.device = device
         self.rendering_type = rendering_type
         self.logger = logger
+        self.tracer = tracer
 
         # Initialize optimization state
         lines_batch = torch.from_numpy(initial_vector).type(dtype).to(device)
@@ -188,6 +189,8 @@ class OptimizationLoop:
         self.length_final = torch.empty_like(self.opt_state.length)
         self.width_final = torch.empty_like(self.opt_state.width)
         self.lines_batch_final = torch.empty_like(lines_batch)
+        # History snapshots (appended at logging intervals)
+        self.history_snapshots = []
 
     def optimize_step(self, iteration: int) -> bool:
         """
@@ -370,6 +373,30 @@ class OptimizationLoop:
                 iou_val = float(np.mean(iou_val))
             iou_mass.append(iou_val)
             mass_for_iou_one.append(self.lines_batch_final.cpu().data.detach().numpy())
+            # Save per-iteration snapshot if tracer is enabled
+            try:
+                if self.tracer is not None and getattr(self.tracer, 'enabled', False):
+                    lines_np = self.lines_batch_final.cpu().data.detach().numpy()
+                    renders_np = self.vector_rendering.cpu().data.detach().numpy()
+                    # Save a lightweight subset to avoid large disk usage
+                    self.tracer.save_iteration(iteration, lines_batch=lines_np, renderings=renders_np)
+                    # append to history snapshots for per-primitive timelines
+                    try:
+                        # store small numeric snapshot (float32) to reduce memory
+                        self.history_snapshots.append(lines_np.astype(np.float32))
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+    def get_history(self):
+        """Return stacked history snapshots as numpy array or None."""
+        if len(self.history_snapshots) == 0:
+            return None
+        try:
+            return np.stack(self.history_snapshots, axis=0)
+        except Exception:
+            return None
 
     def get_final_result(self) -> torch.Tensor:
         """Get the final optimized line parameters."""

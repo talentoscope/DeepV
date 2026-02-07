@@ -16,6 +16,7 @@ from refinement.our_refinement.refinement_for_curves import main as curve_refine
 from refinement.our_refinement.refinement_for_lines import render_optimization_hard
 from util_files.patchify import patchify
 from vectorization import load_model
+from analysis.tracing import Tracer
 
 
 def serialize(checkpoint):
@@ -197,19 +198,62 @@ class PipelineRunner:
         image_tensor = image.unsqueeze(0).to(self.device)
         self.options.sample_name = self.options.image_name[image_index]
 
+        # Set RNG seeds for determinism if tracing
+        trace_enabled = getattr(self.options, "trace", False)
+        seed = 42  # Fixed seed for reproducibility in trace mode
+        if trace_enabled:
+            np.random.seed(seed)
+            torch.manual_seed(seed)
+            if torch.cuda.is_available():
+                torch.cuda.manual_seed(seed)
+
         # Split image into patches
         patches_rgb, patches_offsets, input_rgb = split_to_patches(
             image_tensor.cpu().numpy()[0] * 255, 64, self.options.overlap
         )
 
+        # Initialize tracer for this image (if enabled)
+        tracer = Tracer(
+            enabled=trace_enabled,
+            base_dir=getattr(self.options, "trace_dir", "output/traces"),
+            image_id=self.options.image_name[image_index],
+            seed=seed if trace_enabled else None,
+            device=str(self.device)
+        )
+
+        # Save per-patch images for inspection
+        if tracer.enabled:
+            for pidx in range(patches_rgb.shape[0]):
+                try:
+                    offset = patches_offsets[pidx].tolist() if pidx < patches_offsets.shape[0] else None
+                except Exception:
+                    offset = None
+                tracer.save_patch(pidx, patches_rgb[pidx].astype(np.uint8), offset=offset)
+
         # Run vector estimation
         patches_vector = vector_estimation(patches_rgb, self.model, self.device, image_index, self.options)
+
+        # Save raw model outputs per-patch (compact)
+        try:
+            patches_vector_np = patches_vector.detach().cpu().numpy() if hasattr(patches_vector, 'detach') else np.asarray(patches_vector)
+        except Exception:
+            patches_vector_np = np.asarray(patches_vector)
+        if tracer.enabled:
+            for pidx in range(patches_vector_np.shape[0]):
+                tracer.save_model_output(pidx, {"vector": patches_vector_np[pidx]})
+
+        # Save a lightweight pre-refinement assembly for debugging
+        if tracer.enabled:
+            prelist = []
+            for pidx in range(patches_vector_np.shape[0]):
+                prelist.append({"patch_id": int(pidx), "vector": patches_vector_np[pidx].tolist()})
+            tracer.save_pre_refinement(prelist)
 
         # Run refinement and merging based on primitive type
         if self.options.primitive_type == "curve":
             self._process_curve_pipeline(patches_rgb, patches_vector, patches_offsets, input_rgb)
         elif self.options.primitive_type == "line":
-            self._process_line_pipeline(patches_rgb, patches_vector, patches_offsets, input_rgb, image)
+            self._process_line_pipeline(patches_rgb, patches_vector, patches_offsets, input_rgb, image, tracer)
         else:
             raise ValueError(f"Unsupported primitive type: {self.options.primitive_type}")
 
@@ -230,7 +274,7 @@ class PipelineRunner:
         merging_result = curve_merging(self.options, vector_image_from_optimization=optim_vector_image)
         return merging_result
 
-    def _process_line_pipeline(self, patches_rgb, patches_vector, patches_offsets, input_rgb, image):
+    def _process_line_pipeline(self, patches_rgb, patches_vector, patches_offsets, input_rgb, image, tracer):
         """Process image using line primitives pipeline."""
         # Basic validation and logging
         print(f"[Pipeline] patches_rgb.shape={patches_rgb.shape}, patches_vector.shape={patches_vector.shape}")
@@ -245,6 +289,18 @@ class PipelineRunner:
             print(f"[Pipeline][Error] render_optimization_hard failed: {e}")
             raise
 
+        # Save post-refinement primitives
+        try:
+            if tracer.enabled:
+                try:
+                    va_np = vector_after_opt.detach().cpu().numpy() if hasattr(vector_after_opt, 'detach') else np.asarray(vector_after_opt)
+                except Exception:
+                    va_np = np.asarray(vector_after_opt)
+                postlist = [{"primitive_idx": int(i), "vector": va_np[i].tolist()} for i in range(va_np.shape[0])]
+                tracer.save_post_refinement(postlist)
+        except Exception as _:
+            pass
+
         try:
             merging_result, rendered_merged_image = postprocess(
                 vector_after_opt, patches_offsets, input_rgb, image, 0, self.options
@@ -252,6 +308,16 @@ class PipelineRunner:
         except Exception as e:
             print(f"[Pipeline][Error] postprocess failed: {e}")
             raise
+
+        # Save merge snapshot / basic trace
+        if tracer.enabled:
+            try:
+                # merging_result may be array-like
+                mr = np.asarray(merging_result)
+                tracer.save_merge_trace({"num_primitives": int(mr.shape[0]) if mr.ndim > 0 else 0})
+                tracer.save_provenance({"final_count": int(mr.shape[0]) if mr.ndim > 0 else 0})
+            except Exception:
+                pass
 
         # Ensure output directory exists and save results for inspection
         try:
@@ -321,6 +387,8 @@ def parse_args():
     parser.add_argument("--model_output_count", type=int, default=10, help="max_model_output")
     parser.add_argument("--max_angle_to_connect", type=int, default=10, help="max_angle_to_connect in pixel")
     parser.add_argument("--max_distance_to_connect", type=int, default=3, help="max_distance_to_connect in pixel")
+    parser.add_argument("--trace", action="store_true", default=False, help="Enable per-step tracing outputs for analysis")
+    parser.add_argument("--trace_dir", type=str, default="output/traces", help="Directory to write trace artifacts")
     parser.add_argument(
         "--model_path",
         type=str,

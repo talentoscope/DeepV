@@ -360,7 +360,7 @@ def compute_angle(line0, line1):
     return angle
 
 
-def merge_close(lines: np.ndarray, idx, widths: np.ndarray, tol: float = 1e-3, max_dist: float = 5, max_angle: float = 15, window_width: int = 100) -> List[np.ndarray]:
+def merge_close(lines: np.ndarray, idx, widths: np.ndarray, tol: float = 1e-3, max_dist: float = 5, max_angle: float = 15, window_width: int = 100, tracer=None) -> List[np.ndarray]:
     """
     Merge lines that are close, intersecting, or nearly parallel using spatial indexing.
 
@@ -387,6 +387,7 @@ def merge_close(lines: np.ndarray, idx, widths: np.ndarray, tol: float = 1e-3, m
     window = [-window_width, -window_width, window_width, window_width]
     n = len(lines)
     close = [[] for _ in range(n)]
+    merge_trace = []
 
     for i in tqdm(range(n)):
         #         if (line_length(lines[i, :4]) < 3):
@@ -417,10 +418,24 @@ def merge_close(lines: np.ndarray, idx, widths: np.ndarray, tol: float = 1e-3, m
             path = list(dfs(close, i))
             width = widths[path].mean(keepdims=True)
             new_line = merge_close_lines(lines[path])
-            result.append(np.concatenate((new_line, width, np.ones(width.shape))))
+            merged_line = np.concatenate((new_line, width, np.ones(width.shape)))
+            result.append(merged_line)
             merged.update(path)
+            # record merge cluster for tracing
+            try:
+                merge_trace.append({"cluster": [int(p) for p in path], "merged_line": merged_line.tolist()})
+            except Exception:
+                pass
         elif i not in merged:
             result.append((lines[i]))
+
+    # Save merge trace if tracer provided
+    try:
+        if tracer is not None and getattr(tracer, 'enabled', False):
+            tracer.save_merge_trace({"clusters": merge_trace})
+    except Exception:
+        pass
+
     return result
 
 
@@ -436,7 +451,7 @@ def draw_with_skeleton(lines, drawing_scale=1, skeleton_line_width=0, skeleton_n
     )
 
 
-def maximiz_final_iou(nump: np.ndarray, input_rgb: np.ndarray) -> List[np.ndarray]:
+def maximiz_final_iou(nump: np.ndarray, input_rgb: np.ndarray, tracer=None) -> List[np.ndarray]:
     """
     Optimize final line set by maximizing IOU with original image through iterative removal.
 
@@ -486,12 +501,15 @@ def maximiz_final_iou(nump: np.ndarray, input_rgb: np.ndarray) -> List[np.ndarra
 
     # Test removal of candidate lines
     removed_count = 0
+    removal_trace = []
     for idx in candidates:
         if idx >= len(lines):  # Line might have been removed already
             continue
 
         # Remove the line temporarily
         poped_line = lines.pop(idx)
+
+        trace_entry = {"candidate_idx": int(idx), "line": poped_line.tolist()}
 
         # Re-render with line removed
         tmp_scr = (draw_with_skeleton(np.array(lines), max_x=input_rgb.shape[1], max_y=input_rgb.shape[0]) / 255.0)[..., 0]
@@ -500,12 +518,23 @@ def maximiz_final_iou(nump: np.ndarray, input_rgb: np.ndarray) -> List[np.ndarra
         if tmp_mse > mse_ref:
             # MSE got worse, put the line back
             lines.insert(idx, poped_line)
+            trace_entry["removed"] = False
         else:
             # MSE improved, keep the removal
             mse_ref = tmp_mse
             removed_count += 1
+            trace_entry["removed"] = True
+
+        removal_trace.append(trace_entry)
 
     print(f"IOU optimization: tested {len(candidates)} lines, removed {removed_count} redundant lines")
+    # Save removal trace if tracer provided
+    try:
+        if tracer is not None and getattr(tracer, 'enabled', False):
+            tracer.save_merge_trace({"iou_optimization": {"tested": int(len(candidates)), "removed_count": int(removed_count), "removals": removal_trace}})
+    except Exception:
+        pass
+
     return lines
 
 
