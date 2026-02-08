@@ -25,6 +25,7 @@ Short, actionable guidance to get an AI coding agent productive quickly in this 
 
 ## Where to start (quick links)
 - Full pipeline runner: [run_pipeline.py](run_pipeline.py) (argparse) or [run_pipeline_hydra.py](run_pipeline_hydra.py) (Hydra config)
+ - Full pipeline runner: [run_pipeline.py](run_pipeline.py) (argparse) or [run_pipeline_hydra.py](run_pipeline_hydra.py) (Hydra config)
 - Unified pipeline: [pipeline_unified.py](pipeline_unified.py)
 - Cleaning entrypoint: [cleaning/scripts/main_cleaning.py](cleaning/scripts/main_cleaning.py)
 - Web demo: [run_web_ui_demo.py](run_web_ui_demo.py) and [web_ui/](web_ui/) (⚠️ has deployment issues with Gradio/conda)
@@ -32,8 +33,11 @@ Short, actionable guidance to get an AI coding agent productive quickly in this 
 - Utilities: [util_files/file_utils.py](util_files/file_utils.py) and [util_files/patchify.py](util_files/patchify.py)
 - Analysis scripts: [scripts/comprehensive_analysis.py](scripts/comprehensive_analysis.py) (metrics), [scripts/benchmark_pipeline.py](scripts/benchmark_pipeline.py) (evaluation)
 
+Note: Datasets have been prepared and placed under `data/` (raster/vector). Use the verification scripts below to confirm integrity before running experiments.
+
 ## How to run (concrete examples)
 - Run pipeline (argparse example):
+ - Run pipeline (argparse example):
 
 ```bash
 python run_pipeline.py \
@@ -55,6 +59,7 @@ python run_pipeline_hydra.py \
 ```
 
 - Train cleaning UNet:
+ - Train cleaning UNet:
 
 ```bash
 python cleaning/scripts/main_cleaning.py \
@@ -69,6 +74,11 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements-dev.txt
 .\scripts\run_tests_local.ps1
+
+Verification & dataset notes:
+- Validate environment: run `python scripts/validate_env.py` to check system dependencies.
+- Verify FloorPlanCAD dataset and splits: run `python scripts/download_and_verify_floorplancad.py` or `python create_floorplancad_splits.py` if you produced splits locally.
+- Quick smoke inference (small demo): run `python run_web_ui_demo.py` to sanity-check model imports and rendering.
 ```
 
 ## Project-specific conventions & gotchas
@@ -76,6 +86,10 @@ python -m pip install -r requirements-dev.txt
 - Patch & padding: patches are square (commonly 64px) and images are padded to multiples of 32 (see `cleaning/scripts/main_cleaning.py` and `run_pipeline.py` read/padding logic).
 - `util_files/os.py` previously shadowed stdlib `os`. Use [util_files/file_utils.py](util_files/file_utils.py) imports: `from util_files import file_utils as fu`.
 - When renaming utilities, update imports from `from util_files.os import ...` to `from util_files.file_utils import ...`.
+
+If datasets are already in place:
+- Confirm `data/raster/` and `data/vector/` contain the expected FloorPlanCAD files listed in `floorplancad_files.txt`.
+- Use `scripts/extract_floorplancad_ground_truth.py` to regenerate or validate SVG ground truth parsing.
 - Checkpoints & logging: defaults use `logs/` and `tensorboardx` (SummaryWriter). Always set `--output_dir` and TB dir for reproducibility.
 - Model specs: JSON configs under `vectorization/models/specs/` define network architectures (e.g., ResNet + Transformer decoder).
 - Primitive types: Use "line" or "curve"; curves include Béziers, arcs, splines.
@@ -99,9 +113,16 @@ python -m pip install -r requirements-dev.txt
 - **Processing**: Images are padded to multiples of 32, split into 64×64 patches with configurable overlap (default: 0).
 - **Splits**: Train/val/test splits defined in `data/splits/` as JSON files with image paths.
 
+If you've placed datasets into `data/` already, run `python scripts/comprehensive_analysis.py` (or `python scripts/benchmark_pipeline.py`) on a small subset to confirm the tooling and metric pipelines are working before a full-scale run.
+
 ## Tests, validation & debugging
 - Validate environment: `python scripts/validate_env.py`.
 - Run local tests (Windows helper): `.\scripts\run_tests_local.ps1` or `pytest -q` after installing `requirements-dev.txt`.
+
+Small checklist after dataset placement:
+- Run `python scripts/validate_env.py`.
+- Run `python scripts/download_and_verify_floorplancad.py` (if needed) or `python scripts/create_floorplancad_splits.py` to generate splits.
+- Execute `python run_web_ui_demo.py` for a smoke run.
 - Common pytest commands: `pytest tests/test_smoke.py -v` (smoke tests), `pytest tests/ -k "integration"` (integration tests), `pytest --tb=short` (shorter tracebacks).
 - Not all tests require GPU; tests skip heavy ML parts when CUDA/PyTorch missing.
 - Benchmarking: `scripts/benchmark_pipeline.py` for evaluation against baselines.

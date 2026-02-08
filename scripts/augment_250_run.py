@@ -19,6 +19,26 @@ import util_files.data.transforms.ocrodeg_degrade as ocrodeg
 import io
 from PIL import Image as PILImage
 from skimage.morphology import remove_small_objects
+import inspect
+
+
+# Compatibility wrapper for skimage.morphology.remove_small_objects API
+_rso_sig = inspect.signature(remove_small_objects)
+def _safe_remove_small_objects(binary, min_size: int, **kwargs):
+    """Call `remove_small_objects` preserving old semantics across skimage versions.
+
+    Newer skimage versions renamed/changed the parameter semantics (uses
+    `max_size` meaning "remove objects smaller than or equal to this value").
+    Older versions used `min_size` meaning "remove objects smaller than this value".
+    To keep the previous behaviour, when `max_size` is present we pass
+    `max_size=min_size-1`.
+    """
+    if 'max_size' in _rso_sig.parameters:
+        # new API: remove objects smaller than or equal to max_size
+        max_size = max(0, int(min_size) - 1)
+        return remove_small_objects(binary, max_size=max_size, **kwargs)
+    else:
+        return remove_small_objects(binary, min_size=min_size, **kwargs)
 from skimage.draw import line
 from skimage.draw import line
 from skimage.morphology import remove_small_objects
@@ -671,10 +691,10 @@ def aug_bad_autocrop_border(img, intensity):
 def aug_despeckle_overaggressive(img, intensity):
     intensity = min(intensity, 0.05)  # Further cap max intensity
     # Remove small black pixels with variable min_size
-    from skimage.morphology import remove_small_objects
+    from skimage.morphology import remove_small_objects  # noqa: F401 (used by compatibility wrapper)
     min_size = int(1 + float(intensity) * 10)  # Vary min_size 1-11
     binary = img < 0.5
-    cleaned = remove_small_objects(binary, min_size=min_size)
+    cleaned = _safe_remove_small_objects(binary, min_size=min_size)
     return cleaned.astype(float)
 
 def aug_tone_compression_clipping(img, intensity):
