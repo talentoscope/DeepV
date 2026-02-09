@@ -1,6 +1,7 @@
 import os
 import sys
 from argparse import ArgumentParser
+from typing import Optional, Any
 
 import numpy as np
 
@@ -11,17 +12,26 @@ from util_files.simplification.join_qb import join_quad_beziers
 from util_files.structured_logging import get_pipeline_logger
 
 
-def main(options, vector_image_from_optimization=None, width_percentile=90, fit_tol=0.5, w_tol=np.inf, join_tol=0.5):
+def main(
+    options: Any,
+    vector_image_from_optimization: Optional[Any] = None,
+    width_percentile: int = 90,
+    fit_tol: float = 0.5,
+    w_tol: float = np.inf,
+    join_tol: float = 0.5
+) -> Any:
     """
     Postprocess refined curve primitives by merging and simplifying Bézier curves.
 
-    This function handles curve merging for quadratic Béziers, joining overlapping or nearly
-    collinear curves to reduce redundancy while preserving shape accuracy.
+    This function handles curve merging for quadratic Béziers, joining overlapping or
+    nearly collinear curves to reduce redundancy while preserving shape accuracy.
 
     Args:
         options: Config object with output_dir, sample_name, etc.
-        vector_image_from_optimization: VectorImage object from refinement stage.
-        width_percentile: Percentile of curve widths for scaling tolerances (default 90).
+        vector_image_from_optimization: VectorImage object from refinement
+            stage.
+        width_percentile: Percentile of curve widths for scaling tolerances
+        (default 90).
         fit_tol: Fitting tolerance multiplier for curve simplification.
         w_tol: Width tolerance multiplier for merging.
         join_tol: Joining tolerance multiplier for connecting curves.
@@ -36,7 +46,10 @@ def main(options, vector_image_from_optimization=None, width_percentile=90, fit_
     """
     logger = get_pipeline_logger("merging.curves")
     if vector_image_from_optimization is None:
-        raise ValueError("vector_image_from_optimization must be provided - job_tuples mode is not supported. Use the unified pipeline interface instead.")
+        raise ValueError(
+            "vector_image_from_optimization must be provided - job_tuples mode is not "
+            "supported. Use the unified pipeline interface instead."
+        )
 
     sample_name = options.sample_name[:-4]
     vector_image = vector_image_from_optimization
@@ -55,7 +68,9 @@ def main(options, vector_image_from_optimization=None, width_percentile=90, fit_
         logger.info(f"\tfit_tol is {fit_tol}")
         logger.info(f"\tw_tol is {w_tol}")
         logger.info(f"\tjoin_tol is {join_tol}")
-        curves = join_quad_beziers(curves, fit_tol=join_tol, w_tol=w_tol, join_tol=join_tol).numpy()
+        curves = join_quad_beziers(
+            curves, fit_tol=join_tol, w_tol=w_tol, join_tol=join_tol
+        ).numpy()
         logger.info(f"\tnumber of curves after merging is {len(curves)}")
     curves = np.asarray(curves)
     paths = [Path.from_primitive(PT_QBEZIER, prim) for prim in curves] + [
@@ -70,7 +85,7 @@ def main(options, vector_image_from_optimization=None, width_percentile=90, fit_
     return vector_image
 
 
-def parse_args():
+def parse_args() -> ArgumentParser:
     parser = ArgumentParser()
     parser.add_argument(
         "--dataset",
@@ -79,7 +94,9 @@ def parse_args():
         choices=["synthetic", "custom"],
     )
     parser.add_argument("--job_id", type=int, required=True)
-    parser.add_argument("--init_random", action="store_true", help="init optimization randomly")
+    parser.add_argument(
+        "--init_random", action="store_true", help="init optimization randomly"
+    )
 
     return parser.parse_args()
 

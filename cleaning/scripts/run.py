@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
+"""
+DeepV cleaning and vectorization pipeline runner.
+
+This script provides an end-to-end pipeline for cleaning and vectorizing
+technical drawings using pre-trained models.
+"""
 
 import argparse
 import os
 from itertools import product
+from typing import Any, Tuple
 
 import numpy as np
 import skimage.io as skio
@@ -11,7 +18,7 @@ import torch
 from util_files.patchify import patchify
 
 
-def clean_image(rgb, cleaning_model):
+def clean_image(rgb: np.ndarray, cleaning_model: Any) -> np.ndarray:
     """Run cleaning operation on the input line drawing,
     leaving clean (non-dirty, non-shaded) and
     full (without gaps) line drawing.
@@ -46,7 +53,7 @@ def clean_image(rgb, cleaning_model):
     return cleaned[0, 0].cpu().detach().numpy()[..., None]
 
 
-def split_to_patches(rgb, patch_size, overlap=0):
+def split_to_patches(rgb: np.ndarray, patch_size: int, overlap: int = 0) -> Tuple[np.ndarray, np.ndarray]:
     """Separates the input into square patches of specified size.
 
     :param rgb: input RGB image
@@ -72,31 +79,58 @@ def split_to_patches(rgb, patch_size, overlap=0):
     return patches, patches_offsets
 
 
-def save_output(output_vector, output_filename):
-    """
+def save_output(output_vector: Any, output_filename: str) -> None:
+    """Save vectorized output to file.
 
-    :param output_vector:
-    :param output_filename:
-    :return:
+    :param output_vector: vectorized primitives to save
+    :param output_filename: path to output file
     """
     with open(output_filename, "w") as output_file:
         for primitive in output_vector:
             primitive.write(output_file)
 
 
-def vectorize(rgb, vector_model):
+def vectorize(rgb: np.ndarray, vector_model: Any) -> Any:
+    """Vectorize RGB image using the provided model.
+
+    :param rgb: input RGB image
+    :param vector_model: vectorization model
+    :return: vectorized output
+    """
+    # TODO: Implement vectorization logic
     pass
 
 
-def assemble_vector_patches(patches_vector, patches_offsets):
+def assemble_vector_patches(patches_vector: Any, patches_offsets: np.ndarray) -> Any:
+    """Assemble vectorized patches into final output.
+
+    :param patches_vector: list of vectorized patches
+    :param patches_offsets: offsets for each patch
+    :return: assembled vector output
+    """
     for patch_vector, patch_offset in zip(patches_vector, patches_offsets):
         for primitive in patch_vector:
             primitive.offset(patch_offset)
-
+    # TODO: Implement assembly logic
     pass
 
 
-def main(options):
+def load_vector_model(model_path: str) -> Any:
+    """Load vectorization model from file.
+
+    :param model_path: path to model file
+    :return: loaded model
+    """
+    # TODO: Implement proper model loading
+    return torch.load(model_path)
+
+
+def main(options: argparse.Namespace) -> None:
+    """Main function for running the cleaning and vectorization pipeline."""
+    # Check CUDA availability
+    if not torch.cuda.is_available():
+        raise RuntimeError("CUDA is not available. This script requires GPU support.")
+
     input_rgb = skio.imread(options.input_filename)
 
     cleaned_rgb = input_rgb
@@ -129,7 +163,7 @@ def main(options):
         save_output(output_vector, options.output_filename)
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--gpu", type=int, default=0, help="GPU to use [default: GPU 0].")
     parser.add_argument(

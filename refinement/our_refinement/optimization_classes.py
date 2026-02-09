@@ -6,11 +6,10 @@ into more maintainable, testable components.
 """
 
 import os
-from typing import Any, List, Optional, Tuple
+from typing import List, Tuple, Optional
 
 import numpy as np
 import torch
-from tqdm import tqdm
 
 from refinement.our_refinement.utils.lines_refinement_functions import (
     NonanAdam,
@@ -34,8 +33,10 @@ from util_files.structured_logging import StructuredLogger
 try:
     from omegaconf import OmegaConf
 
-    refinement_config = OmegaConf.load(os.path.join(os.path.dirname(__file__), "../../config/refinement/default.yaml"))
-except:
+    refinement_config = OmegaConf.load(
+        os.path.join(os.path.dirname(__file__), "../../config/refinement/default.yaml")
+    )
+except ImportError:
     # Fallback
     class FallbackConfig:
         render_res = 64
@@ -92,8 +93,10 @@ class LineOptimizationState:
         self.width = width.clone().detach().requires_grad_(True).to(device)
 
         # Initialize optimizers
-        self.pos_optimizer = NonanAdam([self.cx, self.cy, self.theta], lr=refinement_config.learning_rate_lines)
-        self.size_optimizer = NonanAdam([self.length, self.width], lr=refinement_config.learning_rate_lines)
+        self.pos_optimizer = NonanAdam([self.cx, self.cy, self.theta],
+                                       lr=refinement_config.learning_rate_lines)
+        self.size_optimizer = NonanAdam([self.length, self.width],
+                                        lr=refinement_config.learning_rate_lines)
 
         # Initialize gradients
         (self.cx + self.cy + self.theta + self.length + self.width).reshape(-1)[0].backward()
@@ -110,7 +113,7 @@ class LineOptimizationState:
         y2 = self.cy + self.length * torch.sin(self.theta) / 2
         return torch.stack([x1, y1, x2, y2, self.width], -1)
 
-    def apply_constraints(self):
+    def apply_constraints(self) -> None:
         """Apply parameter constraints to keep lines within bounds."""
         constrain_parameters(
             self.cx,
@@ -123,7 +126,7 @@ class LineOptimizationState:
             size_optimizer=self.size_optimizer,
         )
 
-    def snap_lines(self):
+    def snap_lines(self) -> None:
         """Snap lines that have coinciding ends, close orientations and close widths."""
         snap_lines(
             self.cx,
@@ -140,7 +143,10 @@ class BatchProcessor:
     """Handles batch processing for refinement optimization."""
 
     def __init__(
-        self, patches_rgb: torch.Tensor, patches_vector: torch.Tensor, batch_size: int = refinement_config.batch_size
+        self,
+        patches_rgb: torch.Tensor,
+        patches_vector: torch.Tensor,
+        batch_size: int = refinement_config.batch_size
     ):
         """
         Initialize batch processor.
@@ -197,7 +203,9 @@ class OptimizationLoop:
             rendering_type: Type of rendering ('hard' or 'bezier_splatting')
             logger: Logger instance
         """
-        self.rasters_batch = torch.nn.functional.pad(rasters_batch, [padding, padding, padding, padding]).to(device)
+        self.rasters_batch = torch.nn.functional.pad(
+            rasters_batch, [padding, padding, padding, padding]
+        ).to(device)
         self.device = device
         self.rendering_type = rendering_type
         self.logger = logger
@@ -254,7 +262,7 @@ class OptimizationLoop:
         except KeyboardInterrupt:
             return False
 
-    def _reinitialize_excess(self, iteration: int):
+    def _reinitialize_excess(self, iteration: int) -> None:
         """Reinitialize excess line predictions."""
         lines_batch = self.opt_state.get_lines_batch()
         lines_batch[..., -1][lines_batch[..., -1] < refinement_config.width_min_threshold] = 0
@@ -275,7 +283,7 @@ class OptimizationLoop:
             patches_to_consider=self.patches_to_optimize,
         )
 
-    def _optimize_positions(self):
+    def _optimize_positions(self) -> None:
         """Optimize mean field energy w.r.t position parameters."""
         lines_batch = self.opt_state.get_lines_batch()
 
@@ -288,7 +296,7 @@ class OptimizationLoop:
         self.opt_state.pos_optimizer.step()
         self.opt_state.apply_constraints()
 
-    def _optimize_sizes_left_fixed(self):
+    def _optimize_sizes_left_fixed(self) -> None:
         """Optimize size parameters with left points and orientations fixed."""
         # Fix left points
         x1 = self.opt_state.cx.data - self.opt_state.length.data * torch.cos(self.opt_state.theta.data) / 2
@@ -322,7 +330,7 @@ class OptimizationLoop:
         )
         self.opt_state.apply_constraints()
 
-    def _optimize_sizes_right_fixed(self):
+    def _optimize_sizes_right_fixed(self) -> None:
         """Optimize size parameters with right points and orientations fixed."""
         # Fix right points
         x2 = self.opt_state.cx.data + self.opt_state.length.data * torch.cos(self.opt_state.theta.data) / 2
@@ -363,7 +371,7 @@ class OptimizationLoop:
         take_batches: List[int],
         iou_mass: List,
         mass_for_iou_one: List,
-    ):
+    ) -> None:
         """Log progress and update tracking variables."""
         if iteration % refinement_config.logging_interval == 0:
             # Record current parameters
@@ -444,7 +452,7 @@ class OptimizationLoop:
             except Exception:
                 pass
 
-    def get_history(self):
+    def get_history(self) -> Optional[np.ndarray]:
         """Return stacked history snapshots as numpy array or None."""
         if len(self.history_snapshots) == 0:
             return None

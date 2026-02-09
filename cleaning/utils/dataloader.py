@@ -15,6 +15,7 @@ Used by cleaning model training pipelines.
 """
 
 import os
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import PIL
@@ -26,7 +27,16 @@ from torchvision import transforms
 
 
 class MakeData(Dataset):
-    def __init__(self, img_path, img_y_path, transform=None, tr=None):
+    """Dataset class for loading image pairs (input/target) for cleaning training."""
+
+    def __init__(self, img_path: str, img_y_path: str, transform: Optional[transforms.Compose] = None, tr: Optional[int] = None):
+        """Initialize dataset with image paths.
+
+        :param img_path: path to input images
+        :param img_y_path: path to target images
+        :param transform: optional transform pipeline
+        :param tr: training flag
+        """
         tmp_df_x = []
         tmp_df_y = []
         for it in os.listdir(img_path):
@@ -42,13 +52,10 @@ class MakeData(Dataset):
         self.X_train = tmp_df_x
         self.y_train = tmp_df_y
 
-        self.trans = transforms.Compose(
-            [
-                transforms.ToTensor(),
-            ]
-        )
+        self.trans = transforms.Compose([transforms.ToTensor()])
 
-    def crop(self, img, mask, width, height):
+    def crop(self, img: Image.Image, mask: Image.Image, width: int, height: int) -> Tuple[Image.Image, Image.Image]:
+        """Crop images to specified dimensions."""
         print(img.size, width, height)
         assert img.size[0] >= height
         assert img.size[1] >= width
@@ -60,18 +67,18 @@ class MakeData(Dataset):
         mask = mask.crop((y, x, y + height, x + width))
         return img, mask
 
-    def transformation(self, img, img_y):
+    def transformation(self, img: Image.Image, img_y: Image.Image) -> Tuple[Image.Image, Image.Image]:
+        """Apply transformation pipeline to image pair."""
         img = PIL.ImageOps.invert(img)
         img_y = PIL.ImageOps.invert(img_y)
         mini = 512
         img, img_y = self.crop(img, img_y, mini, mini)
-        #         img_y = np.array(img_y)
-        #         a=(img_y>0).astype(int)
         img = PIL.ImageOps.invert(img)
         img_y = PIL.ImageOps.invert(img_y)
         return img, img_y
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Get item at index."""
         img = Image.open(os.path.join(self.img_path_x, self.X_train[index]))
         img = img.convert("L")
         img_y = Image.open(os.path.join(self.img_path_y, self.y_train[index]))
@@ -87,16 +94,25 @@ class MakeData(Dataset):
             img = self.trans(img)
         img_y = np.array(img_y).astype(float)
         img_y = img_y / 255.0
-        #         img_y = (img_y>0).astype(int)
         label = torch.from_numpy(img_y)
         return img, label
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """Return dataset length."""
         return len(self.X_train)
 
 
 class MakeDataSynt(Dataset):
-    def __init__(self, img_path, img_y_path, transform=None, tr=None):
+    """Dataset class for synthetic data with hole/non-hole ground truths."""
+
+    def __init__(self, img_path: str, img_y_path: str, transform: Optional[transforms.Compose] = None, tr: Optional[int] = None):
+        """Initialize synthetic dataset.
+
+        :param img_path: path to input images
+        :param img_y_path: path to target images
+        :param transform: optional transform pipeline
+        :param tr: training flag
+        """
         tmp_df_x = []
         tmp_df_y_h = []
         tmp_df_y_nh = []
@@ -122,11 +138,7 @@ class MakeDataSynt(Dataset):
         self.y_train_h = tmp_df_y_h
         self.y_train_nh = tmp_df_y_nh
 
-        self.trans = transforms.Compose(
-            [
-                transforms.ToTensor(),
-            ]
-        )
+        self.trans = transforms.Compose([transforms.ToTensor()])
 
     def crop(self, img, mask, mask_1, width, height):
         assert img.size[0] >= height
@@ -205,7 +217,13 @@ class MakeDataSynt(Dataset):
 
 
 class MakeDataVectorField(Dataset):
-    def __init__(self, data_path):
+    """Dataset class for loading vector field data from .npy files."""
+
+    def __init__(self, data_path: str):
+        """Initialize vector field dataset.
+
+        :param data_path: path to directory containing .npy files
+        """
         df = []
         for name in os.listdir(data_path):
             if name.endswith(".npy"):
@@ -215,11 +233,12 @@ class MakeDataVectorField(Dataset):
         self.data_path = data_path
         self.data_files = df
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """Return dataset length."""
         return len(self.data_files)
 
-    def __getitem__(self, index):
-
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Get item at index."""
         with open(self.data_path + self.data_files[index], "rb") as inp:
             img_field = np.load(inp)
 

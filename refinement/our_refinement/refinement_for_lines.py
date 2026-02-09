@@ -2,7 +2,7 @@ import argparse
 import logging
 import os
 import signal
-from typing import Any, List, Tuple
+from typing import Any, List
 
 import numpy as np
 import torch
@@ -14,33 +14,25 @@ from refinement.our_refinement.optimization_classes import (
     OptimizationLoop,
 )
 from refinement.our_refinement.utils.lines_refinement_functions import (
-    NonanAdam,
-    collapse_redundant_lines,
-    constrain_parameters,
     dtype,
     h,
-    mean_field_energy_lines,
-    mean_vector_field_energy_lines,
     padding,
-    reinit_excess_lines,
-    render_lines_with_type,
-    size_energy,
-    snap_lines,
     w,
 )
-from util_files.metrics.iou import calc_iou__vect_image
 from util_files.structured_logging import get_pipeline_logger
 
 # Load refinement config
 try:
     from omegaconf import OmegaConf
 
-    refinement_config = OmegaConf.load(os.path.join(os.path.dirname(__file__), "../../config/refinement/default.yaml"))
-except:
+    refinement_config = OmegaConf.load(
+        os.path.join(os.path.dirname(__file__), "../../config/refinement/default.yaml")
+    )
+except ImportError:
     # Fallback
     class FallbackConfig:
         render_res = 64
-        padding = 3
+        render_padding = 3
         learning_rate_lines = 0.1
         optimization_iters_n = 100
         batch_size = 300
@@ -70,7 +62,11 @@ def register_sigint_flag(flag_list: List[bool]) -> None:
 
 
 def render_optimization_hard(
-    patches_rgb: np.ndarray, patches_vector: torch.Tensor, device: torch.device, options: Any, name: str
+    patches_rgb: np.ndarray,
+    patches_vector: torch.Tensor,
+    device: torch.device,
+    options: Any,
+    name: str
 ) -> torch.Tensor:
     """
     Perform differentiable optimization to refine vector primitives for better raster matching.

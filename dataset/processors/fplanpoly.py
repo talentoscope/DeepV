@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict
 
 from tqdm import tqdm
 
@@ -10,11 +10,23 @@ from .base import Processor
 class FPLANPOLYProcessor(Processor):
     """Processor for FPLAN-POLY dataset.
 
-    Copies DXF vector files (floorplans and symbols) to the vector directory.
-    The dataset contains 42 floorplan DXF files and 38 symbol model DXF files.
+    Processes FPLAN-POLY dataset by copying DXF vector files (floorplans and symbols)
+    from Floorplans and Model Symbols directories to the standardized vector directory.
+
+    The dataset contains 42 floorplan DXF files and 38 symbol model DXF files,
+    totaling 80 DXF files that are copied to the output vector directory.
+
+    Args:
+        input_dir: Directory containing Floorplans/ and Model Symbols/ subdirectories
+        output_base: Base directory for processed output
+        dry_run: If True, only analyze and report without copying files
+
+    Returns:
+        Dict containing processing metadata (DXF counts, copy statistics)
     """
 
-    def standardize(self, input_dir: Path, output_base: Path, dry_run: bool = True) -> Dict:
+    def standardize(self, input_dir: Path, output_base: Path,
+                    dry_run: bool = True) -> Dict[str, Any]:
         input_dir = Path(input_dir)
         output_base = Path(output_base)
         vec_dir = output_base / "vector" / "fplanpoly"
@@ -48,13 +60,17 @@ class FPLANPOLYProcessor(Processor):
         dxf_copied = 0
 
         for dxf_file in tqdm(dxf_files, desc="Copying FPLANPOLY DXFs"):
-            # Use the filename as-is (they're already well-named)
-            dest_path = vec_dir / dxf_file.name
+            try:
+                # Use the filename as-is (they're already well-named)
+                dest_path = vec_dir / dxf_file.name
 
-            # Copy DXF file
-            if not dest_path.exists():
-                shutil.copy2(dxf_file, dest_path)
-                dxf_copied += 1
+                # Copy DXF file
+                if not dest_path.exists():
+                    shutil.copy2(dxf_file, dest_path)
+                    dxf_copied += 1
+            except (OSError, shutil.Error) as e:
+                print(f"Warning: Failed to copy {dxf_file.name}: {e}")
+                continue
 
         return {
             "dataset": "fplanpoly",

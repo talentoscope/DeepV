@@ -48,7 +48,7 @@ class Tracer:
         with open(self.image_dir / "determinism.json", "w", encoding="utf-8") as f:
             json.dump(meta, f)
 
-    def save_patch(self, patch_id: str, patch_array: np.ndarray, offset=None):
+    def save_patch(self, patch_id: str, patch_array: np.ndarray, offset=None) -> None:
         if not self._enabled():
             return
         pdir = self.patches_dir / str(patch_id)
@@ -57,15 +57,18 @@ class Tracer:
         try:
             img = Image.fromarray(patch_array)
             img.save(pdir / "patch.png")
-        except Exception:
-            # fallback: save as npz
-            np.savez_compressed(pdir / "patch.npz", patch=patch_array)
+        except (ValueError, TypeError, OSError) as e:
+            # fallback: save as npz if PIL fails
+            try:
+                np.savez_compressed(pdir / "patch.npz", patch=patch_array)
+            except Exception:
+                pass  # Silent failure for tracing
         # save metadata
         meta = {"patch_id": str(patch_id), "offset": offset}
         with open(pdir / "meta.json", "w", encoding="utf-8") as f:
             json.dump(meta, f)
 
-    def save_model_output(self, patch_id: str, model_output: dict):
+    def save_model_output(self, patch_id: str, model_output: dict) -> None:
         if not self._enabled():
             return
         pdir = self.patches_dir / str(patch_id)
@@ -81,25 +84,25 @@ class Tracer:
             with open(pdir / "model_output_meta.json", "w", encoding="utf-8") as f:
                 json.dump(meta, f)
 
-    def save_pre_refinement(self, primitives: list):
+    def save_pre_refinement(self, primitives: list) -> None:
         if not self._enabled():
             return
         with open(self.image_dir / "pre_refinement.json", "w", encoding="utf-8") as f:
             json.dump(primitives, f)
 
-    def save_post_refinement(self, primitives: list):
+    def save_post_refinement(self, primitives: list) -> None:
         if not self._enabled():
             return
         with open(self.image_dir / "post_refinement.json", "w", encoding="utf-8") as f:
             json.dump(primitives, f)
 
-    def save_merge_trace(self, merge_trace: dict):
+    def save_merge_trace(self, merge_trace: dict) -> None:
         if not self._enabled():
             return
         with open(self.image_dir / "merge_trace.json", "w", encoding="utf-8") as f:
             json.dump(merge_trace, f)
 
-    def save_provenance(self, prov: dict):
+    def save_provenance(self, prov: dict) -> None:
         if not self._enabled():
             return
         with open(self.image_dir / "provenance.json", "w", encoding="utf-8") as f:
@@ -121,8 +124,8 @@ class Tracer:
         if lines_batch is not None:
             try:
                 np.savez_compressed(it_dir / f"lines_iter_{iteration}.npz", lines=lines_batch)
-            except Exception:
-                pass
+            except (OSError, ValueError):
+                pass  # Silent failure for tracing
         if renderings is not None:
             # Save a small montage or individual PNGs
             try:
@@ -134,15 +137,15 @@ class Tracer:
                     else:
                         arrn = arr
                     Image.fromarray(arrn).save(it_dir / f"render_{iteration}_{i}.png")
-            except Exception:
+            except (ValueError, TypeError, OSError, IndexError):
                 try:
                     np.savez_compressed(it_dir / f"renderings_iter_{iteration}.npz", renderings=renderings)
-                except Exception:
+                except (OSError, ValueError):
                     pass
         with open(it_dir / f"meta_{iteration}.json", "w", encoding="utf-8") as f:
             json.dump(meta, f)
 
-    def save_primitive_history(self, history_array: np.ndarray):
+    def save_primitive_history(self, history_array: np.ndarray) -> None:
         """Save stacked history snapshots of primitives across iterations.
 
         history_array: numpy array with shape (num_iterations, P, N, 5)
@@ -159,7 +162,7 @@ class Tracer:
             except Exception:
                 pass
 
-    def save_metrics(self, metrics: dict):
+    def save_metrics(self, metrics: dict) -> None:
         """Save per-stage metrics (IoU, Chamfer, etc.).
 
         Args:

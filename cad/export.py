@@ -63,7 +63,7 @@ def export_to_dxf(primitives, filename: str, width: int = 256, height: int = 256
         return False
 
 
-def _export_lines_to_dxf(msp, primitives):
+def _export_lines_to_dxf(msp, primitives) -> None:
     """Export line primitives to DXF modelspace."""
     if "lines" not in primitives or len(primitives["lines"]) == 0:
         return
@@ -78,7 +78,7 @@ def _export_lines_to_dxf(msp, primitives):
         msp.add_line((dxf_x1, dxf_y1), (dxf_x2, dxf_y2))
 
 
-def _export_curves_to_dxf(msp, primitives):
+def _export_curves_to_dxf(msp, primitives) -> None:
     """Export quadratic Bézier curves to DXF modelspace."""
     if "curves" not in primitives or len(primitives["curves"]) == 0:
         return
@@ -93,7 +93,7 @@ def _export_curves_to_dxf(msp, primitives):
             msp.add_spline(points, degree=2)
 
 
-def _export_cubic_curves_to_dxf(msp, primitives):
+def _export_cubic_curves_to_dxf(msp, primitives) -> None:
     """Export cubic Bézier curves to DXF modelspace."""
     if "cubic_curves" not in primitives or len(primitives["cubic_curves"]) == 0:
         return
@@ -113,7 +113,7 @@ def _export_cubic_curves_to_dxf(msp, primitives):
             msp.add_spline(points, degree=3)
 
 
-def _export_arcs_to_dxf(msp, primitives):
+def _export_arcs_to_dxf(msp, primitives) -> None:
     """Export arc primitives to DXF modelspace."""
     if "arcs" not in primitives or len(primitives["arcs"]) == 0:
         return
@@ -272,20 +272,20 @@ def validate_cad_export(filename: str) -> bool:
     # For DXF files, check if it contains basic structure
     if filename.endswith(".dxf"):
         try:
-            with open(filename, "r") as f:
+            with open(filename, "r", encoding="utf-8") as f:
                 content = f.read()
                 # Check for basic DXF structure
                 return "SECTION" in content and "ENDSEC" in content
-        except:
+        except (OSError, UnicodeDecodeError):
             return False
 
     # For SVG files, check for basic XML structure
     if filename.endswith(".svg"):
         try:
-            with open(filename, "r") as f:
+            with open(filename, "r", encoding="utf-8") as f:
                 content = f.read()
                 return "<svg" in content and "</svg>" in content
-        except:
+        except (OSError, UnicodeDecodeError):
             return False
 
     return True

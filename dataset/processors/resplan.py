@@ -11,11 +11,28 @@ class ResPlanProcessor(Processor):
     """Process ResPlan dataset residential floorplans into vector/raster format.
 
     Extracts vector primitives from pickled Shapely geometries containing
-    walls, doors, windows, balconies, and room spaces.
+    walls, doors, windows, balconies, and room spaces. Converts geometric
+    data into colored SVG representations with PNG raster renderings.
+
+    The dataset contains residential floorplan geometries with different
+    element types (walls, doors, windows, rooms) stored as Shapely objects.
+
+    Args:
+        input_dir: Directory containing ResPlan.pkl file (or extracted/ subdirectory)
+        output_base: Base directory for processed output
+        dry_run: If True, only analyze and report without processing files
+
+    Returns:
+        Dict containing processing metadata (SVG/PNG counts, directory paths)
     """
 
-    def standardize(self, input_dir: Path, output_base: Path, dry_run: bool = False) -> Dict[str, Any]:
-        """Process ResPlan dataset files."""
+    def standardize(self, input_dir: Path, output_base: Path,
+                    dry_run: bool = False) -> Dict[str, Any]:
+        """Process ResPlan dataset files.
+
+        Loads pickled floorplan geometries and converts them to SVG vector
+        format with corresponding PNG raster renderings using CairoSVG.
+        """
         vector_dir = output_base / "vector" / "resplan"
         raster_dir = output_base / "raster" / "resplan"
 
@@ -80,7 +97,18 @@ class ResPlanProcessor(Processor):
         }
 
     def _create_svg_from_resplan(self, plan: Dict, plan_id: str) -> str:
-        """Create SVG from ResPlan Shapely geometry data."""
+        """Create SVG from ResPlan Shapely geometry data.
+
+        Converts floorplan geometries (walls, doors, windows, rooms) into
+        a colored SVG representation with appropriate styling for each element type.
+
+        Args:
+            plan: Dictionary containing Shapely geometries keyed by element type
+            plan_id: Unique identifier for the floorplan
+
+        Returns:
+            SVG content as string, or None if conversion fails
+        """
         try:
             from shapely.geometry import MultiPolygon, Polygon
 
@@ -162,8 +190,22 @@ class ResPlanProcessor(Processor):
             print(f"Error creating SVG for {plan_id}: {e}")
             return None
 
-    def _geometry_to_svg_paths(self, geom, scale: float, offset_x: float, offset_y: float) -> List[str]:
-        """Convert Shapely geometry to SVG path data."""
+    def _geometry_to_svg_paths(self, geom, scale: float, offset_x: float,
+                               offset_y: float) -> List[str]:
+        """Convert Shapely geometry to SVG path data.
+
+        Transforms Shapely Polygon/MultiPolygon objects into SVG path strings
+        with proper coordinate scaling and translation.
+
+        Args:
+            geom: Shapely geometry object (Polygon or MultiPolygon)
+            scale: Scaling factor to fit geometry in SVG viewport
+            offset_x: X-axis translation offset
+            offset_y: Y-axis translation offset
+
+        Returns:
+            List of SVG path data strings
+        """
         paths = []
 
         def coords_to_path(coords):

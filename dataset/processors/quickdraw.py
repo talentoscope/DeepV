@@ -12,11 +12,28 @@ class QuickDrawProcessor(Processor):
 
     QuickDraw contains 50M+ vector sketches as stroke sequences.
     Each drawing consists of multiple strokes, where each stroke contains
-    sequences of (x,y) coordinates. Converts to SVG format for vectorization.
+    sequences of (x,y) coordinates. Converts stroke data to SVG format for vectorization.
+
+    Supports both NDJSON and Parquet formats:
+    - NDJSON: Line-delimited JSON with one drawing per line
+    - Parquet: Columnar format with drawing data in structured columns
+
+    Args:
+        input_dir: Directory containing .ndjson or .parquet files (or subdirectories)
+        output_base: Base directory for processed output
+        dry_run: If True, only analyze and report without processing files
+
+    Returns:
+        Dict containing processing metadata (file counts, processing statistics)
     """
 
-    def standardize(self, input_dir: Path, output_base: Path, dry_run: bool = False) -> Dict[str, Any]:
-        """Process QuickDraw dataset files."""
+    def standardize(self, input_dir: Path, output_base: Path,
+                    dry_run: bool = False) -> Dict[str, Any]:
+        """Process QuickDraw dataset files.
+
+        Converts stroke-based drawing data from NDJSON/Parquet formats into
+        standardized SVG vector files. Processes up to 10,000 drawings by default.
+        """
         vector_dir = output_base / "vector" / "quickdraw"
         raster_dir = output_base / "raster" / "quickdraw"
 
@@ -103,7 +120,9 @@ class QuickDrawProcessor(Processor):
 
                         # Assume the drawing data is in a 'drawing' column
                         if "drawing" in row:
-                            svg_content = self._strokes_to_svg({"drawing": row["drawing"]}, drawing_id)
+                            svg_content = self._strokes_to_svg(
+                                {"drawing": row["drawing"]}, drawing_id
+                            )
 
                             if svg_content:
                                 if not dry_run:
@@ -180,7 +199,9 @@ class QuickDrawProcessor(Processor):
 
                     if len(x_coords) > 0 and len(y_coords) > 0:
                         # Create path string
-                        path_data = f"M {x_coords[0] - min_x + padding},{y_coords[0] - min_y + padding}"
+                        path_data = (
+                            f"M {x_coords[0] - min_x + padding},{y_coords[0] - min_y + padding}"
+                        )
                         for x, y in zip(x_coords[1:], y_coords[1:]):
                             path_data += f" L {x - min_x + padding},{y - min_y + padding}"
 

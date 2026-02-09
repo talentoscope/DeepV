@@ -2,7 +2,7 @@ import base64
 import random
 import shutil
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict
 
 from tqdm import tqdm
 
@@ -12,10 +12,23 @@ from .base import Processor
 class FloorPlanCADProcessor(Processor):
     """Processor for FloorPlanCAD dataset.
 
-    Loads Parquet files, extracts SVG and PNG data, and saves to vector/raster dirs.
+    Handles FloorPlanCAD dataset processing by loading from Parquet files or
+    FiftyOne format, extracting SVG vector data and PNG raster images,
+    and organizing them into standardized vector/raster directory structures.
+
+    Supports both HuggingFace datasets format (Parquet) and FiftyOne format
+    with automatic format detection and appropriate processing.
+
+    Args:
+        raw_dir: Directory containing raw dataset files (Parquet or FiftyOne format)
+        output_base: Base directory for processed output
+        dry_run: If True, only analyze and report without processing files
+
+    Returns:
+        Dict containing processing metadata (extracted/skipped counts, etc.)
     """
 
-    def standardize(self, raw_dir: Path, output_base: Path, dry_run: bool = True) -> Dict:
+    def standardize(self, raw_dir: Path, output_base: Path, dry_run: bool = True) -> Dict[str, Any]:
         raw_dir = Path(raw_dir)
         output_base = Path(output_base)
         vec_dir = output_base / "vector" / "floorplancad"
@@ -106,12 +119,16 @@ class FloorPlanCADProcessor(Processor):
                 random.shuffle(svgs_with_png)
                 selected_svgs = svgs_with_png[:10000]  # Limit to 10,000
                 for s in tqdm(selected_svgs, desc="Copying SVGs and PNGs"):
-                    # Flatten nested structure by using only filename
-                    flat_name = s.name
-                    shutil.copy2(s, vec_dir / flat_name)
-                    # Copy corresponding PNG with same flat structure
-                    png_path = s.with_suffix(".png")
-                    shutil.copy2(png_path, ras_dir / flat_name.replace(".svg", ".png"))
+                    try:
+                        # Flatten nested structure by using only filename
+                        flat_name = s.name
+                        shutil.copy2(s, vec_dir / flat_name)
+                        # Copy corresponding PNG with same flat structure
+                        png_path = s.with_suffix(".png")
+                        shutil.copy2(png_path, ras_dir / flat_name.replace(".svg", ".png"))
+                    except (OSError, shutil.Error) as e:
+                        print(f"Warning: Failed to copy files for {s.name}: {e}")
+                        continue
                 return {"dataset": "floorplancad", "selected_samples": len(selected_svgs)}
 
         # Load dataset
@@ -141,27 +158,35 @@ class FloorPlanCADProcessor(Processor):
                 if "svg" in sample:
                     svg_content = sample["svg"]
                     if isinstance(svg_content, str):
-                        svg_path = vec_dir / f"{sample_id}.svg"
-                        if not svg_path.exists():
-                            with open(svg_path, "w") as f:
-                                f.write(svg_content)
-                            actions["extracted"] += 1
-                        else:
-                            actions["skipped"] += 1
+                        try:
+                            svg_path = vec_dir / f"{sample_id}.svg"
+                            if not svg_path.exists():
+                                with open(svg_path, "w", encoding="utf-8") as f:
+                                    f.write(svg_content)
+                                actions["extracted"] += 1
+                            else:
+                                actions["skipped"] += 1
+                        except (OSError, UnicodeEncodeError) as e:
+                            print(f"Warning: Failed to write SVG for sample {sample_id}: {e}")
+                            continue
 
                 # Extract PNG
                 if "png" in sample:
                     png_data = sample["png"]
                     if isinstance(png_data, str) and png_data.startswith("data:image/png;base64,"):
-                        png_b64 = png_data.split(",")[1]
-                        png_bytes = base64.b64decode(png_b64)
-                        png_path = ras_dir / f"{sample_id}.png"
-                        if not png_path.exists():
-                            with open(png_path, "wb") as f:
-                                f.write(png_bytes)
-                            actions["extracted"] += 1
-                        else:
-                            actions["skipped"] += 1
+                        try:
+                            png_b64 = png_data.split(",")[1]
+                            png_bytes = base64.b64decode(png_b64)
+                            png_path = ras_dir / f"{sample_id}.png"
+                            if not png_path.exists():
+                                with open(png_path, "wb") as f:
+                                    f.write(png_bytes)
+                                actions["extracted"] += 1
+                            else:
+                                actions["skipped"] += 1
+                        except (ValueError, IndexError) as e:
+                            print(f"Warning: Failed to decode PNG for sample {sample_id}: {e}")
+                            continue
 
         meta = {
             "dataset": "floorplancad",

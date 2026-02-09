@@ -1,8 +1,30 @@
+"""
+Curve refinement pipeline for DeepV.
+
+This module implements differentiable optimization for curve primitives (quadratic Béziers).
+It refines initially predicted curve parameters to better match target raster images
+through gradient-based optimization with rendering-based loss functions.
+
+The pipeline supports:
+- Quadratic Bézier curves with variable control points
+- Batch processing for efficiency
+- Metrics logging and convergence monitoring
+- Multiple initialization strategies (model-based or random)
+- Repatching for improved resolution
+
+Key components:
+- DataLoader: Handles data loading and preprocessing
+- MetricsHandler: Manages optimization metrics and logging
+- OptimizationHandler: Core optimization logic with batch processing
+- RefinementPipeline: Main orchestrator class
+"""
+
 import os
 import pickle
 import sys
 from argparse import ArgumentParser
 from time import time
+from typing import Optional, Tuple, List, Any
 
 import h5py
 import numpy as np
@@ -27,7 +49,8 @@ class DataLoader:
         self.options = options
         self.logger = logger
 
-    def load_data(self):
+    def load_data(self) -> Tuple[str, torch.Tensor, torch.Tensor, torch.Tensor,
+                          Optional[int], Optional[str]]:
         """Load and preprocess the input data."""
         self.logger.info("1. Load data")
 
@@ -66,7 +89,12 @@ class DataLoader:
             primitive_type_from_model,
         )
 
-    def preprocess_data(self, raster_patches, patch_offsets, model_output, repatch_scale):
+    def preprocess_data(self, raster_patches: torch.Tensor,
+                        patch_offsets: torch.Tensor,
+                        model_output: torch.Tensor,
+                        repatch_scale: Optional[int]) -> Tuple[torch.Tensor, torch.Tensor,
+                                                              torch.Tensor, List,
+                                                              Optional[List]]:
         """Preprocess the loaded data."""
         self.logger.info("2. Preprocess data")
 
@@ -182,7 +210,7 @@ class MetricsLogger:
         self.logger = logger
         self.metrics_file_path = f"{options.output_dir}/logs/{sample_name}.h5"
 
-    def setup_metrics_file(self, optimization_iters_n, measure_period):
+    def setup_metrics_file(self, optimization_iters_n: int, measure_period: int) -> None:
         """Set up the HDF5 file for metrics logging."""
         os.makedirs(os.path.dirname(self.metrics_file_path), exist_ok=True)
         self.logger.info(f"7. Prepare file with metrics at {self.metrics_file_path}")
@@ -194,7 +222,9 @@ class MetricsLogger:
         )
         self.union_array = self.metrics_file.create_dataset("union", dtype="f", shape=[log_iters_n, self.patches_n])
 
-    def log_metrics(self, log_i, rasterization, binary_raster, first_patch_i, next_first_patch_i):
+    def log_metrics(self, log_i: int, rasterization: torch.Tensor,
+                    binary_raster: torch.Tensor, first_patch_i: int,
+                    next_first_patch_i: int) -> None:
         """Log intersection and union metrics."""
         self.intersection_array[log_i, first_patch_i:next_first_patch_i] = (
             (rasterization & binary_raster).sum(dim=-1).sum(dim=-1)
@@ -218,7 +248,7 @@ class Optimizer:
         self.patches_offset_batches = patches_offset_batches
         self.logger = logger
 
-    def create_init_function(self):
+    def create_init_function(self) -> Any:
         """Create the primitive initialization function."""
         return make_init_primitives(
             self.options.init_random,
@@ -232,7 +262,8 @@ class Optimizer:
             self.logger,
         )
 
-    def optimize_batch(self, batch_i, init_primitives, metrics_logger, first_patch_i):
+    def optimize_batch(self, batch_i: int, init_primitives: Any,
+                       metrics_logger: MetricsLogger, first_patch_i: int) -> Tuple[Any, int]:
         """Optimize a single batch of patches."""
         self.logger.info("\tInitialize")
         prim_ten = init_primitives(batch_i)
@@ -281,7 +312,7 @@ class Optimizer:
 
         return aligner, next_first_patch_i
 
-    def run_optimization(self, init_primitives, metrics_logger):
+    def run_optimization(self, init_primitives: Any, metrics_logger: MetricsLogger) -> torch.Tensor:
         """Run the complete optimization process."""
         self.logger.info("8. Optimization")
         optimization_start_time = time()
@@ -312,7 +343,7 @@ class Optimizer:
         self.logger.info(f"\tOptimization took {time() - optimization_start_time} seconds")
         return primitives_after_optimization
 
-    def run_optimization_legacy(self, init_primitives, metrics_logger):
+    def run_optimization_legacy(self, init_primitives: Any, metrics_logger: MetricsLogger) -> Any:
         """Run optimization in legacy mode (for intermediate_output)."""
         self.logger.info("8. Optimization")
         optimization_start_time = time()
@@ -327,7 +358,8 @@ class Optimizer:
         self.logger.info(f"\tOptimization took {time() - optimization_start_time} seconds")
         return self.options.primitives_after_optimization
 
-    def optimize_batch_legacy(self, batch_i, init_primitives, metrics_logger, first_patch_i):
+    def optimize_batch_legacy(self, batch_i: int, init_primitives: Any,
+                              metrics_logger: MetricsLogger, first_patch_i: int) -> Tuple[Any, int]:
         """Optimize a single batch of patches in legacy mode."""
         self.logger.info("\tInitialize")
         prim_ten = init_primitives(batch_i)
@@ -394,15 +426,34 @@ class OutputGenerator:
         self.sample_name = sample_name
         self.logger = logger
 
-    def save_optimization_result(self, primitives_after_optimization):
+    def save_optimization_result(self, primitives_after_optimization: torch.Tensor) -> None:
         """Save the optimization result to SVG."""
         optimization_output_path = f"{self.options.output_dir}/after_optimization/{self.sample_name}.svg"
         self.logger.info(f"9. Save optimization result to {optimization_output_path}")
         os.makedirs(os.path.dirname(optimization_output_path), exist_ok=True)
 
-        from util_files.evaluation_utils import get_vectorimage
+        from util_files.data.graphics.graphics import VectorImage, Path
+        from util_files.data.graphics_primitives import PT_LINE, PT_QBEZIER
+        from util_files.data.graphics.units import Pixels
 
-        get_vectorimage(primitives_after_optimization).save(optimization_output_path)
+        # Convert primitives tensor to list for processing
+        primitives_list = primitives_after_optimization.detach().cpu().numpy()
+        
+        paths = []
+        for prim in primitives_list:
+            params_n = len(prim)
+            if params_n == 5:  # Line primitive
+                path = Path.from_primitive(PT_LINE, prim)
+            elif params_n >= 8:  # Curve primitive (quadratic Bézier)
+                path = Path.from_primitive(PT_QBEZIER, prim)
+            else:
+                continue  # Skip unknown primitive types
+            if len(path) > 0:  # Only add non-empty paths
+                paths.append(path)
+        
+        # Create VectorImage with default view size (will be set properly by save method)
+        vector_image = VectorImage(paths, view_size=(Pixels(1000), Pixels(1000)))
+        vector_image.save(optimization_output_path)
 
 
 class RefinementPipeline:
@@ -412,7 +463,7 @@ class RefinementPipeline:
         self.options = options
         self.logger = get_pipeline_logger("refinement.curves")
 
-    def run(self):
+    def run(self) -> Tuple[torch.Tensor, torch.Tensor, Optional[int], Any]:
         """Run the complete refinement pipeline."""
         # Data loading and preprocessing
         data_loader = DataLoader(self.options, self.logger)
@@ -513,27 +564,47 @@ class RefinementPipeline:
         if hasattr(self.options, "intermediate_output") and self.options.intermediate_output is not None:
             self.options.output_dir = outp_dir
 
-        from util_files.evaluation_utils import get_vectorimage
+        from util_files.data.graphics.graphics import VectorImage, Path
+        from util_files.data.graphics_primitives import PT_LINE, PT_QBEZIER
+        from util_files.data.graphics.units import Pixels
+
+        # Convert primitives tensor to list for processing
+        primitives_list = primitives_after_optimization.detach().cpu().numpy()
+        
+        paths = []
+        for prim in primitives_list:
+            params_n = len(prim)
+            if params_n == 5:  # Line primitive
+                path = Path.from_primitive(PT_LINE, prim)
+            elif params_n >= 8:  # Curve primitive (quadratic Bézier)
+                path = Path.from_primitive(PT_QBEZIER, prim)
+            else:
+                continue  # Skip unknown primitive types
+            if len(path) > 0:  # Only add non-empty paths
+                paths.append(path)
+        
+        # Create VectorImage with default view size
+        vector_image = VectorImage(paths, view_size=(Pixels(1000), Pixels(1000)))
 
         return (
             primitives_after_optimization,
             patch_offsets,
             repatch_scale,
-            get_vectorimage(primitives_after_optimization),
+            vector_image,
         )
 
 
 def build_vectorimage(
-    patches,
-    patch_offsets,
-    image_size,
-    control_points_n,
-    patch_size,
-    scale,
-    min_width,
-    min_confidence,
-    min_length,
-):
+    patches: torch.Tensor,
+    patch_offsets: torch.Tensor,
+    image_size: Tuple[int, int],
+    control_points_n: int,
+    patch_size: Tuple[int, int],
+    scale: float,
+    min_width: float,
+    min_confidence: float,
+    min_length: float,
+) -> Any:
     """Top-level helper to build a VectorImage from per-patch primitives.
 
     This extracts the call to `vector_image_from_patches` out of the `main` scope so it
@@ -556,23 +627,23 @@ def build_vectorimage(
 def main(
     options,
     intermediate_output=None,
-    control_points_n=3,
-    dtype=torch.float32,
-    device="cuda",
-    primitives_n=None,
-    primitive_type=None,
-    merge_period=60,
-    lr=0.05,
-    the_width_percentile=90,
-    optimization_iters_n=None,
-    batch_size=300,
-    measure_period=20,
-    reinit_period=20,
-    max_reinit_iter=100,
-    min_width=0.3,
-    min_confidence=64 * 0.5,
-    min_length=1.7,
-    append_iters_to_outdir=True,
+    control_points_n: int = 3,
+    dtype = torch.float32,
+    device: str = "cuda",
+    primitives_n: Optional[int] = None,
+    primitive_type: Optional[str] = None,
+    merge_period: int = 60,
+    lr: float = 0.05,
+    the_width_percentile: int = 90,
+    optimization_iters_n: Optional[int] = None,
+    batch_size: int = 300,
+    measure_period: int = 20,
+    reinit_period: int = 20,
+    max_reinit_iter: int = 100,
+    min_width: float = 0.3,
+    min_confidence: float = 64 * 0.5,
+    min_length: float = 1.7,
+    append_iters_to_outdir: bool = True,
 ):
     """Legacy main function - now delegates to the RefinementPipeline."""
     # For backward compatibility, handle the intermediate_output parameter
@@ -617,7 +688,24 @@ def main(
         raise ValueError("intermediate_output must be provided - job_tuples mode is not supported. Use RefinementPipeline instead.")
 
 
-def repatch(raster_patches, patch_offsets, model_output, scale=None, h=None, w=None):
+def repatch(raster_patches: torch.Tensor, patch_offsets: torch.Tensor,
+           model_output: torch.Tensor, scale: Optional[int] = None,
+           h: Optional[int] = None, w: Optional[int] = None) -> Tuple[torch.Tensor,
+                                                                     torch.Tensor,
+                                                                     torch.Tensor]:
+    """Repatch raster patches and model output to larger patch sizes.
+
+    Args:
+        raster_patches: Input raster patches tensor
+        patch_offsets: Patch offset coordinates
+        model_output: Model output primitives
+        scale: Scaling factor for repatching
+        h: Height scaling factor
+        w: Width scaling factor
+
+    Returns:
+        Tuple of (raster_patches, patch_offsets, model_output) after repatching
+    """
     if h is None:
         h = scale
     if w is None:
@@ -692,13 +780,26 @@ def repatch(raster_patches, patch_offsets, model_output, scale=None, h=None, w=N
 
 
 def group_patches(
-    model_output,
-    raster_patches,
-    patches_offset,
-    min_confidence,
-    max_prims_n,
-    max_batch_size,
-):
+    model_output: torch.Tensor,
+    raster_patches: torch.Tensor,
+    patches_offset: torch.Tensor,
+    min_confidence: float,
+    max_prims_n: int,
+    max_batch_size: int,
+) -> Tuple[List, List]:
+    """Group patches into batches based on primitive count for efficient processing.
+
+    Args:
+        model_output: Model output primitives
+        raster_patches: Raster patch images
+        patches_offset: Patch offset coordinates
+        min_confidence: Minimum confidence threshold
+        max_prims_n: Maximum primitives per patch
+        max_batch_size: Maximum batch size
+
+    Returns:
+        Tuple of (batches, patches_offset_batches)
+    """
     parameters_n = model_output.shape[2]
     confident_primitives = model_output[:, :, -1] >= min_confidence
     prims_n = confident_primitives.sum(dim=-1)
@@ -727,16 +828,32 @@ def group_patches(
 
 
 def make_init_primitives(
-    random,
-    primitive_type,
-    batches,
-    patch_width,
-    patch_height,
-    dtype,
-    device,
-    primitive_type_from_model,
-    logger,
-):
+    random: bool,
+    primitive_type: str,
+    batches: List,
+    patch_width: int,
+    patch_height: int,
+    dtype: torch.dtype,
+    device: str,
+    primitive_type_from_model: str,
+    logger: Any,
+) -> Any:
+    """Create primitive initialization function for optimization.
+
+    Args:
+        random: Whether to use random initialization
+        primitive_type: Type of primitives ('lines' or 'qbeziers')
+        batches: Batched data
+        patch_width: Width of patches
+        patch_height: Height of patches
+        dtype: Data type for tensors
+        device: Device for tensors
+        primitive_type_from_model: Primitive type from model output
+        logger: Logger instance
+
+    Returns:
+        Initialization function for primitives
+    """
     if random:
         logger.info("\tinitialization is random")
         if primitive_type == "lines":
@@ -803,13 +920,23 @@ def make_init_primitives(
 
 
 def assemble_primitives_to(
-    primitive_tensor,
-    data_tensor,
-    first_patch_i,
-    next_first_patch_i,
-    min_width,
-    min_confidence,
-):
+    primitive_tensor: Any,
+    data_tensor: torch.Tensor,
+    first_patch_i: int,
+    next_first_patch_i: int,
+    min_width: float,
+    min_confidence: float,
+) -> None:
+    """Assemble primitive tensor data into output tensor format.
+
+    Args:
+        primitive_tensor: Primitive tensor object (LineTensor or QuadraticBezierTensor)
+        data_tensor: Output data tensor to populate
+        first_patch_i: Starting patch index
+        next_first_patch_i: Ending patch index
+        min_width: Minimum width threshold
+        min_confidence: Minimum confidence threshold
+    """
     primitives_n = primitive_tensor.primitives_n
     good_confidence = min_confidence * 2
     if isinstance(primitive_tensor, LineTensor):
@@ -834,11 +961,30 @@ def assemble_primitives_to(
         data_tensor[first_patch_i:next_first_patch_i, :primitives_n, 7] *= good_confidence
 
 
-def binarize(raster):
+def binarize(raster: torch.Tensor) -> torch.Tensor:
+    """Binarize raster image using 0.5 threshold.
+
+    Args:
+        raster: Input raster tensor
+
+    Returns:
+        Binarized raster tensor
+    """
     return raster > 0.5
 
 
-def merge_close(model_output, min_confidence, width_percentile=90):
+def merge_close(model_output: torch.Tensor, min_confidence: float,
+               width_percentile: int = 90) -> torch.Tensor:
+    """Merge close primitives within patches to reduce redundancy.
+
+    Args:
+        model_output: Model output primitives
+        min_confidence: Minimum confidence threshold
+        width_percentile: Width percentile for tolerance calculation
+
+    Returns:
+        Model output with merged primitives
+    """
     patches_n, primitives_n, parameters_n = model_output.shape
     new_model_output = model_output.new_zeros([patches_n, primitives_n, parameters_n])
     max_primitives_in_patch = 0

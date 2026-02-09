@@ -5,12 +5,12 @@ the current implementations in `dataset_downloaders`.
 """
 
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Any, Optional
 
 from . import download_dataset as _dlmod
 
 
-def download(dataset_name: str, output_dir: Path | str = "./data", test: bool = False, **kwargs) -> Dict:
+def download(dataset_name: str, output_dir: Path | str = "./data", test: bool = False, **kwargs: Any) -> Dict[str, Any]:
     """Download `dataset_name` into `output_dir` using existing downloaders.
 
     Additional keyword args are forwarded to the underlying downloader when
@@ -23,8 +23,8 @@ def download(dataset_name: str, output_dir: Path | str = "./data", test: bool = 
     if hasattr(mod, fn_name):
         fn = getattr(mod, fn_name)
         # Try calling common signature
-        kwargs2 = {}
-        sig = None
+        kwargs2: Dict[str, Any] = {}
+        sig: Optional[Any] = None
         try:
             import inspect
 

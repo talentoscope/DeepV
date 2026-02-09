@@ -13,11 +13,29 @@ class MSDProcessor(Processor):
     """Process Modified Swiss Dwellings dataset into vector/raster format.
 
     Extracts vector primitives from NetworkX graphs containing room geometries
-    as Shapely polygons, and raster images from numpy arrays.
+    as Shapely polygons, and raster images from numpy arrays. The dataset
+    contains floor plan graphs with room type annotations and structural layouts.
+
+    Processes two types of data:
+    - graph_out/*.pickle: NetworkX graphs with room geometries and types
+    - struct_in/*.npy: 3D numpy arrays with structural information
+
+    Args:
+        input_dir: Directory containing graph_out/ and struct_in/ subdirectories
+        output_base: Base directory for processed output
+        dry_run: If True, only analyze and report without processing files
+
+    Returns:
+        Dict containing processing metadata (SVG/PNG counts, directory paths)
     """
 
-    def standardize(self, input_dir: Path, output_base: Path, dry_run: bool = False) -> Dict[str, Any]:
-        """Process MSD dataset files."""
+    def standardize(self, input_dir: Path, output_base: Path,
+                    dry_run: bool = False) -> Dict[str, Any]:
+        """Process MSD dataset files.
+
+        Extracts SVG floor plans from NetworkX graphs and PNG structural images
+        from numpy arrays, organizing them into standardized vector/raster directories.
+        """
         vector_dir = output_base / "vector" / "msd"
         raster_dir = output_base / "raster" / "msd"
 
@@ -94,7 +112,19 @@ class MSDProcessor(Processor):
         }
 
     def _create_svg_from_msd_graph(self, graph, plan_id: str) -> str:
-        """Create SVG from MSD NetworkX graph containing room geometries."""
+        """Create SVG from MSD NetworkX graph containing room geometries.
+
+        Converts NetworkX graph nodes with Shapely polygon geometries into
+        colored SVG paths with room type labels. Each room type gets a
+        distinct color and abbreviated label.
+
+        Args:
+            graph: NetworkX graph with node data containing 'geometry' and 'roomtype'
+            plan_id: Identifier for the floor plan
+
+        Returns:
+            SVG content as string, or None if conversion fails
+        """
         try:
 
             svg_elements = []
@@ -158,7 +188,8 @@ class MSDProcessor(Processor):
 
                         if scaled_coords:
                             path_data = (
-                                f"M {scaled_coords[0]} " + " ".join(f"L {coord}" for coord in scaled_coords[1:]) + " Z"
+                                f"M {scaled_coords[0]} " +
+                                " ".join(f"L {coord}" for coord in scaled_coords[1:]) + " Z"
                             )
                             svg_elements.append(
                                 f'<path d="{path_data}" fill="{color}" '
@@ -193,7 +224,18 @@ class MSDProcessor(Processor):
             return None
 
     def _create_png_from_msd_struct(self, npy_file: Path, plan_id: str) -> bytes:
-        """Create PNG from MSD structural numpy array."""
+        """Create PNG from MSD structural numpy array.
+
+        Converts 3D numpy array (512x512x3) structural data into a binary
+        PNG image where structural elements are black and background is white.
+
+        Args:
+            npy_file: Path to .npy file containing 3D structural array
+            plan_id: Identifier for the floor plan
+
+        Returns:
+            PNG image data as bytes, or None if conversion fails
+        """
         try:
             import numpy as np
             from PIL import Image

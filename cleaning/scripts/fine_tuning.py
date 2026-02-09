@@ -1,6 +1,14 @@
+"""
+Fine-tuning script for cleaning UNet models.
+
+This script provides fine-tuning capabilities for UNet-based image cleaning models
+using synthetic data with optional pre-trained model loading.
+"""
+
 import argparse
 import os
 from time import gmtime, strftime
+from typing import Dict, Tuple
 
 import numpy as np
 import torch
@@ -17,7 +25,7 @@ from cleaning.utils.dataloader import MakeDataSynt
 from cleaning.utils.loss import IOU, CleaningLoss
 from util_files.metrics.raster_metrics import iou_score
 
-MODEL_LOSS = {
+MODEL_LOSS: Dict[str, Dict[str, torch.nn.Module]] = {
     "UNET": {
         "model": UNet(n_channels=3, n_classes=1, final_tanh=True),
         "loss": CleaningLoss(kind="BCE", with_restore=False),
@@ -27,34 +35,35 @@ MODEL_LOSS = {
 }
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
+def parse_args() -> argparse.Namespace:
+    """Parse command line arguments for fine-tuning script."""
+    parser = argparse.ArgumentParser(description="Fine-tune cleaning UNet models")
 
     parser.add_argument(
         "--model",
         type=str,
         required=True,
-        help='What model to use, one of [ "UNET,"UNET_MSE,"SmallUnet"]',
+        help='Model type: one of ["UNET", "UNET_MSE", "SmallUNET"]',
+        choices=["UNET", "UNET_MSE", "SmallUNET"],
         default="UNET",
     )
-    parser.add_argument("--n_epochs", type=int, help="Num of epochs for training", default=10)
-    parser.add_argument("--datadir", type=str, help="Path to training dataset")
-    parser.add_argument("--valdatadir", type=str, help="Path to validation dataset")
-    parser.add_argument("--batch_size", type=int, default=8)
-    parser.add_argument("--name", type=str, help="Name of the experiment")
-    parser.add_argument("--model_path", type=str, default=None, help="Path to model checkpoint")
-
-    args = parser.parse_args()
-    return args
+    parser.add_argument("--n_epochs", type=int, help="Number of epochs for training", default=10)
+    parser.add_argument("--datadir", type=str, required=True, help="Path to training dataset")
+    parser.add_argument("--valdatadir", type=str, required=True, help="Path to validation dataset")
+    parser.add_argument("--batch_size", type=int, default=8, help="Batch size for training")
+    parser.add_argument("--name", type=str, required=True, help="Name of the experiment")
+    parser.add_argument("--added_part", type=str, default="No",
+                        choices=["Yes", "No"], help="Use added part training mode")
 
 
-def get_dataloaders(args):
+def get_dataloaders(args: argparse.Namespace) -> Tuple[DataLoader, DataLoader]:
+    """Create training and validation dataloaders."""
     train_transform = transforms.Compose([transforms.ToTensor()])
     # TODO Make sure that this should be MakeDataSynt and not MakeData from dataloader.py
     dset_synt = MakeDataSynt(args.datadir, args.datadir, train_transform, 1)
     dset_val_synt = MakeDataSynt(args.valdatadir, args.valdatadir, train_transform)
 
-    print(args.batch_size)
+    print(f"Batch size: {args.batch_size}")
 
     train_loader = DataLoader(
         dset_synt, batch_size=args.batch_size, shuffle=True, num_workers=0, pin_memory=False  # 1 for CUDA
@@ -65,7 +74,9 @@ def get_dataloaders(args):
     return train_loader, val_loader
 
 
-def validate(tb, val_loader, model, loss_func, global_step):
+def validate(tb: SummaryWriter, val_loader: DataLoader, model: torch.nn.Module,
+            loss_func: torch.nn.Module, global_step: int, added_part: bool = False) -> None:
+    """Run validation and log metrics to TensorBoard."""
     val_loss_epoch = []
     val_iou_extract = []
 
@@ -75,7 +86,7 @@ def validate(tb, val_loader, model, loss_func, global_step):
 
         logits_restor, logits_extract = None, model(x_input)  # restoration + extraction
 
-        if args.added_part == "Yes":
+        if added_part:
             # training "Unet on without filling wholes on h_gt in synthetic
             loss = loss_func(logits_extract, logits_restor, y_extract, y_restor)
             iou_scr = iou_score(
@@ -93,41 +104,48 @@ def validate(tb, val_loader, model, loss_func, global_step):
         del loss
 
     tb.add_scalar("val_loss", np.mean(val_loss_epoch), global_step=global_step)
-
     tb.add_scalar("val_iou_extract", np.mean(val_iou_extract), global_step=global_step)
+
     out_grid = torchvision.utils.make_grid(logits_extract.unsqueeze(1).cpu())
     input_grid = torchvision.utils.make_grid(x_input.cpu())
     tb.add_image(tag="val_out_extract", img_tensor=out_grid, global_step=global_step)
     tb.add_image(tag="val_input", img_tensor=input_grid, global_step=global_step)
 
 
-def save_model(model, path):
-    print('Saving model to "%s"' % path)
+def save_model(model: torch.nn.Module, path: str) -> None:
+    """Save model to specified path."""
+    print(f'Saving model to "{path}"')
     torch.save(model, path)
 
 
-def load_model(model, path):
-    print('Loading model from "%s"' % path)
+def load_model(model: torch.nn.Module, path: str) -> torch.nn.Module:
+    """Load model from specified path."""
+    print(f'Loading model from "{path}"')
     model = torch.load(path)
-
     return model
 
 
-def main(args):
-    tb_dir = "/logs/tb_logs_article/fine_tuning_" + args.name
+def main(args: argparse.Namespace) -> None:
+    """Main training function for fine-tuning cleaning models."""
+    # Check CUDA availability
+    if not torch.cuda.is_available():
+        raise RuntimeError("CUDA is not available. This script requires GPU training.")
+
+    tb_dir = f"/logs/tb_logs_article/fine_tuning_{args.name}"
     tb = SummaryWriter(tb_dir)
 
     train_loader, val_loader = get_dataloaders(args)
 
-    if args.model not in ["UNET", "UNET_MSE", "SmallUnet"]:
-        raise Exception('Unsupported type of model, choose from ["UNET,"UNET_MSE,"SmallUnet"]')
+    if args.model not in MODEL_LOSS:
+        available_models = list(MODEL_LOSS.keys())
+        raise ValueError(f"Unsupported model type '{args.model}'. Choose from: {available_models}")
 
     model = MODEL_LOSS[args.model]["model"]
     loss_func = MODEL_LOSS[args.model]["loss"]
 
     model = model.cuda()
 
-    if "model_path" in args and args.model_path is not None:
+    if args.model_path is not None:
         model = load_model(model, args.model_path)
     model.eval()
     tb.add_text(tag="model", text_string=repr(model))
@@ -135,6 +153,7 @@ def main(args):
     opt = torch.optim.Adam(model.parameters(), lr=0.0005)
 
     global_step = 0
+    added_part = args.added_part == "Yes"
 
     for epoch in range(args.n_epochs):
         model.train()
@@ -161,9 +180,9 @@ def main(args):
 
                 model.eval()
                 with torch.no_grad():
-                    validate(tb, val_loader, model, loss_func, global_step=global_step)
+                    validate(tb, val_loader, model, loss_func, global_step=global_step, added_part=added_part)
                 model.train()
-                save_model(model, os.path.join(tb_dir, "model_it_%s.pth" % global_step))
+                save_model(model, os.path.join(tb_dir, f"model_it_{global_step}.pth"))
 
             del logits_extract
             del logits_restor

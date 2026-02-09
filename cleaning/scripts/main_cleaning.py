@@ -1,11 +1,22 @@
+"""
+Main training script for DeepV cleaning models.
+
+This script trains UNet-based models for technical drawing cleaning and artifact removal.
+Supports various architectures, mixed precision training, and early stopping.
+"""
+
 import argparse
 import os
+from typing import Any, Optional, Tuple, TYPE_CHECKING
 
 import numpy as np
 import torchvision
 
+if TYPE_CHECKING:
+    import torch
 
-def parse_args(args=None):
+
+def parse_args(args: Optional[list] = None) -> argparse.Namespace:
     """Parse command-line arguments.
 
     Accepts an optional list `args` for programmatic use in tests.
@@ -58,7 +69,7 @@ def parse_args(args=None):
 # `iou_score` is imported lazily inside `validate` to avoid importing heavy image libs at module import time.
 
 
-def get_model_and_loss(selected_model_key):
+def get_model_and_loss(selected_model_key: str) -> Tuple[Any, Any]:
     """Lazily import models and losses and return the chosen model and loss.
 
     This avoids importing heavy ML packages at module import time.
@@ -83,7 +94,8 @@ def get_model_and_loss(selected_model_key):
     }
 
     if selected_model_key not in MODEL_LOSS:
-        raise Exception("Unsupported type of model, choose from %s" % list(MODEL_LOSS.keys()))
+        available_models = list(MODEL_LOSS.keys())
+        raise ValueError(f"Unsupported model type '{selected_model_key}'. Choose from: {available_models}")
 
     return MODEL_LOSS[selected_model_key]["model"], MODEL_LOSS[selected_model_key]["loss"]
 
@@ -91,7 +103,7 @@ def get_model_and_loss(selected_model_key):
 # `parse_args(args=None)` is defined above (accepts an optional args list).
 
 
-def get_dataloaders(args):
+def get_dataloaders(args: argparse.Namespace) -> Tuple[Any, Any]:
     # Local imports to avoid heavy dependencies at module import time
     from torch.utils.data import DataLoader
     from torchvision import transforms
@@ -116,7 +128,7 @@ def get_dataloaders(args):
     return train_loader, val_loader
 
 
-def validate(tb, val_loader, model, loss_func, global_step):
+def validate(tb: Any, val_loader: Any, model: Any, loss_func: Any, global_step: int) -> float:
     val_loss_epoch = []
     val_iou_extract = []
     # Local imports
@@ -159,14 +171,14 @@ def validate(tb, val_loader, model, loss_func, global_step):
     return np.mean(val_loss_epoch)
 
 
-def save_model(model, path):
+def save_model(model: Any, path: str) -> None:
     print('Saving model to "%s"' % path)
     import torch
 
     torch.save(model, path)
 
 
-def load_model(model, path):
+def load_model(model: Any, path: str) -> Any:
     print('Loading model from "%s"' % path)
     import torch
 
@@ -174,7 +186,7 @@ def load_model(model, path):
     return model
 
 
-def main(args):
+def main(args: argparse.Namespace) -> None:
     """Main training function for DeepV cleaning models.
 
     Trains UNet-based models for technical drawing cleaning and artifact removal.
