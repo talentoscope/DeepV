@@ -110,7 +110,7 @@ class PrimitiveAligner:
 
     def save_plots(self, filepath, fps=30):
         if self.stored_plots is None:
-            raise ValueError("Not prepared for saving")
+            raise ValueError("Cannot save plots: stored_plots is None. Ensure plotting is enabled and frames have been stored during optimization.")
 
         import matplotlib.animation as animation
 

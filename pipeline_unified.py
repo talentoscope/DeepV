@@ -26,7 +26,7 @@ class UnifiedPipeline:
         """
         self.primitive_type = primitive_type.lower()
         if self.primitive_type not in ["line", "curve"]:
-            raise ValueError(f"Unsupported primitive type: {primitive_type}")
+            raise ValueError(f"Unsupported primitive type: {primitive_type}. Supported types are 'line' and 'curve'.")
 
     def run_refinement(
         self, patches_rgb: np.ndarray, patches_vector: torch.Tensor, device: torch.device, options: Any

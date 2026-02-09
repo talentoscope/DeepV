@@ -262,7 +262,7 @@ def curve_score(image_true, image_pred, kind="full", metric="hausdorff", average
             diffsq = cost_matrix[row_ind, col_ind]
 
         else:
-            raise ValueError(f"Unknown kind: {kind}")
+            raise ValueError(f"Unknown kind '{kind}'. Supported kinds are 'full' and 'bijection'.")
 
         return np.mean(diffsq)
 

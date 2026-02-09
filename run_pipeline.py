@@ -271,7 +271,7 @@ class PipelineRunner:
         elif self.options.primitive_type == "line":
             self._process_line_pipeline(patches_rgb, patches_vector, patches_offsets, input_rgb, image, tracer)
         else:
-            raise ValueError(f"Unsupported primitive type: {self.options.primitive_type}")
+            raise ValueError(f"Unsupported primitive type: {self.options.primitive_type}. Supported types are 'line' and 'curve'.")
 
     def _process_curve_pipeline(self, patches_rgb, patches_vector, patches_offsets, input_rgb):
         """Process image using curve primitives pipeline."""

@@ -53,7 +53,7 @@ def build_options(args):
         elif args.primitive_type == "curve":
             args.model_path = "models/model_curves.weights"
         else:
-            raise ValueError(f"Unknown primitive type: {args.primitive_type}")
+            raise ValueError(f"Unknown primitive type: {args.primitive_type}. Supported types are 'line' and 'curve'.")
 
     # Build a simple Namespace compatible with run_pipeline.parse_args output
     opts = argparse.Namespace()

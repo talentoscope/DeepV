@@ -128,7 +128,7 @@ def primitive_to_path_and_crop(arg):
     elif params_n:
         path = Path.from_primitive(PT_QBEZIER, primitive_parameters)
     else:
-        raise NotImplementedError(f"Unknown primitive with {params_n} parameters")
+        raise NotImplementedError(f"Unknown primitive with {params_n} parameters. Supported parameter counts are 5 (line) and 8+ (curve).")
 
     path.crop(bbox)
     if len(path) == 0:

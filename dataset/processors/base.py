@@ -18,4 +18,4 @@ class Processor(Protocol):
         Returns:
             metadata dict describing actions performed
         """
-        raise NotImplementedError()
+        raise NotImplementedError("Subclasses must implement the standardize method")

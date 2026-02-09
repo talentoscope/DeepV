@@ -244,7 +244,7 @@ class RGSSSupersampling(SupersamplingStrategy):
 
     def reorder_supersamples(self, supersamples):
         """Reorder supersamples, generated for C ordered (row major) raster_coordinates, for being in C order."""
-        raise NotImplementedError
+        raise NotImplementedError("Subclasses must implement reorder_supersamples method")
 
 
 def render_lines(
