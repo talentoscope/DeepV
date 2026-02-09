@@ -1,6 +1,6 @@
 import os
 import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from typing import Optional, Any
 
 import numpy as np
@@ -13,7 +13,7 @@ from util_files.structured_logging import get_pipeline_logger
 
 
 def main(
-    options: Any,
+    options: Namespace,
     vector_image_from_optimization: Optional[Any] = None,
     width_percentile: int = 90,
     fit_tol: float = 0.5,
@@ -85,7 +85,7 @@ def main(
     return vector_image
 
 
-def parse_args() -> ArgumentParser:
+def parse_args() -> Namespace:
     parser = ArgumentParser()
     parser.add_argument(
         "--dataset",

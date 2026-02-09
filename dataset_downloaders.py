@@ -4,9 +4,15 @@ This module forwards imports to the new `dataset.downloaders.download_dataset` m
 It exists to make an incremental migration safe; it can be removed once callers
 are updated to use `dataset.*` APIs.
 """
+import sys
 from importlib import import_module
+from typing import Any
 
-_mod = import_module('dataset.downloaders.download_dataset')
+try:
+    _mod = import_module('dataset.downloaders.download_dataset')
+except ImportError as e:
+    print(f"Error: Failed to import dataset.downloaders.download_dataset: {e}", file=sys.stderr)
+    sys.exit(1)
 
 # Re-export common symbols
 for _name in dir(_mod):

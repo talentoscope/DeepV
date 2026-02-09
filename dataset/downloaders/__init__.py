@@ -47,7 +47,7 @@ def download(dataset_name: str, output_dir: Path | str = "./data", test: bool = 
         # Fallback to the local download_dataset CLI
         try:
             return _dlmod.download_dataset(dataset_name, output_dir, test_mode=test)
-        except Exception as e:
+        except Exception:
             raise
 
 

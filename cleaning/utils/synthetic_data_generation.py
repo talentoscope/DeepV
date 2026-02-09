@@ -17,7 +17,7 @@ Used by cleaning model training for synthetic data creation.
 import math
 import os
 from glob import glob
-from typing import Any, Optional, List
+from typing import Any
 
 import cairocffi as cairo
 import imageio
@@ -28,26 +28,35 @@ from PIL import Image
 from util_files.color_utils import gray_float_to_8bit, img_8bit_to_float, rgb_to_gray
 from util_files.data.transforms.degradation_models import (
     DegradationGenerator,
-    all_degradations,
 )
 
 
 class Synthetic:
-    """Synthetic data generator for image cleaning training using Cairo rendering."""
+    """Synthetic data generator for image cleaning training using Cairo rendering.
+
+    Generates synthetic images with geometric shapes and applies various degradations
+    to create training data for image cleaning models.
+    """
 
     def __init__(self, MAX_X: int = 840, MAX_Y: int = 840, border: int = 50):
         """Initialize synthetic data generator.
 
-        :param MAX_X: maximum canvas width
-        :param MAX_Y: maximum canvas height
-        :param border: border size for shape placement
+        Args:
+            MAX_X: Maximum canvas width in pixels
+            MAX_Y: Maximum canvas height in pixels
+            border: Border size for shape placement to avoid edges
         """
         self.MAX_X = MAX_X
         self.MAX_Y = MAX_Y
         self.border = border
 
-    def triangle(self, ctx: Any) -> None:
-        """Draw a random triangle on the Cairo context."""
+    def triangle(self, ctx: cairo.Context) -> None:
+        """Draw a random triangle on the Cairo context.
+
+        Args:
+            ctx: Cairo drawing context
+        """
+        x = []
         y = []
         for it in range(3):
             x.append(np.random.randint(self.border, self.MAX_X - self.border))
@@ -191,13 +200,15 @@ class Synthetic:
         cr.fill()
         cr.restore()
 
-    def MergeImages(self, img_path: str, name: str, prev_degr: bool, backgrouds_path: str = "../../dataset/Background/*.png") -> None:
+    def MergeImages(
+        self, img_path: str, name: str, prev_degr: bool, backgrouds_path: str = "../../dataset/Background/*.png"
+    ) -> None:
         """Merge generated image with random background."""
         try:
             im1 = Image.open(img_path + name + "_h_gt.png").convert("RGB")
         except (FileNotFoundError, OSError) as e:
             raise FileNotFoundError(f"Could not open image file {img_path + name + '_h_gt.png'}: {e}")
-        
+
         if not prev_degr:
             png_image = np.array(im1)
             d = DegradationGenerator(degradations_list=["noisy_binary_blur"], max_num_degradations=1)
@@ -210,7 +221,7 @@ class Synthetic:
         backgrounds = glob(backgrouds_path)
         if not backgrounds:
             raise FileNotFoundError(f"No background images found at {backgrouds_path}")
-        
+
         r = np.random.randint(0, len(backgrounds))
         try:
             im2 = Image.open(backgrounds[r])
@@ -245,7 +256,7 @@ class Synthetic:
                 np.random.normal(loc=1, scale=0.008, size=(self.MAX_X, self.MAX_Y))[:, :, np.newaxis], 3, axis=2
             )
             same = same.astype("uint8")
-        
+
         try:
             imageio.imwrite(img_path + name + ".png", same)
         except OSError as e:
@@ -257,11 +268,11 @@ class Synthetic:
             png_image = np.array(Image.open(img_path + name + "_nh_gt.png"))
         except (FileNotFoundError, OSError) as e:
             raise FileNotFoundError(f"Could not open image file {img_path + name + '_nh_gt.png'}: {e}")
-        
+
         if prev_degr:
-            all_degradations = ["distort", "gaussian_blur", "random_blotches"]
+            degradations_list = ["distort", "gaussian_blur", "random_blotches"]
         else:
-            all_degradations = ["kanungo", "distort", "gaussian_blur", "binary_blur", "random_blotches"]
+            degradations_list = ["kanungo", "distort", "gaussian_blur", "binary_blur", "random_blotches"]
 
         m_num = np.random.uniform()
         if m_num > 0.9:
@@ -269,7 +280,7 @@ class Synthetic:
         else:
             m_num = 2
 
-        d = DegradationGenerator(degradations_list=all_degradations, max_num_degradations=m_num)
+        d = DegradationGenerator(degradations_list=degradations_list, max_num_degradations=m_num)
         png_image = rgb_to_gray(png_image)
         png_image = img_8bit_to_float(png_image)
         png_image = d.do_degrade(png_image)
@@ -280,8 +291,19 @@ class Synthetic:
         except OSError as e:
             raise OSError(f"Could not write degraded image to {img_path + name + '_h_gt.png'}: {e}")
 
-    def get_image(self, img_path: str = "../data/Synthetic/", name: str = "1", backgrouds_path: str = "/data/Background/*.png") -> None:
-        """Generate synthetic image with clean and degraded versions."""
+    def get_image(
+        self, img_path: str = "../data/Synthetic/", name: str = "1", backgrouds_path: str = "/data/Background/*.png"
+    ) -> None:
+        """Generate synthetic image with clean and degraded versions.
+
+        Creates an SVG with random geometric shapes, renders it to PNG,
+        applies synthetic degradation, and merges with a background.
+
+        Args:
+            img_path: Path to output directory
+            name: Base name for generated files
+            backgrouds_path: Path pattern for background images
+        """
         if not os.path.exists(img_path + "/svg/"):
             os.makedirs(img_path + "/svg/")
         ps = cairo.SVGSurface(img_path + "svg" + name + ".svg", self.MAX_X, self.MAX_Y)

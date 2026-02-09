@@ -7,21 +7,32 @@ Much faster than recursive os.walk() through data/, logs/, etc.
 """
 
 import os
-import sys
-from pathlib import Path
+from typing import List
 
-def fast_list_python_files():
+
+def fast_list_python_files() -> List[str]:
     """Fast listing of Python files, excluding common directories."""
 
     # Directories to exclude (most common first for performance)
     exclude_dirs = {
-        'data', 'logs', 'models', '__pycache__', '.git', '.venv', 'venv',
-        'node_modules', '.pytest_cache', '.mypy_cache', 'dist', 'build',
-        'vectorization/models/specs', 'docs/_build'
+        "data",
+        "logs",
+        "models",
+        "__pycache__",
+        ".git",
+        ".venv",
+        "venv",
+        "node_modules",
+        ".pytest_cache",
+        ".mypy_cache",
+        "dist",
+        "build",
+        "vectorization/models/specs",
+        "docs/_build",
     }
 
     # Patterns to exclude
-    exclude_patterns = ['test_', '_test.py', 'conftest.py']
+    exclude_patterns = ["test_", "_test.py", "conftest.py"]
 
     python_files = []
 
@@ -36,7 +47,7 @@ def fast_list_python_files():
                             continue
                         # Recurse into subdirectories
                         scan_dir(entry.path, f"{prefix}{entry.name}/")
-                    elif entry.name.endswith('.py'):
+                    elif entry.name.endswith(".py"):
                         # Skip test files
                         if not any(pattern in entry.name for pattern in exclude_patterns):
                             rel_path = f"{prefix}{entry.name}"
@@ -45,11 +56,12 @@ def fast_list_python_files():
             pass  # Skip directories we can't read
 
     # Start scanning from current directory
-    scan_dir('.')
+    scan_dir(".")
 
     return sorted(python_files)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     files = fast_list_python_files()
     print(f"Found {len(files)} Python files:")
     for file in files:

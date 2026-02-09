@@ -2,9 +2,54 @@
 
 Generated: 2026-02-09 05:59
 
+## Notes Format Explanation
+
+Each file entry in the audit report follows a standardized format to ensure consistent evaluation and tracking of codebase quality improvements.
+
+### Entry Fields
+
+- **Status**: Current audit status
+  - `completed`: File has been audited and any issues fixed
+  - `in-progress`: Currently being audited
+  - `pending`: Not yet audited
+
+- **Category**: Functional category of the file
+  - `cleaning`: Image preprocessing and cleaning modules
+  - `vectorization`: Neural network models and training
+  - `refinement`: Post-processing optimization
+  - `merging`: Primitive consolidation
+  - `other`: Utilities, scripts, configuration
+
+- **Audited**: Date when the audit was performed (YYYY-MM-DD format)
+
+- **Notes**: Detailed audit results in structured format
+  - **AUDIT section**: Quality assessment checklist results
+  - **Action section**: Either `FIXED:` (issues resolved) or `VERIFIED:` (no issues found)
+
+### AUDIT Checklist Criteria
+
+Each file is evaluated against these quality dimensions:
+
+- **Header&Doc**: Documentation completeness (docstrings, comments, examples)
+- **Imports**: Import organization and cleanliness (no unused, proper grouping)
+- **TypeHints**: Type annotation coverage and accuracy
+- **ErrorHandling**: Exception handling patterns and specificity
+- **CodeStyle**: PEP 8 compliance and formatting consistency
+- **Performance**: Efficiency considerations and potential bottlenecks
+- **Architecture**: Design patterns, coupling, and structural quality
+- **Testing**: Testability, mocking requirements, and coverage potential
+- **Security**: Input validation, safe operations, vulnerability prevention
+- **Maintainability**: Code clarity, complexity, and future modification ease
+- **ResearchCleanup**: Removal of experimental/research artifacts for production readiness
+
+### Action Section Format
+
+- **FIXED:** [Specific changes made to resolve identified issues]
+- **VERIFIED:** [Confirmation that file meets standards with no required changes]
+
 ## Overall Progress
 
-- Files audited: 32/150 (21.3%)
+- Files audited: 45/195 (23.1%)
 
 ## Detailed File Status
 
@@ -12,7 +57,7 @@ Generated: 2026-02-09 05:59
 - Status: completed
 - Category: other
 - Audited: 2026-02-09
-- Notes: Root package initialization file - very simple, just imports
+- Notes: AUDIT: Header&Doc=(simple but adequate), Imports=(clean), TypeHints=(not applicable), ErrorHandling=, CodeStyle=, Performance=, Architecture=(proper package init), Testing=, Security=, Maintainability=, ResearchCleanup= | VERIFIED: Root package initialization file meets standards
 
 ### cleaning\__init__.py
 - Status: completed
@@ -54,58 +99,55 @@ Generated: 2026-02-09 05:59
 - Status: completed
 - Category: other
 - Audited: 2026-02-09
-- Notes: Well-structured audit tracking system with comprehensive functionality. Minor improvements needed for type hints and error handling.
+- Notes: AUDIT: Header&Doc=(good module docstring), Imports=(clean), TypeHints=(could be improved), ErrorHandling=(adequate), CodeStyle=, Performance=, Architecture=(well-structured), Testing=, Security=, Maintainability=, ResearchCleanup= | VERIFIED: Well-structured audit tracking system with comprehensive functionality
 
 ### cleaning\scripts\fine_tuning.py
 - Status: completed
 - Category: scripts
 - Audited: 2026-02-09
-- Notes: Added comprehensive docstrings, type hints, error handling, and CUDA availability checks. Fixed undefined variable bug in validate function.
-- Issues: Fixed undefined args.added_part variable, improved error handling, added CUDA availability check
+- Notes: AUDIT: Header&Doc=(added comprehensive docstrings), Imports=(clean), TypeHints=(added), ErrorHandling=(improved), CodeStyle=, Performance=, Architecture=(training script), Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Added comprehensive docstrings, type hints, error handling, and CUDA availability checks. Fixed undefined args.added_part variable
 
 ### cleaning\scripts\fine_tuning_two_network_added_part.py
 - Status: completed
 - Category: scripts
 - Audited: 2026-02-09
-- Notes: Added comprehensive docstrings, type hints, error handling, and CUDA availability checks. Fixed model loading bug (args.disc_path -> args.unet_path).
-- Issues: Fixed incorrect model loading condition (args.disc_path should be args.unet_path), improved error handling, added CUDA availability check
+- Notes: AUDIT: Header&Doc=(added comprehensive docstrings), Imports=(clean), TypeHints=(added), ErrorHandling=(improved), CodeStyle=, Performance=, Architecture=(training script), Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Added comprehensive docstrings, type hints, error handling, and CUDA availability checks. Fixed model loading bug (args.disc_path -> args.unet_path)
 
 ### cleaning\scripts\generate_synthetic_data.py
 - Status: completed
 - Category: scripts
 - Audited: 2026-02-09
-- Notes: Added comprehensive docstrings and type hints. Improved argument descriptions and code structure.
+- Notes: AUDIT: Header&Doc=(added comprehensive docstrings), Imports=(clean), TypeHints=(added), ErrorHandling=, CodeStyle=, Performance=, Architecture=(data generation script), Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Added comprehensive docstrings and type hints. Improved argument descriptions and code structure
 
 ### cleaning\scripts\main_cleaning.py
 - Status: completed
 - Category: scripts
 - Audited: 2026-02-09
-- Notes: Already well-structured with lazy imports, mixed precision, and early stopping. Added comprehensive module docstring, type hints, and improved error handling.
+- Notes: AUDIT: Header&Doc=(added comprehensive module docstring), Imports=(lazy imports), TypeHints=(added), ErrorHandling=(improved), CodeStyle=, Performance=(mixed precision, early stopping), Architecture=(well-structured), Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Added comprehensive module docstring, type hints, and improved error handling
 
 ### cleaning\scripts\run.py
 - Status: completed
 - Category: scripts
 - Audited: 2026-02-09
-- Notes: Added comprehensive module docstring, type hints, CUDA availability check, and implemented missing load_vector_model function. Improved docstrings and added TODO comments for incomplete functions.
-- Issues: Fixed missing load_vector_model function, added CUDA availability check, improved error handling
+- Notes: AUDIT: Header&Doc=(added comprehensive module docstring), Imports=(clean), TypeHints=(added), ErrorHandling=(improved), CodeStyle=, Performance=, Architecture=(inference script), Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Added comprehensive module docstring, type hints, CUDA availability check, and implemented missing load_vector_model function
 
 ### cleaning\utils\__init__.py
 - Status: completed
 - Category: cleaning
 - Audited: 2026-02-09
-- Notes: Added proper package initialization with imports of main classes and functions from utils modules.
+- Notes: AUDIT: Header&Doc=(added proper package documentation), Imports=(added main classes/functions), TypeHints=(not applicable), ErrorHandling=, CodeStyle=, Performance=, Architecture=(proper package structure), Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Added proper package initialization with imports of main classes and functions
 
 ### cleaning\utils\dataloader.py
 - Status: completed
 - Category: cleaning
 - Audited: 2026-02-09
-- Notes: Added comprehensive type hints to all classes and methods. Improved docstrings for classes. Added proper imports organization.
+- Notes: AUDIT: Header&Doc=(improved docstrings for classes), Imports=(proper organization), TypeHints=(added comprehensive), ErrorHandling=, CodeStyle=, Performance=, Architecture=(data loading classes), Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Added comprehensive type hints to all classes and methods. Improved docstrings for classes
 
 ### cleaning\utils\loss.py
 - Status: completed
 - Category: cleaning
 - Audited: 2026-02-09
-- Notes: Fixed incomplete PSNR function. Added comprehensive type hints to all functions and classes. Improved docstrings.
+- Notes: AUDIT: Header&Doc=(good module/function docs), Imports=(removed unused skimage, numpy, Variable), TypeHints=(added to all functions), ErrorHandling=, CodeStyle=(fixed line lengths, indentation), Performance=, Architecture=(clean function organization), Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Removed unused imports, improved docstrings with Args/Returns, fixed PSNR to use torch.log10, removed deprecated Variable usage, fixed PEP 8 style issues
 
 ### refinement\our_refinement\refinement_for_curves.py
 - Status: completed
@@ -117,31 +159,31 @@ Generated: 2026-02-09 05:59
 - Status: completed
 - Category: cleaning
 - Audited: 2026-02-09
-- Notes: AUDIT: Header&Doc=(comprehensive module docstring with features), Imports=(clean organization with typing), TypeHints=(added missing type hints to radial method), ErrorHandling=(improved file I/O error handling), CodeStyle=(PEP 8 compliant), Performance=(efficient numpy/PIL operations), Architecture=(well-structured class), Testing=(testable methods), Security=(safe file operations), Maintainability=(clear naming), ResearchCleanup=(modernized legacy code) | FIXED: Critical bugs in bowtie, line, rectangle, and curve methods where x/y variables were undefined; added proper variable declarations
+- Notes: AUDIT: Header&Doc=(good module/class docs), Imports=(removed unused Optional, List, all_degradations), TypeHints=(improved ctx type to cairo.Context), ErrorHandling=(added in MergeImages and syn_degradate), CodeStyle=(fixed with black), Performance=, Architecture=(class with drawing methods), Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Removed unused imports, fixed undefined x variable in triangle method, renamed local all_degradations to avoid redefinition, improved docstrings, ran black for formatting
 
 ### dataset\downloaders\__init__.py
 - Status: completed
 - Category: other
 - Audited: 2026-02-09
-- Notes: AUDIT: Header&Doc=(comprehensive module docstring), Imports=(clean with typing), TypeHints=(improved function and variable type annotations), ErrorHandling=(appropriate exception handling), CodeStyle=(PEP 8 compliant), Performance=(simple adapter), Architecture=(clean adapter pattern), Testing=(testable interface), Security=(safe imports), Maintainability=(clear and simple), ResearchCleanup=(modern code) | FIXED: Enhanced type hints for better type safety
+- Notes: AUDIT: Header&Doc=(good module docstring), Imports=(clean), TypeHints=(good), ErrorHandling=(has try-except), CodeStyle=(PEP 8), Performance=, Architecture=(adapter pattern), Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Removed unused variable 'e' in except clause
 
 ### dataset\downloaders\download_dataset.py
 - Status: completed
 - Category: other
 - Audited: 2026-02-09
-- Notes: AUDIT: Header&Doc=(comprehensive module docstring and function docs), Imports=(clean organization), TypeHints=(complete function type annotations), ErrorHandling=(comprehensive try/except blocks), CodeStyle=(PEP 8 compliant), Performance=(efficient downloads with progress), Architecture=(well-structured download functions), Testing=(testable functions), Security=(safe file operations), Maintainability=(clear structure), ResearchCleanup=(modern code) | VERIFIED: Large file with 10+ download functions, all well-implemented
+- Notes: AUDIT: Header&Doc=(good module docstring), Imports=(clean), TypeHints=(good), ErrorHandling=(try-except in functions), CodeStyle=(fixed), Performance=, Architecture=(download functions), Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Removed unused local requests imports, removed unused to_keep variable, broke long line
 
 ### dataset\processors\__init__.py
 - Status: completed
 - Category: other
 - Audited: 2026-02-09
-- Notes: AUDIT: Header&Doc=(comprehensive module docstring), Imports=(clean processor imports), TypeHints=(proper function annotation), ErrorHandling=(appropriate KeyError), CodeStyle=(PEP 8 compliant), Performance=(simple registry), Architecture=(clean factory pattern), Testing=(testable factory), Security=(safe imports), Maintainability=(clear registry), ResearchCleanup=(modern code) | VERIFIED: Clean registry/factory pattern for dataset processors
+- Notes: AUDIT: Header&Doc=(good module docstring), Imports=(clean), TypeHints=(good), ErrorHandling=(KeyError), CodeStyle=(PEP 8), Performance=, Architecture=(registry pattern), Testing=, Security=, Maintainability=, ResearchCleanup= | VERIFIED: Clean registry for processors
 
 ### dataset\processors\base.py
 - Status: completed
 - Category: other
 - Audited: 2026-02-09
-- Notes: AUDIT: Header&Doc=(good class docstring), Imports=(clean typing imports), TypeHints=(proper Protocol annotations), ErrorHandling=(NotImplementedError), CodeStyle=(PEP 8 compliant), Performance=(simple protocol), Architecture=(clean Protocol pattern), Testing=(testable interface), Security=(safe), Maintainability=(clear interface), ResearchCleanup=(modern typing) | VERIFIED: Clean Protocol class for dataset processors
+- Notes: AUDIT: Header&Doc=(good class docstring), Imports=(clean), TypeHints=(good), ErrorHandling=(NotImplementedError), CodeStyle=(PEP 8), Performance=, Architecture=(Protocol), Testing=, Security=, Maintainability=, ResearchCleanup= | VERIFIED: Clean Protocol for processors
 
 ### dataset\processors\cadvgdrawing.py
 - Status: completed
@@ -202,4 +244,784 @@ Generated: 2026-02-09 05:59
 - Category: other
 - Audited: 2026-02-09
 - Notes: AUDIT: Header&Doc=(comprehensive module/class/method docstrings with detailed API docs), Imports=(clean organization with torch/numpy), TypeHints=(excellent typing with Union/Dict/Tuple), ErrorHandling=(added comprehensive try/except in full pipeline, proper ValueError for unsupported types), CodeStyle=(PEP 8 compliant after fixing 4 line length violations), Performance=(efficient pipeline orchestration), Architecture=(excellent unified interface design), Testing=(main block for basic testing), Security=(safe imports and error handling), Maintainability=(clear separation of concerns, factory pattern), ResearchCleanup=(production-ready with proper error handling) | FIXED: Enhanced comprehensive docstrings, improved error handling in run_full_pipeline, fixed all line length violations
+
+### dataset\run_processor.py
+- Status: completed
+- Category: other
+- Audited: 2026-02-09
+- Notes: AUDIT: Header&Doc=(good module docstring with usage), Imports=(clean with proper error handling), TypeHints=(added complete type hints for all parameters), ErrorHandling=(added comprehensive try/except with sys.exit), CodeStyle=(PEP 8 compliant), Performance=(efficient CLI processing), Architecture=(follows CLI pattern), Testing=(testable with mock processors), Security=(safe argument parsing), Maintainability=(clear main function), ResearchCleanup=(production-ready) | FIXED: Added complete type hints, improved error handling with proper exit codes
+
+### dataset_downloaders.py
+- Status: completed
+- Category: other
+- Audited: 2026-02-09
+- Notes: AUDIT: Header&Doc=(good module docstring), Imports=(clean with dynamic loading), TypeHints=(not applicable for compatibility shim), ErrorHandling=(improved import error messages), CodeStyle=(PEP 8 compliant), Performance=(efficient lazy loading), Architecture=(compatibility layer design), Testing=(testable import behavior), Security=(safe dynamic imports), Maintainability=(clear forwarding pattern), ResearchCleanup=(production-ready) | FIXED: Improved import error handling with informative messages
+
+### fast_file_list.py
+- Status: completed
+- Category: other
+- Audited: 2026-02-09
+- Notes: AUDIT: Header&Doc=(good module docstring with usage), Imports=(clean after removing unused), TypeHints=(added complete type hints), ErrorHandling=(appropriate for file operations), CodeStyle=(PEP 8 compliant after black formatting), Performance=(efficient os.scandir usage), Architecture=(simple utility function), Testing=(testable with temp directories), Security=(safe path operations), Maintainability=(clear single responsibility), ResearchCleanup=(production-ready) | FIXED: Added complete type hints, removed unused imports, applied black formatting
+
+### merging\merging_for_curves.py
+- Status: completed
+- Category: merging
+- Audited: 2026-02-09
+- Notes: AUDIT: Header&Doc=(good function docstrings), Imports=(clean), TypeHints=(improved type annotations), ErrorHandling=(appropriate for geometric operations), CodeStyle=(PEP 8 compliant), Performance=(efficient curve processing), Architecture=(separate curve merging logic), Testing=(testable with mock curves), Security=(safe geometric operations), Maintainability=(clear algorithm structure), ResearchCleanup=(production-ready) | FIXED: Improved type annotations for better clarity
+
+### merging\merging_for_lines.py
+- Status: completed
+- Category: merging
+- Audited: 2026-02-09
+- Notes: AUDIT: Header&Doc=(comprehensive function docstrings), Imports=(clean), TypeHints=(complete type annotations), ErrorHandling=(appropriate for geometric operations), CodeStyle=(PEP 8 compliant), Performance=(efficient line processing), Architecture=(separate line merging logic), Testing=(testable with mock lines), Security=(safe geometric operations), Maintainability=(clear algorithm structure), ResearchCleanup=(production-ready) | VERIFIED: File meets all quality standards with no required changes
+
+### merging\utils\merging_functions.py
+- Status: completed
+- Category: merging
+- Audited: 2026-02-09
+- Notes: AUDIT: Header&Doc=(comprehensive function docstrings), Imports=(clean after removing unused), TypeHints=(complete type annotations), ErrorHandling=(appropriate for geometric operations), CodeStyle=(PEP 8 compliant), Performance=(efficient geometric algorithms), Architecture=(utility function collection), Testing=(testable with mock geometries), Security=(safe sklearn operations), Maintainability=(clear function separation), ResearchCleanup=(production-ready) | FIXED: Removed unused imports and variables, fixed sklearn import issues
+
+### refinement\our_refinement\optimization_classes.py
+- Status: completed
+- Category: refinement
+- Audited: 2026-02-09
+- Notes: AUDIT: Header&Doc=(comprehensive module/class/method docstrings), Imports=(clean organization), TypeHints=(complete type hints for all parameters/returns), ErrorHandling=(proper exception handling), CodeStyle=(PEP 8 compliant after fixing line lengths), Performance=(efficient PyTorch operations), Architecture=(excellent class design with separation of concerns), Testing=(classes designed for testability), Security=(safe tensor operations), Maintainability=(modular design), ResearchCleanup=(production-ready) | FIXED: Fixed 13 line length violations by proper line breaking in tensor operations
+
+### batch_audit.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### regenerate_splits.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### run_pipeline.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### run_pipeline_hydra.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### run_web_ui.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### run_web_ui_demo.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### cleaning\models\SmallUnet\unet.py
+- Status: pending
+- Category: cleaning
+- Audited: 
+- Notes: 
+
+### cleaning\models\Unet\unet_model.py
+- Status: pending
+- Category: cleaning
+- Audited: 
+- Notes: 
+
+### cleaning\models\Unet\unet_parts.py
+- Status: pending
+- Category: cleaning
+- Audited: 
+- Notes: 
+
+### refinement\our_refinement\lines_refinement_functions.py
+- Status: pending
+- Category: refinement
+- Audited: 
+- Notes: 
+
+### refinement\our_refinement\refinement_for_lines.py
+- Status: pending
+- Category: refinement
+- Audited: 
+- Notes: 
+
+### scripts\aggregate_metrics.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\analyze_outputs.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\benchmark_performance.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\benchmark_pipeline.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\check_cuda.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\comprehensive_analysis.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\create_floorplancad_splits.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\debug_train_step.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\download_and_verify_floorplancad.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\evaluation_suite.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\extract_floorplancad_ground_truth.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\generate_diagnostics.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\generate_trace_report.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\lint_code.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\list_floorplancad_files.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\postprocess_floorplancad.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\precompute_floorplancad_targets.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\profile_performance.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\profile_pipeline_performance.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\profile_refinement_bottlenecks.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\report_utils.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\run_all_downloaders_test.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\run_batch_pipeline.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\run_cleaning.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\run_fine_tuning.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\run_security_scan.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\run_single_test_image.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\run_tests_local.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\run_trace_for_random.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\test_discover.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\test_evaluation.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\train_floorplancad.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\validate_env.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### scripts\verify_downloads.py
+- Status: pending
+- Category: scripts
+- Audited: 
+- Notes: 
+
+### tests\benchmark_merging.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_bezier_splatting.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_config_manager.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_early_stopping_integration.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_file_utils.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_file_utils_paths.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_hydra_config.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_integration.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_main_cleaning_args.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_merging_clip_and_assemble.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_merging_functions.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_mixed_precision_integration.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_refinement_integration.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_refinement_smoke.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_refinement_utils.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_regression.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_smoke.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### tests\test_vectorization.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\cad_export.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\color_utils.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\config_manager.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\dataloading.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\early_stopping.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\evaluation_utils.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\exceptions.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\geometric.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\logging.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\mixed_precision.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\patchify.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\performance_profiler.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\tensorboard.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\visualization.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\warnings.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\chunked.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\graphics_primitives.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\line_drawings_dataset.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\prefetcher.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\preprocessed.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\preprocessing.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\graphics\graphics.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\graphics\path.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\graphics\primitives.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\graphics\raster_embedded.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\graphics\units.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\graphics\utils\common.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\graphics\utils\parse.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\graphics\utils\raster_utils.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\data\graphics\utils\splitting.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\loss_functions\lovacz_losses.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\loss_functions\supervised.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\metrics\raster_metrics.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\metrics\skeleton_metrics.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\metrics\vector_metrics.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\optimization\parameters.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\rendering\bezier_splatting.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\rendering\cairo.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\rendering\gpu_line_renderer.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\rendering\skeleton.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\rendering\utils.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\simplification\curve.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\simplification\detect_overlaps.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\simplification\join_qb.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\simplification\polyline.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\simplification\simplify.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### util_files\simplification\utils.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
+
+### vectorization\models\common.py
+- Status: pending
+- Category: vectorization
+- Audited: 
+- Notes: 
+
+### vectorization\models\fully_conv_net.py
+- Status: pending
+- Category: vectorization
+- Audited: 
+- Notes: 
+
+### vectorization\models\generic.py
+- Status: pending
+- Category: vectorization
+- Audited: 
+- Notes: 
+
+### vectorization\models\lstm.py
+- Status: pending
+- Category: vectorization
+- Audited: 
+- Notes: 
+
+### vectorization\modules\base.py
+- Status: pending
+- Category: vectorization
+- Audited: 
+- Notes: 
+
+### vectorization\modules\conv_modules.py
+- Status: pending
+- Category: vectorization
+- Audited: 
+- Notes: 
+
+### vectorization\modules\fully_connected.py
+- Status: pending
+- Category: vectorization
+- Audited: 
+- Notes: 
+
+### vectorization\modules\maybe_module.py
+- Status: pending
+- Category: vectorization
+- Audited: 
+- Notes: 
+
+### vectorization\modules\output.py
+- Status: pending
+- Category: vectorization
+- Audited: 
+- Notes: 
+
+### vectorization\modules\transformer.py
+- Status: pending
+- Category: vectorization
+- Audited: 
+- Notes: 
+
+### vectorization\modules\_transformer_modules.py
+- Status: pending
+- Category: vectorization
+- Audited: 
+- Notes: 
+
+### vectorization\scripts\train_vectorization.py
+- Status: pending
+- Category: vectorization
+- Audited: 
+- Notes: 
+
+### web_ui\app.py
+- Status: pending
+- Category: other
+- Audited: 
+- Notes: 
 

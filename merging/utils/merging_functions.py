@@ -18,7 +18,7 @@ from __future__ import division
 
 import os
 import sys
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple
 
 sys.path.append("..")
 sys.path.append(os.path.join(os.getcwd(), ".."))
@@ -29,13 +29,12 @@ import os
 import numpy as np
 from PIL import Image
 from scipy.spatial import distance
-from sklearn import datasets, linear_model
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, RANSACRegressor
 from tqdm import tqdm
 
 import util_files.data.graphics_primitives as graphics_primitives
-from util_files.data.graphics_primitives import PT_CBEZIER, PT_LINE, PT_QBEZIER
-from util_files.exceptions import ClippingError, MergeError
+from util_files.data.graphics_primitives import PT_LINE
+from util_files.exceptions import ClippingError
 from util_files.geometric import liang_barsky_screen
 from util_files.rendering.cairo import render, render_with_skeleton
 
@@ -143,7 +142,7 @@ def merge_close_lines(lines: np.ndarray, threshold: float = 0.5) -> np.ndarray:
     #     max_y = max(lines[:,1].max(), lines[:,3].max())
 
     lr = LinearRegression()
-    ransac = linear_model.RANSACRegressor()
+    ransac = RANSACRegressor()
 
     dt = np.hstack((lines[:, 0], lines[:, 2]))
     y_t = np.hstack((lines[:, 1], lines[:, 3]))
@@ -161,7 +160,7 @@ def merge_close_lines(lines: np.ndarray, threshold: float = 0.5) -> np.ndarray:
         inlier_mask = ransac.inlier_mask_
 
         lr.fit(dt[inlier_mask].reshape(-1, 1), y_t[inlier_mask])
-    except Exception as e:
+    except Exception:
         # Fallback to simple linear regression if RANSAC fails
         lr.fit(dt.reshape(-1, 1), y_t)
 
@@ -365,7 +364,7 @@ def compute_angle(line0, line1):
 
     try:
         angle = math.degrees(angle_radians(pt1, pt2))
-    except Exception as e:
+    except Exception:
         # Return 0 angle if angle calculation fails
         angle = 0
     if angle >= 90 and angle <= 270:
@@ -408,7 +407,6 @@ def merge_close(
         - Skips lines shorter than 3 units.
         - Merges groups into single representative lines.
     """
-    window = [-window_width, -window_width, window_width, window_width]
     n = len(lines)
     close = [[] for _ in range(n)]
     merge_trace = []

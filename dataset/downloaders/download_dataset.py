@@ -129,7 +129,6 @@ def download_floorplancad(output_dir: Path, test_mode: bool = False) -> Dict:
 
 def download_cubicasa5k(output_dir: Path, test_mode: bool = False) -> Dict:
     """Download CubiCasa5K from Zenodo."""
-    import requests
 
     dataset_dir = output_dir / "raw" / "cubicasa5k"
     dataset_dir.mkdir(parents=True, exist_ok=True)
@@ -263,7 +262,8 @@ def download_msd(output_dir: Path, test_mode: bool = False) -> Dict:
     if test_mode:
         print("Test mode: MSD download from 4TU.ResearchData.")
         print(
-            "Direct download link: https://data.4tu.nl/file/e1d89cb5-6872-48fc-be63-aadd687ee6f9/1ba5885d-19d7-4c0a-b73a-085e772ea1bc"
+            "Direct download link: https://data.4tu.nl/file/e1d89cb5-6872-48fc-be63-aadd687ee6f9/"
+            "1ba5885d-19d7-4c0a-b73a-085e772ea1bc"
         )
         metadata = {
             "name": "Modified Swiss Dwellings (MSD)",
@@ -566,7 +566,6 @@ def download_cadvgdrawing(output_dir: Path, test_mode: bool = False) -> Dict:
 
 def download_fplanpoly(output_dir: Path, test_mode: bool = False) -> Dict:
     """Download FPLAN-POLY from archived CVC site."""
-    import requests
 
     dataset_dir = output_dir / "raw" / "fplanpoly"
     dataset_dir.mkdir(parents=True, exist_ok=True)
@@ -743,7 +742,6 @@ def _prune_dataset_files(dataset_dir: Path, max_items: int = None) -> dict:
 
     # Sort deterministically and keep the first max_items
     candidates.sort(key=lambda p: p.as_posix())
-    to_keep = set(candidates[:max_items])
     to_move = candidates[max_items:]
 
     overflow_dir = dataset_dir / "_overflow"

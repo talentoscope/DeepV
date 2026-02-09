@@ -299,8 +299,12 @@ class OptimizationLoop:
     def _optimize_sizes_left_fixed(self) -> None:
         """Optimize size parameters with left points and orientations fixed."""
         # Fix left points
-        x1 = self.opt_state.cx.data - self.opt_state.length.data * torch.cos(self.opt_state.theta.data) / 2
-        y1 = self.opt_state.cy.data - self.opt_state.length.data * torch.sin(self.opt_state.theta.data) / 2
+        x1 = self.opt_state.cx.data - self.opt_state.length.data * torch.cos(
+            self.opt_state.theta.data
+        ) / 2
+        y1 = self.opt_state.cy.data - self.opt_state.length.data * torch.sin(
+            self.opt_state.theta.data
+        ) / 2
 
         # Update right points based on current length
         x2 = x1 + self.opt_state.length * torch.cos(self.opt_state.theta.data)
@@ -308,8 +312,13 @@ class OptimizationLoop:
 
         lines_batch = torch.stack([x1, y1, x2, y2, self.opt_state.width], -1)
 
-        excess_energy = size_energy(lines_batch[self.patches_to_optimize], self.rasters_batch[self.patches_to_optimize])
-        collinearity_energy = mean_vector_field_energy_lines(lines_batch[self.patches_to_optimize])
+        excess_energy = size_energy(
+            lines_batch[self.patches_to_optimize],
+            self.rasters_batch[self.patches_to_optimize]
+        )
+        collinearity_energy = mean_vector_field_energy_lines(
+            lines_batch[self.patches_to_optimize]
+        )
 
         self.opt_state.size_optimizer.zero_grad()
         (excess_energy + collinearity_energy).backward()
@@ -333,8 +342,12 @@ class OptimizationLoop:
     def _optimize_sizes_right_fixed(self) -> None:
         """Optimize size parameters with right points and orientations fixed."""
         # Fix right points
-        x2 = self.opt_state.cx.data + self.opt_state.length.data * torch.cos(self.opt_state.theta.data) / 2
-        y2 = self.opt_state.cy.data + self.opt_state.length.data * torch.sin(self.opt_state.theta.data) / 2
+        x2 = self.opt_state.cx.data + self.opt_state.length.data * torch.cos(
+            self.opt_state.theta.data
+        ) / 2
+        y2 = self.opt_state.cy.data + self.opt_state.length.data * torch.sin(
+            self.opt_state.theta.data
+        ) / 2
 
         # Update left points based on current length
         x1 = x2 - self.opt_state.length * torch.cos(self.opt_state.theta.data)
@@ -342,8 +355,13 @@ class OptimizationLoop:
 
         lines_batch = torch.stack([x1, y1, x2, y2, self.opt_state.width], -1)
 
-        excess_energy = size_energy(lines_batch[self.patches_to_optimize], self.rasters_batch[self.patches_to_optimize])
-        collinearity_energy = mean_vector_field_energy_lines(lines_batch[self.patches_to_optimize])
+        excess_energy = size_energy(
+            lines_batch[self.patches_to_optimize],
+            self.rasters_batch[self.patches_to_optimize]
+        )
+        collinearity_energy = mean_vector_field_energy_lines(
+            lines_batch[self.patches_to_optimize]
+        )
 
         self.opt_state.size_optimizer.zero_grad()
         (excess_energy + collinearity_energy).backward()
@@ -375,11 +393,21 @@ class OptimizationLoop:
         """Log progress and update tracking variables."""
         if iteration % refinement_config.logging_interval == 0:
             # Record current parameters
-            self.cx_final[self.patches_to_optimize] = self.opt_state.cx.data[self.patches_to_optimize]
-            self.cy_final[self.patches_to_optimize] = self.opt_state.cy.data[self.patches_to_optimize]
-            self.theta_final[self.patches_to_optimize] = self.opt_state.theta.data[self.patches_to_optimize]
-            self.length_final[self.patches_to_optimize] = self.opt_state.length.data[self.patches_to_optimize]
-            self.width_final[self.patches_to_optimize] = self.opt_state.width.data[self.patches_to_optimize]
+            self.cx_final[self.patches_to_optimize] = (
+                self.opt_state.cx.data[self.patches_to_optimize]
+            )
+            self.cy_final[self.patches_to_optimize] = (
+                self.opt_state.cy.data[self.patches_to_optimize]
+            )
+            self.theta_final[self.patches_to_optimize] = (
+                self.opt_state.theta.data[self.patches_to_optimize]
+            )
+            self.length_final[self.patches_to_optimize] = (
+                self.opt_state.length.data[self.patches_to_optimize]
+            )
+            self.width_final[self.patches_to_optimize] = (
+                self.opt_state.width.data[self.patches_to_optimize]
+            )
 
             # Collapse invisible lines
             self.width_final[self.width_final < refinement_config.width_min_threshold] = 0
@@ -430,19 +458,26 @@ class OptimizationLoop:
             )
 
             # Calculate IOU
-            iou_val = calc_iou__vect_image(self.lines_batch_final.data.cpu() / 64, patches_rgb_im[take_batches])
+            iou_val = calc_iou__vect_image(
+                self.lines_batch_final.data.cpu() / 64,
+                patches_rgb_im[take_batches]
+            )
             # Ensure it's a scalar by taking mean if it's an array
             if hasattr(iou_val, "__len__") and len(iou_val) > 1:
                 iou_val = float(np.mean(iou_val))
             iou_mass.append(iou_val)
-            mass_for_iou_one.append(self.lines_batch_final.cpu().data.detach().numpy())
+            mass_for_iou_one.append(
+                self.lines_batch_final.cpu().data.detach().numpy()
+            )
             # Save per-iteration snapshot if tracer is enabled
             try:
                 if self.tracer is not None and getattr(self.tracer, "enabled", False):
                     lines_np = self.lines_batch_final.cpu().data.detach().numpy()
                     renders_np = self.vector_rendering.cpu().data.detach().numpy()
                     # Save a lightweight subset to avoid large disk usage
-                    self.tracer.save_iteration(iteration, lines_batch=lines_np, renderings=renders_np)
+                    self.tracer.save_iteration(
+                        iteration, lines_batch=lines_np, renderings=renders_np
+                    )
                     # append to history snapshots for per-primitive timelines
                     try:
                         # store small numeric snapshot (float32) to reduce memory

@@ -14,48 +14,63 @@ Features:
 Used by cleaning model training and evaluation.
 """
 
-import numpy as np
 import torch
 import torch.nn as nn
-from skimage.measure import compare_psnr
-from torch.autograd import Variable
 
 SMOOTH = 1e-6
 
 
-def IOU(outputs: torch.Tensor, labels: torch.Tensor):
+def IOU(outputs: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    """Calculate Intersection over Union (IoU) for binary segmentation.
+
+    Args:
+        outputs: Predicted binary masks, shape (B, H, W) or (B, 1, H, W)
+        labels: Ground truth binary masks, shape (B, H, W)
+
+    Returns:
+        Thresholded IoU scores averaged over batch
+    """
     # You can comment out this line if you are passing tensors of equal shape
     # But if you are passing output from UNet or something it will most probably
     # be with the BATCH x 1 x H x W shape
     outputs = outputs.squeeze(1)  # BATCH x 1 x H x W => BATCH x H x W
 
     intersection = (outputs & labels).float().sum((1, 2))  # Will be zero if Truth=0 or Prediction=0
-    union = (outputs | labels).float().sum((1, 2))  # Will be zzero if both are 0
+    union = (outputs | labels).float().sum((1, 2))  # Will be zero if both are 0
 
-    iou = (intersection + SMOOTH) / (union + SMOOTH)  # We smooth our devision to avoid 0/0
+    iou = (intersection + SMOOTH) / (union + SMOOTH)  # We smooth our division to avoid 0/0
 
-    thresholded = torch.clamp(20 * (iou - 0.5), 0, 10).ceil() / 10  # This is equal to comparing with thresolds
+    thresholded = torch.clamp(20 * (iou - 0.5), 0, 10).ceil() / 10  # This is equal to comparing with thresholds
 
     return thresholded.mean()
 
 
-def PSNR(outputs: torch.Tensor, labels: torch.Tensor) -> float:
-    """Calculate Peak Signal-to-Noise Ratio between outputs and labels."""
+def PSNR(outputs: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    """Calculate Peak Signal-to-Noise Ratio between outputs and labels.
+
+    Args:
+        outputs: Predicted images, shape (B, 1, H, W) or (B, H, W)
+        labels: Ground truth images, shape (B, H, W)
+
+    Returns:
+        PSNR value in dB
+    """
     outputs = outputs.squeeze(1)  # BATCH x 1 x H x W => BATCH x H x W
 
     mse = torch.nn.functional.mse_loss(outputs, labels)
-    return 10 * np.log10(1 / mse.item())
+    return 10 * torch.log10(1 / mse)
 
 
 class CleaningLoss(nn.Module):
-    """Custom loss function for image cleaning tasks."""
+    """Custom loss function for image cleaning tasks combining extraction and restoration losses."""
 
     def __init__(self, kind: str = "MSE", with_restore: bool = True, alpha: float = 1):
         """Initialize cleaning loss.
 
-        :param kind: loss type ('MSE' or 'BCE')
-        :param with_restore: whether to include restoration loss
-        :param alpha: weighting factor
+        Args:
+            kind: Loss type, either 'MSE' or 'BCE'
+            with_restore: Whether to include restoration loss component
+            alpha: Weighting factor for losses (currently unused)
         """
         super().__init__()
 
@@ -71,7 +86,17 @@ class CleaningLoss(nn.Module):
 
     def forward(self, y_pred_extract: torch.Tensor, y_pred_restore: torch.Tensor,
                 y_true_extract: torch.Tensor, y_true_restore: torch.Tensor) -> torch.Tensor:
-        """Forward pass of cleaning loss."""
+        """Compute the cleaning loss.
+
+        Args:
+            y_pred_extract: Predicted extraction output
+            y_pred_restore: Predicted restoration output
+            y_true_extract: Ground truth extraction target
+            y_true_restore: Ground truth restoration target
+
+        Returns:
+            Combined loss value
+        """
         loss = 0
         y_true_extract = y_true_extract.unsqueeze(1)
         y_true_restore = y_true_restore.unsqueeze(1)
@@ -83,10 +108,22 @@ class CleaningLoss(nn.Module):
         return loss
 
 
-def MSE_loss(X_batch: torch.Tensor, y_batch: torch.Tensor, model: nn.Module = None, device: str = "cpu") -> torch.Tensor:
-    """Calculate MSE loss for batch."""
-    X_batch = Variable(torch.FloatTensor(X_batch)).to(device)
-    y_batch = Variable(y_batch.type(torch.FloatTensor)).to(device)
+def MSE_loss(
+    X_batch: torch.Tensor, y_batch: torch.Tensor, model: nn.Module = None, device: str = "cpu"
+) -> torch.Tensor:
+    """Calculate MSE loss for a batch.
+
+    Args:
+        X_batch: Input batch
+        y_batch: Target batch
+        model: Model to evaluate
+        device: Device to run on
+
+    Returns:
+        MSE loss value
+    """
+    X_batch = X_batch.to(device)
+    y_batch = y_batch.to(device)
 
     y_batch = y_batch.unsqueeze(1)
     logits, _ = model(X_batch)
@@ -94,13 +131,26 @@ def MSE_loss(X_batch: torch.Tensor, y_batch: torch.Tensor, model: nn.Module = No
     return loss_fun(logits, y_batch)
 
 
-def MSE_synthetic_loss(X_batch: torch.Tensor, y_batch_er: torch.Tensor, y_batch_e: torch.Tensor,
-                      model: nn.Module = None, device: str = None) -> torch.Tensor:
-    """Calculate MSE loss for synthetic data with extraction and restoration."""
+def MSE_synthetic_loss(
+    X_batch: torch.Tensor, y_batch_er: torch.Tensor, y_batch_e: torch.Tensor,
+    model: nn.Module = None, device: str = None
+) -> torch.Tensor:
+    """Calculate MSE loss for synthetic data with extraction and restoration.
+
+    Args:
+        X_batch: Input batch
+        y_batch_er: Restoration targets
+        y_batch_e: Extraction targets
+        model: Model to evaluate
+        device: Device to run on (optional)
+
+    Returns:
+        Combined MSE loss
+    """
     if device is not None:
-        X_batch = Variable(torch.FloatTensor(X_batch)).to(device)
-        y_batch_er = Variable(y_batch_er.type(torch.FloatTensor)).to(device)
-        y_batch_e = Variable(y_batch_e.type(torch.FloatTensor)).to(device)
+        X_batch = X_batch.to(device)
+        y_batch_er = y_batch_er.to(device)
+        y_batch_e = y_batch_e.to(device)
 
     y_batch_er = y_batch_er.unsqueeze(1)
     y_batch_e = y_batch_e.unsqueeze(1)
@@ -112,10 +162,22 @@ def MSE_synthetic_loss(X_batch: torch.Tensor, y_batch_er: torch.Tensor, y_batch_
     return loss_first(logits_er, y_batch_er) + loss_second(logits_e, y_batch_e)
 
 
-def BCE_loss(X_batch: torch.Tensor, y_batch: torch.Tensor, model: nn.Module = None, device: str = "cpu") -> torch.Tensor:
-    """Calculate BCE loss for batch."""
-    X_batch = Variable(torch.FloatTensor(X_batch)).to(device)
-    y_batch = Variable(y_batch.type(torch.FloatTensor)).to(device)
+def BCE_loss(
+    X_batch: torch.Tensor, y_batch: torch.Tensor, model: nn.Module = None, device: str = "cpu"
+) -> torch.Tensor:
+    """Calculate BCE loss for a batch.
+
+    Args:
+        X_batch: Input batch
+        y_batch: Target batch
+        model: Model to evaluate
+        device: Device to run on
+
+    Returns:
+        BCE loss value
+    """
+    X_batch = X_batch.to(device)
+    y_batch = y_batch.to(device)
 
     y_batch = y_batch.unsqueeze(1)
     logits = model(X_batch)
