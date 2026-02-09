@@ -49,7 +49,7 @@ def parse_args():
 
 
 def get_dataloaders(args):
-    train_transform = transforms.Compose([transforms.ToTensor(), transforms.ColorJitter()])
+    train_transform = transforms.Compose([transforms.ToTensor()])
     # TODO Make sure that this should be MakeDataSynt and not MakeData from dataloader.py
     dset_synt = MakeDataSynt(args.datadir, args.datadir, train_transform, 1)
     dset_val_synt = MakeDataSynt(args.valdatadir, args.valdatadir, train_transform)

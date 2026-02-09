@@ -1,5 +1,4 @@
 import os
-import random
 
 import numpy as np
 import PIL
@@ -33,14 +32,14 @@ class MakeData(Dataset):
             ]
         )
 
-    def randomCrop(self, img, mask, width, height):
+    def crop(self, img, mask, width, height):
         print(img.size, width, height)
         assert img.size[0] >= height
         assert img.size[1] >= width
         assert img.size[0] == mask.size[0]
         assert img.size[1] == mask.size[1]
-        x = random.randint(0, img.size[1] - width)
-        y = random.randint(0, img.size[0] - height)
+        x = 0  # random.randint(0, img.size[1] - width)
+        y = 0  # random.randint(0, img.size[0] - height)
         img = img.crop((y, x, y + height, x + width))
         mask = mask.crop((y, x, y + height, x + width))
         return img, mask
@@ -48,17 +47,8 @@ class MakeData(Dataset):
     def transformation(self, img, img_y):
         img = PIL.ImageOps.invert(img)
         img_y = PIL.ImageOps.invert(img_y)
-        if np.random.uniform() < 0.5:
-            img = img.transpose(Image.FLIP_LEFT_RIGHT)
-            img_y = img_y.transpose(Image.FLIP_LEFT_RIGHT)
-        elif np.random.uniform() < 0.5:
-            img = img.transpose(Image.FLIP_TOP_BOTTOM)
-            img_y = img_y.transpose(Image.FLIP_TOP_BOTTOM)
-        rn = np.random.uniform(0, 270)
-        img = img.rotate(rn)
-        img_y = img_y.rotate(rn)
         mini = 512
-        img, img_y = self.randomCrop(img, img_y, mini, mini)
+        img, img_y = self.crop(img, img_y, mini, mini)
         #         img_y = np.array(img_y)
         #         a=(img_y>0).astype(int)
         img = PIL.ImageOps.invert(img)
@@ -122,13 +112,13 @@ class MakeDataSynt(Dataset):
             ]
         )
 
-    def randomCrop(self, img, mask, mask_1, width, height):
+    def crop(self, img, mask, mask_1, width, height):
         assert img.size[0] >= height
         assert img.size[1] >= width
         assert img.size[0] == mask.size[0]
         assert img.size[1] == mask.size[1]
-        x = random.randint(0, img.size[1] - width)
-        y = random.randint(0, img.size[0] - height)
+        x = 0  # random.randint(0, img.size[1] - width)
+        y = 0  # random.randint(0, img.size[0] - height)
         img = img.crop((y, x, y + height, x + width))
         mask = mask.crop((y, x, y + height, x + width))
         mask_1 = mask_1.crop((y, x, y + height, x + width))
@@ -138,20 +128,8 @@ class MakeDataSynt(Dataset):
         img = PIL.ImageOps.invert(img)
         img_y = PIL.ImageOps.invert(img_y)
         img_y_nh = PIL.ImageOps.invert(img_y_nh)
-        if np.random.uniform() < 0.5:
-            img = img.transpose(Image.FLIP_LEFT_RIGHT)
-            img_y = img_y.transpose(Image.FLIP_LEFT_RIGHT)
-            img_y_nh = img_y_nh.transpose(Image.FLIP_LEFT_RIGHT)
-        elif np.random.uniform() < 0.5:
-            img = img.transpose(Image.FLIP_TOP_BOTTOM)
-            img_y = img_y.transpose(Image.FLIP_TOP_BOTTOM)
-            img_y_nh = img_y_nh.transpose(Image.FLIP_TOP_BOTTOM)
-        rn = np.random.uniform(0, 270)
-        img = img.rotate(rn)
-        img_y = img_y.rotate(rn)
-        img_y_nh = img_y_nh.rotate(rn)
         mini = 512
-        img, img_y, img_y_nh = self.randomCrop(img, img_y, img_y_nh, mini, mini)
+        img, img_y, img_y_nh = self.crop(img, img_y, img_y_nh, mini, mini)
         #         img_y = np.array(img_y)
         #         img_y = np.array(img_y)
         #         a=(img_y>0).astype(int)

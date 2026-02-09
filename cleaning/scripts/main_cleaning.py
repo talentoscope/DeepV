@@ -98,7 +98,7 @@ def get_dataloaders(args):
 
     from cleaning.utils.dataloader import MakeDataSynt
 
-    train_transform = transforms.Compose([transforms.ToTensor(), transforms.ColorJitter()])
+    train_transform = transforms.Compose([transforms.ToTensor()])
 
     dset_synt = MakeDataSynt(args.datadir, args.datadir, train_transform, 1)
     dset_val_synt = MakeDataSynt(args.valdatadir, args.valdatadir, train_transform)
