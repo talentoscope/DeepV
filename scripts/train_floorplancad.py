@@ -1,6 +1,24 @@
 #!/usr/bin/env python3
 """
-Train vectorization model on FloorPlanCAD dataset using custom train/val/test splits.
+FloorPlanCAD Vectorization Model Trainer
+
+Trains DeepV vectorization models specifically on FloorPlanCAD dataset using
+custom train/validation/test splits. Supports end-to-end training from raw images
+to vector primitives.
+
+Features:
+- Custom FloorPlanCAD dataset loader with SVG ground truth parsing
+- Configurable model architectures (ResNet, Transformer variants)
+- Multi-GPU training support
+- Automatic checkpointing and resume capability
+- Comprehensive logging and progress tracking
+- Validation metrics during training
+
+Supports training different primitive types (lines, curves, arcs) and model
+configurations for architectural floor plan vectorization.
+
+Usage:
+    python scripts/train_floorplancad.py --train_split data/splits/floorplancad/train.txt --val_split data/splits/floorplancad/val.txt --output_dir logs/training/floorplancad
 """
 
 import argparse

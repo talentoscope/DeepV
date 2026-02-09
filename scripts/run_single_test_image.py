@@ -1,8 +1,26 @@
 #!/usr/bin/env python3
-"""Run the DeepV pipeline on a single test image (data/raw/test.png by default).
+"""
+Single Image DeepV Pipeline Runner
 
-This helper constructs the options namespace expected by `run_pipeline.PipelineRunner`
-and runs the pipeline. It is intended for quick single-image checks.
+Runs the complete DeepV vectorization pipeline on a single test image for quick
+validation and debugging. Provides a simplified interface for testing model
+performance on individual images without full dataset processing.
+
+Features:
+- Automatic model selection if not specified
+- Configurable primitive types (line/curve)
+- Support for custom model paths and configurations
+- GPU/CPU execution modes
+- Output visualization and metrics
+
+Ideal for:
+- Quick model validation during development
+- Debugging pipeline issues
+- Performance testing on specific images
+- Demonstrating model capabilities
+
+Usage:
+    python scripts/run_single_test_image.py --image_name my_test.png --primitive_type line
 """
 
 import argparse

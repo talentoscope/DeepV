@@ -1,8 +1,23 @@
+#!/usr/bin/env python3
 """
-Benchmarking pipeline for DeepV models across multiple datasets.
+DeepV Pipeline Benchmarking Suite
 
-Provides automated benchmarking against state-of-the-art baselines
-and comprehensive performance evaluation.
+Automated benchmarking framework for evaluating DeepV models across multiple datasets
+against state-of-the-art baselines. Provides comprehensive performance evaluation and
+comparison metrics.
+
+Features:
+- Multi-dataset evaluation (FloorPlanCAD, synthetic data, custom datasets)
+- Baseline comparisons with published methods
+- Automated metric computation and reporting
+- Statistical significance testing
+- Performance profiling and bottleneck analysis
+
+Supports benchmarking different model variants, hyperparameters, and preprocessing
+strategies to identify optimal configurations.
+
+Usage:
+    python scripts/benchmark_pipeline.py --model_path logs/models/best_model --datasets floorplancad synthetic
 """
 
 import argparse

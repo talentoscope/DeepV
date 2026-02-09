@@ -1,9 +1,19 @@
 #!/usr/bin/env python3
 """
-Run Code Linters and Formatters
+DeepV Code Quality Linting and Formatting Script
 
-Cross-platform Python script to run code quality checks.
-Equivalent to the original lint_code.ps1 PowerShell script.
+Runs comprehensive code quality checks and automatic formatting on the DeepV codebase.
+Cross-platform Python equivalent of the original PowerShell linting script.
+
+Performs the following checks:
+- Black code formatting and style enforcement
+- Flake8 linting for PEP 8 compliance and code quality
+- MyPy static type checking (if configured)
+- Import sorting and organization
+- Line length and whitespace validation
+
+Automatically fixes formatting issues where possible and reports remaining
+issues that require manual correction.
 
 Usage:
     python scripts/lint_code.py

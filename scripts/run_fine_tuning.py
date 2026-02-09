@@ -1,8 +1,21 @@
 #!/usr/bin/env python3
 """
-Run Fine-tuning Script
+DeepV Cleaning Model Fine-Tuning Runner
 
-Python equivalent of run_fine_tuning.sh for fine-tuning the cleaning UNet model.
+Runs fine-tuning for the cleaning UNet model with predefined parameters.
+Python equivalent of the shell script for cross-platform compatibility.
+
+Features:
+- GPU requirement enforcement
+- Predefined fine-tuning parameters
+- Automatic directory navigation
+- Error handling and status reporting
+
+Fine-tunes the cleaning model for improved artifact removal and preprocessing
+performance on specific datasets.
+
+Usage:
+    python scripts/run_fine_tuning.py
 """
 
 import os

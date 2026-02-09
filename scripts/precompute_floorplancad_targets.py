@@ -1,7 +1,19 @@
 #!/usr/bin/env python3
 """
-Pre-compute and cache FloorPlanCAD primitive targets from SVG files.
-This eliminates expensive SVG parsing during training.
+FloorPlanCAD Target Pre-computation Script
+
+Pre-computes and caches primitive targets from FloorPlanCAD SVG files to eliminate
+expensive SVG parsing during training. Converts ground truth vectors into cached
+tensors for efficient training data loading.
+
+Features:
+- Parses SVG files once and caches primitive representations
+- Supports configurable maximum primitives per image
+- Generates training targets in DeepV vector format
+- Eliminates runtime SVG parsing bottleneck during training
+
+Usage:
+    python scripts/precompute_floorplancad_targets.py --split_file data/splits/floorplancad/train.txt --cache_dir data/cache/floorplancad
 """
 
 import argparse

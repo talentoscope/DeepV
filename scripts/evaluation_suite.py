@@ -1,8 +1,26 @@
+#!/usr/bin/env python3
 """
-Comprehensive evaluation suite for DeepV vectorization models.
+DeepV Comprehensive Evaluation Suite
 
-Provides standardized evaluation across multiple datasets with comprehensive metrics,
-visualization, and comparison against state-of-the-art baselines.
+Standardized evaluation framework for DeepV vectorization models across multiple
+datasets with extensive metrics, visualizations, and baseline comparisons.
+
+Evaluation Capabilities:
+- Multi-dataset support (FloorPlanCAD, synthetic, custom datasets)
+- Comprehensive metrics suite (geometric, visual, structural, CAD-specific)
+- Statistical analysis and significance testing
+- Automated report generation with plots and summaries
+- Baseline comparisons against published methods
+- Cross-validation and ablation study support
+
+Features:
+- Batch evaluation with progress tracking
+- Configurable metric subsets for different use cases
+- Export capabilities (JSON, CSV, plots)
+- Integration with benchmarking pipeline
+
+Usage:
+    python scripts/evaluation_suite.py --predictions_dir logs/outputs/test --ground_truth_dir data/ground_truth --output_dir logs/evaluation
 """
 
 import argparse

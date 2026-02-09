@@ -1,6 +1,21 @@
 #!/usr/bin/env python3
 """
-Process FloorPlanCAD dataset directly from raw data to create clean vector/raster files.
+FloorPlanCAD Dataset Post-Processor
+
+Post-processes raw FloorPlanCAD data to create clean, standardized vector and raster files
+suitable for DeepV training and evaluation. Performs SVG cleaning and PNG generation.
+
+Features:
+- SVG preprocessing: removes text, standardizes colors (black lines on white background)
+- PNG generation from cleaned SVGs using CairoSVG
+- Batch processing with progress tracking
+- Maintains filename correspondence between vector and raster outputs
+
+Prepares FloorPlanCAD data for use in training pipelines by ensuring consistent
+formatting and removing non-geometric elements.
+
+Usage:
+    python scripts/postprocess_floorplancad.py --input_dir data/raw/floorplancad --output_dir data/processed/floorplancad
 """
 
 import argparse

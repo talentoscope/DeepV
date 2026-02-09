@@ -1,5 +1,19 @@
 #!/usr/bin/env python3
-"""Wrapper to run the comprehensive analysis and export a compact JSON summary.
+"""
+DeepV Output Analysis Wrapper
+
+Convenient wrapper script for running comprehensive DeepV output analysis and
+generating compact JSON summaries. Provides simplified interface to the full
+comprehensive_analysis.py functionality.
+
+Features:
+- Automatic analysis execution on pipeline outputs
+- JSON summary generation for CI/CD integration
+- Optional original image comparison
+- Configurable device selection (CPU/GPU)
+- Structured logging integration
+
+Generates analysis_summary.json with key metrics and quality assessments.
 
 Usage:
     python scripts/analyze_outputs.py --output_dir logs/outputs/single_test/ --original data/raw/test.png --out summary.json

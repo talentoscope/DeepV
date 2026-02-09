@@ -1,8 +1,20 @@
 #!/usr/bin/env python3
 """
-Run Cleaning Training Script
+DeepV Cleaning Model Training Runner
 
-Python equivalent of run_cleaning.sh for training the cleaning UNet model.
+Runs training for the cleaning UNet model with predefined parameters.
+Python equivalent of the shell script for cross-platform compatibility.
+
+Features:
+- Predefined training parameters for cleaning model
+- Automatic directory navigation to cleaning module
+- GPU device configuration
+- Error handling and status reporting
+
+Trains the cleaning model for improved artifact removal and image preprocessing.
+
+Usage:
+    python scripts/run_cleaning.py
 """
 
 import os

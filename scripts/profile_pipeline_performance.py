@@ -2,8 +2,24 @@
 """
 DeepV Pipeline Performance Profiler
 
-Comprehensive profiling script for the DeepV raster-to-vector pipeline.
-Uses PyTorch profiler and Python cProfile to identify performance bottlenecks.
+Comprehensive performance profiling and bottleneck analysis for the DeepV
+raster-to-vector conversion pipeline. Uses multiple profiling techniques to
+identify optimization opportunities.
+
+Profiling Methods:
+- PyTorch Profiler: GPU kernel timing, memory usage, operator analysis
+- Python cProfile: CPU function timing and call counts
+- Memory profiling: Peak memory usage and allocation patterns
+- Custom timing: Pipeline stage duration measurement
+
+Generates detailed reports for:
+- End-to-end pipeline performance
+- Per-stage bottlenecks (cleaning, vectorization, refinement, merging)
+- Memory usage patterns and leaks
+- GPU utilization and kernel efficiency
+
+Usage:
+    python scripts/profile_pipeline_performance.py --data_dir data/raster/test --output_dir logs/profiling
 """
 
 import argparse

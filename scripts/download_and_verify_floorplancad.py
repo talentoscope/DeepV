@@ -1,4 +1,19 @@
-"""Download FloorPlanCAD up to max_items and verify results."""
+#!/usr/bin/env python3
+"""
+FloorPlanCAD Dataset Downloader and Verifier
+
+Downloads the FloorPlanCAD dataset from HuggingFace and verifies the download integrity.
+Supports configurable download limits and automatic pruning of excess files.
+
+This script:
+- Downloads up to max_items FloorPlanCAD samples
+- Verifies file integrity and format
+- Moves overflow files to _overflow directory
+- Generates download report with statistics
+
+Usage:
+    python scripts/download_and_verify_floorplancad.py
+"""
 
 import json
 from pathlib import Path

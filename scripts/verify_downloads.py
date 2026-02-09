@@ -1,4 +1,24 @@
-"""Verify downloaded dataset files under data/raw and write a report."""
+#!/usr/bin/env python3
+"""
+Dataset Download Verification Script
+
+Verifies the integrity and completeness of downloaded datasets in data/raw/.
+Generates detailed reports on file counts, sizes, and download status for all
+supported datasets.
+
+Verification Checks:
+- Dataset directory existence
+- File count and total size
+- Non-empty file validation
+- Metadata file presence
+- Download completeness assessment
+
+Generates JSON report with per-dataset statistics for troubleshooting
+download issues and ensuring data availability.
+
+Usage:
+    python scripts/verify_downloads.py
+"""
 
 import json
 import sys

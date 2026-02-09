@@ -1,3 +1,24 @@
+#!/usr/bin/env python3
+"""
+DeepV Report Generation Utilities
+
+Utility functions for generating visualizations and reports from pipeline traces
+and analysis results. Supports patch visualization, overlay generation, and
+diagnostic report creation.
+
+Features:
+- Patch image loading and processing
+- Vector overlay generation on raster images
+- Report formatting and visualization
+- Trace data interpretation and display
+
+Used by analysis and reporting scripts to create human-readable outputs
+from raw pipeline data.
+
+Usage:
+    Imported by analysis and reporting scripts
+"""
+
 import json
 import os
 from pathlib import Path

@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
 """
-Run the project's `run_pipeline.py` on a batch of images (samples random images
-or reads a list), enforce GPU usage, and run the analysis wrapper for each
-output. Writes per-image logs and metric JSONs into the specified output root.
+DeepV Batch Pipeline Runner
 
-Usage (example):
-  python scripts/run_batch_pipeline.py --data_dir data/raster/floorplancad/test \
-      --random_count 10 --output_root logs/outputs/batch_run --model_path models/model_lines.weights
+Runs the DeepV vectorization pipeline on batches of images with automatic
+analysis and metric collection. Supports random sampling or predefined image lists.
 
-This script shells out to `run_pipeline.py` to keep runtime behaviour identical
-to the CLI entrypoint and avoid deep imports.
+Features:
+- Batch processing with configurable image counts
+- Random sampling from dataset directories
+- Predefined image list support
+- Automatic output analysis and metric generation
+- Per-image logging and JSON summaries
+- GPU enforcement for consistent performance testing
+
+Shells out to run_pipeline.py to maintain identical runtime behavior to CLI usage.
+
+Usage:
+    python scripts/run_batch_pipeline.py --data_dir data/raster/floorplancad/test --random_count 10 --output_root logs/outputs/batch_run
 """
 
 import argparse

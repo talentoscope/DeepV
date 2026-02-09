@@ -1,7 +1,20 @@
 #!/usr/bin/env python3
 """
-Simple test script to demonstrate the benchmarking pipeline working.
-Creates minimal test data and runs evaluation.
+DeepV Evaluation Suite Test Script
+
+Simple demonstration script for testing the benchmarking and evaluation pipeline.
+Creates minimal test data and runs evaluation components to verify functionality.
+
+Features:
+- Minimal test data generation
+- Evaluation pipeline testing
+- Component integration verification
+- Debugging and development support
+
+Used for ensuring evaluation components work correctly before full benchmarking.
+
+Usage:
+    python scripts/test_evaluation.py
 """
 
 import sys

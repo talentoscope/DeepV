@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
-"""Quick debug: load one batch, do one forward, save checkpoint."""
+"""
+DeepV Training Step Debugger
+
+Debug utility for testing single training steps and data loading without full
+training runs. Useful for troubleshooting data pipeline issues and model loading.
+
+Features:
+- Single batch loading and processing
+- Forward pass testing
+- Checkpoint saving for inspection
+- Data loader validation
+- Model initialization verification
+
+Performs minimal training setup to isolate and debug specific components
+without the overhead of full training loops.
+
+Usage:
+    python scripts/debug_train_step.py
+"""
 
 import os
 import sys

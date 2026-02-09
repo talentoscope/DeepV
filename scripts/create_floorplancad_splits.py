@@ -1,9 +1,26 @@
 #!/usr/bin/env python3
 """
-Create train/val/test splits for FloorPlanCAD dataset.
+FloorPlanCAD Dataset Split Creator
 
-Splits the processed FloorPlanCAD data (80/10/10) while maintaining
-raster-vector pairs by filename/folder structure.
+Creates stratified train/validation/test splits for FloorPlanCAD dataset while
+maintaining raster-vector pairs. Organizes data into proper directory structure
+for training and evaluation.
+
+Features:
+- Maintains SVG/PNG filename correspondence across splits
+- Configurable split ratios (default 80/10/10)
+- Preserves subdirectory organization if present
+- Generates split files for use by training scripts
+- Supports random shuffling with optional seed for reproducibility
+
+Creates the following outputs:
+- data/splits/floorplancad/train.txt
+- data/splits/floorplancad/val.txt
+- data/splits/floorplancad/test.txt
+- Organized data directories (optional)
+
+Usage:
+    python scripts/create_floorplancad_splits.py --data_dir data/vector/floorplancad --output_dir data/splits/floorplancad
 """
 
 import argparse

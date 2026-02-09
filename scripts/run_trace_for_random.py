@@ -1,4 +1,22 @@
 #!/usr/bin/env python3
+"""
+Random Image Pipeline Tracing Runner
+
+Runs the DeepV pipeline with tracing enabled on a randomly selected test image.
+Useful for performance analysis and debugging on representative data.
+
+Features:
+- Random image selection from test set
+- Automatic tracing configuration
+- GPU enforcement for consistent profiling
+- Output directory management
+
+Generates trace files for performance analysis and bottleneck identification.
+
+Usage:
+    python scripts/run_trace_for_random.py
+"""
+
 import random
 import subprocess
 import sys

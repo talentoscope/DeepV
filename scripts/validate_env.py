@@ -1,7 +1,21 @@
-"""Environment validation script for developers and CI.
+#!/usr/bin/env python3
+"""
+DeepV Environment Validation Script
 
-Checks Python version, presence of critical packages, and CUDA availability.
-Run locally to get fast feedback before running heavier jobs.
+Validates the development and runtime environment for DeepV compatibility.
+Checks Python version, required packages, CUDA availability, and system dependencies.
+
+This script performs comprehensive environment checks including:
+- Python version compatibility
+- Critical package availability and versions
+- PyTorch/CUDA installation and GPU support
+- Optional dependencies for extended functionality
+- System resource availability
+
+Run this before training or deployment to ensure all requirements are met.
+
+Usage:
+    python scripts/validate_env.py
 """
 
 import importlib

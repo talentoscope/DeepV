@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """
-Comprehensive DeepV Output Quality Analysis Framework
+DeepV Comprehensive Output Quality Analysis Framework
 
-Computes extensive metrics for vectorization quality assessment including:
-- Geometric accuracy (IoU, Dice, Chamfer distance)
-- Structural/topological metrics (lengths, angles, parallelism)
-- Visual quality (SSIM, PSNR, MSE, MAE)
-- CAD-specific metrics (angle compliance, connectivity, equal lengths)
-- Statistical distributions (widths, probabilities, angles)
-- Error pattern analysis
+Performs extensive quantitative and qualitative analysis of DeepV vectorization outputs
+against ground truth. Computes multiple categories of metrics for thorough quality assessment.
+
+Analysis Categories:
+- Geometric Accuracy: IoU, Dice coefficient, Chamfer distance, Hausdorff distance
+- Structural/Topological: Primitive counts, length/angle preservation, parallelism detection
+- Visual Quality: SSIM, PSNR, MSE, MAE, edge accuracy, contour matching
+- CAD-Specific: Vector edit distance, geometric constraint satisfaction, angle compliance
+- Statistical Analysis: Distribution analysis for widths, probabilities, lengths, angles
+- Error Patterns: Over/under-segmentation detection, geometric distortions analysis
+
+Generates detailed JSON reports and visualizations for model evaluation and debugging.
 
 Usage:
     python scripts/comprehensive_analysis.py --output_dir logs/outputs/single_test/ --original data/raw/test.png

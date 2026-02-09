@@ -1,6 +1,23 @@
 #!/usr/bin/env python3
 """
-Generate diagnostics report from aggregated metrics.
+DeepV Pipeline Diagnostics Report Generator
+
+Generates comprehensive diagnostics reports from aggregated pipeline metrics.
+Analyzes performance patterns, identifies worst-performing images, and provides
+insights for model improvement.
+
+Features:
+- Statistical analysis of pipeline metrics (IoU, SSIM, etc.)
+- Worst-case performance identification
+- Performance trend analysis
+- Automated insights and recommendations
+- HTML/markdown report generation
+
+Reads from logs/metrics/summary.csv and generates actionable diagnostics
+for debugging and optimization.
+
+Usage:
+    python scripts/generate_diagnostics.py
 """
 
 import csv

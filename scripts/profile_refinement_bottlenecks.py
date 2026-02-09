@@ -1,8 +1,22 @@
+#!/usr/bin/env python3
 """
-Detailed profiling of refinement bottlenecks.
+DeepV Refinement Bottleneck Profiler
 
-Profiles the refinement pipeline components to identify and optimize bottlenecks.
-Target: <2s per 64x64 patch
+Detailed profiling of refinement pipeline components to identify and optimize
+performance bottlenecks. Target performance: <2 seconds per 64x64 patch.
+
+Features:
+- Component-level timing analysis
+- Memory usage profiling
+- Bottleneck identification and ranking
+- Optimization recommendations
+- Synthetic test data generation
+
+Uses cProfile and custom timing to provide detailed performance insights
+for refinement optimization.
+
+Usage:
+    python scripts/profile_refinement_bottlenecks.py
 """
 
 import cProfile

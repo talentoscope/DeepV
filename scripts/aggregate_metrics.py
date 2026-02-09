@@ -1,10 +1,21 @@
 #!/usr/bin/env python3
 """
-Aggregate per-image JSON metric summaries (from `analyze_outputs.py`) into a CSV
-and print basic statistics (mean/median/std) for key metrics.
+DeepV Metrics Aggregation Script
+
+Aggregates per-image JSON metric summaries into CSV format and computes
+basic statistics for key performance metrics across multiple evaluations.
+
+Features:
+- JSON to CSV conversion for analysis
+- Statistical summaries (mean, median, std dev)
+- Missing value handling
+- Sorted output for easy analysis
+
+Combines individual image metrics into dataset-level summaries for
+model evaluation and comparison.
 
 Usage:
-  python scripts/aggregate_metrics.py --metrics_dir logs/outputs/batch_run/metrics --out_csv logs/metrics/summary.csv
+    python scripts/aggregate_metrics.py --metrics_dir logs/outputs/batch_run/metrics --out_csv logs/metrics/summary.csv
 """
 
 import argparse

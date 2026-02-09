@@ -1,9 +1,19 @@
 #!/usr/bin/env python3
 """
-Run Local Tests
+DeepV Local Test Runner
 
-Cross-platform Python script to set up environment and run tests.
-Equivalent to the original run_tests_local.ps1 PowerShell script.
+Sets up the development environment and runs the complete test suite locally.
+Cross-platform Python equivalent of the original PowerShell test runner.
+
+Features:
+- Automatic virtual environment creation and activation
+- Dependency installation from requirements-dev.txt
+- Comprehensive test execution (unit, integration, smoke tests)
+- Test coverage reporting
+- Cross-platform compatibility (Windows/Linux/macOS)
+
+Runs pytest with appropriate configuration for the DeepV codebase, including
+GPU availability checks and optional test skipping.
 
 Usage:
     python scripts/run_tests_local.py

@@ -1,4 +1,22 @@
-"""Run dry-run tests for all dataset downloaders and report results."""
+#!/usr/bin/env python3
+"""
+Dataset Downloader Test Suite
+
+Tests all dataset downloaders in dry-run mode to verify functionality without
+actually downloading data. Useful for CI/CD validation and development testing.
+
+Features:
+- Dry-run testing of all available downloaders
+- Error reporting and traceback collection
+- Success/failure statistics
+- Compatibility testing across different downloader implementations
+
+Tests both the unified download() interface and individual downloader functions
+to ensure all dataset sources are accessible and properly configured.
+
+Usage:
+    python scripts/run_all_downloaders_test.py
+"""
 
 import traceback
 from pathlib import Path

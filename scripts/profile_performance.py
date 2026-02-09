@@ -1,7 +1,22 @@
-"""Profile refinement and rendering performance.
+#!/usr/bin/env python3
+"""
+DeepV Refinement Performance Profiler
 
-This script profiles the refinement and rendering components to identify
-performance hotspots and bottlenecks.
+Profiles the performance of refinement and rendering components to identify
+bottlenecks and optimization opportunities. Uses synthetic test data to isolate
+performance characteristics.
+
+Features:
+- Synthetic data generation for consistent testing
+- Refinement pipeline profiling
+- Rendering performance analysis
+- Memory usage tracking
+- Bottleneck identification
+
+Generates performance reports for optimization prioritization.
+
+Usage:
+    python scripts/profile_performance.py
 """
 
 import sys

@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
 """
-Extract ground truth vectors from FloorPlanCAD SVG files for evaluation.
+FloorPlanCAD Ground Truth Vector Extractor
 
-This script parses FloorPlanCAD SVG files and extracts geometric primitives
-(lines, arcs, curves) from relevant layers (walls, structural elements) to
-create ground truth vectors in the same format as DeepV outputs.
+Parses FloorPlanCAD SVG files to extract geometric primitives (lines, arcs, curves)
+for evaluation and benchmarking. Converts SVG path elements into DeepV-compatible
+vector representations.
+
+Key features:
+- Extracts primitives from relevant architectural layers (walls, structure)
+- Converts SVG paths to line segments, Bézier curves, and arcs
+- Outputs vectors in DeepV format for comparison with predictions
+- Filters out non-structural elements (text, furniture, etc.)
+
+Usage:
+    python scripts/extract_floorplancad_ground_truth.py --input_dir data/vector/floorplancad --output_dir data/ground_truth
 """
 
 import argparse

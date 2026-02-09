@@ -1,3 +1,20 @@
+#!/usr/bin/env python3
+"""
+CUDA Availability and Configuration Check
+
+Simple diagnostic script to verify PyTorch CUDA installation and GPU availability.
+Reports CUDA status, device count, and GPU names for troubleshooting GPU training issues.
+
+Outputs key-value pairs for easy parsing by other scripts:
+- torch_version: PyTorch version string
+- cuda_available: Boolean CUDA availability
+- device_count: Number of CUDA devices
+- device_name_0: Name of first GPU device
+
+Usage:
+    python scripts/check_cuda.py
+"""
+
 import sys
 
 try:
