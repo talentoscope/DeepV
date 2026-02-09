@@ -93,14 +93,14 @@ def main(options):
         device = torch.device("cuda:0")
         prefetch_data = True
     elif len(options.gpu) == 1:
-        device = torch.device("cuda:{}".format(options.gpu[0]))
+        device = torch.device(f"cuda:{options.gpu[0]}")
         prefetch_data = True
     else:
         if distributed:
             # Use torch.distributed for multi-node/multi-GPU training
             os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
             os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(options.gpu)
-            device = torch.device("cuda:{}".format(options.gpu[0]))
+            device = torch.device(f"cuda:{options.gpu[0]}")
             prefetch_data = True
             parallel = False  # Let distributed handle parallelism
             # Initialize distributed training
@@ -110,7 +110,7 @@ def main(options):
             # Use DataParallel for single-node multi-GPU
             os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
             os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(options.gpu)
-            device = torch.device("cuda:{}".format(options.gpu[0]))
+            device = torch.device(f"cuda:{options.gpu[0]}")
             prefetch_data = True
             parallel = True
     RASTER_RES = (options.render_res, options.render_res)
@@ -130,7 +130,7 @@ def main(options):
     logger = create_logger(options)
     writer = SummaryWriter(logdir=options.tboard_dir)
 
-    logger.info("Called with parameters: {}".format(options.__dict__))
+    logger.info(f"Called with parameters: {options.__dict__}")
 
     make_loaders_fn = dataloading.prepare_loaders[options.dataloader_type]
     train_loader_memory_constraint = (
@@ -153,9 +153,9 @@ def main(options):
             handcrafted_val_part=options.handcrafted_val_part,
         )
     train_loader, val_loader, val_mini_loader = make_loaders_fn(**loader_params)
-    logger.info("Total number of train patches: ~{}".format(len(train_loader) * options.train_batch_size))
-    logger.info("Total number of val patches: ~{}".format(len(val_loader) * options.val_batch_size))
-    logger.info("Total number of mini val patches: ~{}".format(len(val_mini_loader) * options.val_batch_size))
+    logger.info(f"Total number of train patches: ~{len(train_loader) * options.train_batch_size}")
+    logger.info(f"Total number of val patches: ~{len(val_loader) * options.val_batch_size}")
+    logger.info(f"Total number of mini val patches: ~{len(val_mini_loader) * options.val_batch_size}")
 
     model = load_model(options.model_spec_filename).to(device)
     logger.info_trainable_params(model)
@@ -211,7 +211,7 @@ def main(options):
         # Model to eval
         model.eval()
         for batch_j, batch_data_val in enumerate(loader):
-            logger.info("Validating batch {}".format(batch_j))
+            logger.info(f"Validating batch {batch_j}")
             # Run through validation dataset
             with logger.print_duration("    preparing batch on device"):
                 images, y_true = prepare_batch_on_device(batch_data_val, device)
@@ -231,7 +231,7 @@ def main(options):
             y_pred_vector = vmetrics.batch_numpy_to_vector(y_pred.cpu().numpy(), RASTER_RES, pt)
             for metric_name, metric in vmetrics.METRICS_BY_NAME.items():
                 metric_value = metric(y_true_vector, y_pred_vector, **METRIC_PARAMS)
-                metric_name = "{}val_{}".format(prefix, metric_name)
+                metric_name = f"{prefix}val_{metric_name}"
                 val_metrics[metric_name].append(np.atleast_1d(metric_value))
 
         # Save stuff to tensorboard for visualization
@@ -245,19 +245,19 @@ def main(options):
         _loader = _Loader()
 
         # scores = -val_loss
-        scores = np.concatenate(val_metrics["{}val_{}".format(prefix, "iou_score")])
+        scores = np.concatenate(val_metrics[f"{prefix}val_{'iou_score'}"])
 
         # TODO visualizatins problem
         worst_grid, best_grid, average_grid = make_ranked_images_from_loader_and_model(
             lambda input: model(input, max_lines), _loader, scores, **IMGLOG_PARAMS
         )
-        writer.add_image("worst/{}val".format(prefix), worst_grid, log_i)
-        writer.add_image("best/{}val".format(prefix), best_grid, log_i)
-        writer.add_image("average/{}val".format(prefix), average_grid, log_i)
+        writer.add_image(f"worst/{prefix}val", worst_grid, log_i)
+        writer.add_image(f"best/{prefix}val", best_grid, log_i)
+        writer.add_image(f"average/{prefix}val", average_grid, log_i)
 
         mean_val_loss = val_loss.mean()
-        writer.add_scalar(("{}val_" + options.loss_funct).format(prefix), mean_val_loss, global_step=log_i)
-        logger.info("Validation loss: {:.4f}".format(mean_val_loss))
+        writer.add_scalar((f"{prefix}val_" + options.loss_funct), mean_val_loss, global_step=log_i)
+        logger.info(f"Validation loss: {mean_val_loss:.4f}")
 
         metrics_scalars = {name: np.mean(np.concatenate(values)) for name, values in val_metrics.items()}
         for name, value in metrics_scalars.items():
@@ -280,7 +280,7 @@ def main(options):
             model.train()
             iter_i = epoch_i * len(train_loader) + batch_i
             # Train for one batch
-            logger.info("Training batch {}".format(batch_i))
+            logger.info(f"Training batch {batch_i}")
             with logger.print_duration("    preparing batch on device"):
                 images, y_true = prepare_batch_on_device(batch_data, device)
 
@@ -302,16 +302,10 @@ def main(options):
                 mp_trainer.backward(loss)
                 mp_trainer.step_optimizer(optimizer)
 
-            # Output loss for each training step, as it is already computed
             logger.info(
-                "Training iteration [{item_idx} / {num_batches}] {percent:.3f}% complete, loss: {loss:.4f}".format(
-                    item_idx=batch_i,
-                    num_batches=len(train_loader),
-                    percent=100.0 * batch_i / len(train_loader),
-                    loss=loss.item(),
-                )
+                f"Training iteration [{batch_i} / {len(train_loader)}] {100.0 * batch_i / len(train_loader):.3f}% complete, loss: {loss.item():.4f}"
             )
-            logger.info("1 batch time  {}".format(time() - start_time))
+            logger.info(f"1 batch time  {time() - start_time}")
             writer.add_scalar("learning_rate", optimizer.get_lr()[0], global_step=iter_i)
             writer.add_scalar(("train_" + options.loss_funct), loss.item(), global_step=iter_i)
 
@@ -323,7 +317,7 @@ def main(options):
                 y_true_vector = vmetrics.batch_numpy_to_vector(y_true.cpu().numpy(), RASTER_RES, pt)
                 y_pred_vector = vmetrics.batch_numpy_to_vector(y_pred.detach().cpu().numpy(), RASTER_RES, pt)
                 train_metrics = {
-                    "train_{}".format(name): metric(y_true_vector, y_pred_vector, **METRIC_PARAMS_AVG)
+                    f"train_{name}": metric(y_true_vector, y_pred_vector, **METRIC_PARAMS_AVG)
                     for name, metric in vmetrics.METRICS_BY_NAME.items()
                 }
                 for name, value in train_metrics.items():
@@ -334,13 +328,11 @@ def main(options):
                     num_items=len(y_true),
                 )
 
-                logger.info("Running mini validation with {} batches".format(len(val_mini_loader)))
+                logger.info(f"Running mini validation with {len(val_mini_loader)} batches")
                 mini_val_loss = validate(val_mini_loader, iter_i, prefix="mini")
 
             if batch_i % options.batches_before_save == 0:
-                weights_filename = "{prefix}_{batch_id}.weights".format(
-                    prefix=options.save_model_filename, batch_id=iter_i
-                )
+                weights_filename = f"{options.save_model_filename}_{iter_i}.weights"
                 torch.save(
                     {
                         "epoch": epoch_i,
@@ -354,11 +346,11 @@ def main(options):
                     },
                     weights_filename,
                 )
-                logger.debug("Model for batch {} saved to {}".format(batch_i, weights_filename))
+                logger.debug(f"Model for batch {batch_i} saved to {weights_filename}")
 
         batches_completed_in_epoch = 0
 
-        logger.info("Running validation on the whole validation dataset with {} batches".format(len(val_loader)))
+        logger.info(f"Running validation on the whole validation dataset with {len(val_loader)} batches")
         val_loss = validate(val_loader, (epoch_i + 1) * len(train_loader))
 
         # Check early stopping
