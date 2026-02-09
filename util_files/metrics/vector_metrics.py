@@ -144,7 +144,7 @@ def endpoint_score(image_true, image_pred, kind="full", metric="euclidean", aver
             diffsq = cost_matrix[row_ind, col_ind]
 
         else:
-            raise ValueError
+            raise ValueError(f"Unknown kind '{kind}'. Supported kinds are 'full' and 'bijection'.")
 
         return np.mean(diffsq)
 

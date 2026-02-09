@@ -32,7 +32,7 @@ def _prepare_raster(raster, binarization=None, envelope=0):
     elif None is binarization:
         binarization_func = lambda image: image
     else:
-        raise NotImplementedError
+        raise NotImplementedError(f"Unsupported binarization method '{binarization}'. Supported methods are 'maxink', 'maxwhite', 'median', or None.")
 
     raster = binarization_func(raster)
     assert _is_binary_1bit(raster), "images are not binary (only values 0 and 1 allowed in images)"

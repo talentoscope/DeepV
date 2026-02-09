@@ -104,7 +104,7 @@ def render_with_skeleton(
     linejoin="miter",
 ):
     if data_representation != "vahe":
-        raise NotImplementedError
+        raise NotImplementedError(f"Data representation '{data_representation}' is not supported. Only 'vahe' format is currently implemented.")
     # prepare data buffer
     width, height = dimensions
     buffer_width = cairo.ImageSurface.format_stride_for_width(cairo.FORMAT_RGB24, width)

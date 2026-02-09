@@ -356,7 +356,7 @@ class PrimitiveTensor:
         )
 
     def render_single_primitive_with_cairo(self, ctx, patch_i, primitive_i):
-        raise NotImplementedError
+        raise NotImplementedError("Subclasses must implement render_single_primitive_with_cairo method")
 
     def render_with_cairo_each(self, width, height):
         r"""
@@ -468,4 +468,4 @@ class PrimitiveTensor:
         energies : torch.Tensor
             of shape [patches_n, primitives_n, pixels_n]
         """
-        raise NotImplementedError
+        raise NotImplementedError("Subclasses must implement unit_energy method")
