@@ -222,14 +222,14 @@ def generate_html_report(trace_dir, output_file=None):
     for json_file in sorted(trace_dir.glob("*.json")):
         html += f'<li><a href="{json_file.name}">{json_file.name}</a></li>\n'
 
-    html += """
+    html += f"""
         </ul>
         
         <hr>
-        <p>Generated from trace artifacts in <code>{}</code></p>
+        <p>Generated from trace artifacts in <code>{trace_dir}</code></p>
     </body>
     </html>
-    """.format(trace_dir)
+    """
 
     # Write report
     with open(output_file, "w", encoding="utf-8") as f:
