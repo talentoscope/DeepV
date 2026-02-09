@@ -11,11 +11,11 @@ class Logger(logging.Logger):
         start = time.clock()
         yield
         duration = time.clock() - start
-        self.debug(duration_of_what + " complete in {0:.3f} seconds".format(duration))
+        self.debug(f"{duration_of_what} complete in {duration:.3f} seconds")
 
     def info_scalars(self, s, scalars_dict, **kwargs):
         for key, value in scalars_dict.items():
-            log_s = s.format(key=key, value=value, **kwargs)
+            log_s = s.format(key=key, value=value, **kwargs)  # Keep as-is for template flexibility
             self.info(log_s)
 
     def info_trainable_params(self, torch_model):

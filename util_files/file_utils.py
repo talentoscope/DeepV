@@ -8,7 +8,7 @@ def require_empty(d, recreate=False):
         if recreate:
             shutil.rmtree(d)
         else:
-            raise OSError("Path {} exists and no --overwrite set. Exiting".format(d))
+            raise OSError(f"Path {d} exists and no --overwrite set. Exiting")
     os.makedirs(d)
 
 

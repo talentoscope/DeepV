@@ -97,9 +97,8 @@ class ScaledDotProductAttention(nn.Module):
 
         if attn_mask is not None:
             assert attn_mask.size() == attn.size(), (
-                "Attention mask shape {} mismatch "
-                "with Attention logit tensor shape "
-                "{}.".format(attn_mask.size(), attn.size())
+                f"Attention mask shape {attn_mask.size()} mismatch "
+                f"with Attention logit tensor shape {attn.size()}."
             )
 
             attn.data.masked_fill_(attn_mask, -float("inf"))

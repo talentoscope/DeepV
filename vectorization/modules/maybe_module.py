@@ -13,5 +13,5 @@ class MaybeModule(nn.Module):
         return input
 
     def __repr__(self):
-        main_str = "{}({}) {}".format(self._get_name(), self.maybe, repr(self.layer))
+        main_str = f"{self._get_name()}({self.maybe}) {repr(self.layer)}"
         return main_str
