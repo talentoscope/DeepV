@@ -14,9 +14,7 @@ from refinement.our_refinement.optimization_classes import (
     OptimizationLoop,
 )
 from refinement.our_refinement.utils.lines_refinement_functions import (
-    dtype,
     h,
-    padding,
     w,
 )
 from util_files.structured_logging import get_pipeline_logger
@@ -88,10 +86,13 @@ def render_optimization_hard(
         Refined vector patches (batch, N, 6) with added probability channel.
 
     Notes:
-        - Uses Bézier splatting for differentiable rendering if options.rendering_type == 'bezier_splatting'.
-        - Configurable parameters loaded from refinement/default.yaml (learning rates, thresholds, intervals).
+        - Uses Bézier splatting for differentiable rendering if
+          options.rendering_type == 'bezier_splatting'.
+        - Configurable parameters loaded from refinement/default.yaml
+          (learning rates, thresholds, intervals).
         - Optimization iterates over position and size parameters alternately.
-        - Saves IOU metrics and refined vectors to numpy files in options.output_dir/arrays/.
+        - Saves IOU metrics and refined vectors to numpy files in
+          options.output_dir/arrays/.
     """
     # Initialize structured logger
     logger = get_pipeline_logger("refinement.lines")
@@ -102,7 +103,9 @@ def render_optimization_hard(
         # Initialize data structures
         patches_rgb_im = np.copy(patches_rgb)
         patches_vector = torch.tensor(patches_vector)
-        y_pred_rend = torch.zeros((patches_vector.shape[0], patches_vector.shape[1], patches_vector.shape[2] - 1))
+        y_pred_rend = torch.zeros(
+            (patches_vector.shape[0], patches_vector.shape[1], patches_vector.shape[2] - 1)
+        )
         patches_rgb = 1 - torch.tensor(patches_rgb).squeeze(3).unsqueeze(1) / 255.0
 
         logger.info(
@@ -114,7 +117,10 @@ def render_optimization_hard(
             },
         )
 
-        logger.info(f"Random initialization: {options.init_random}", extra={"init_random": options.init_random})
+        logger.info(
+            f"Random initialization: {options.init_random}",
+            extra={"init_random": options.init_random}
+        )
 
         if options.init_random:
             logger.info("Initializing with random vectors")
@@ -122,24 +128,37 @@ def render_optimization_hard(
             patches_vector[..., 4] = 1
 
         # Initialize batch processor
-        batch_processor = BatchProcessor(patches_rgb.squeeze(1), patches_vector, refinement_config.batch_size)
+        batch_processor = BatchProcessor(
+            patches_rgb.squeeze(1), patches_vector, refinement_config.batch_size
+        )
 
         # Process batches
         first_encounter = True
         iou_all = None
         mass_for_iou = None
-        total_batches = (patches_vector.shape[0] + refinement_config.batch_size - 1) // refinement_config.batch_size
+        total_batches = (
+            patches_vector.shape[0] + refinement_config.batch_size - 1
+        ) // refinement_config.batch_size
 
         logger.info(
             f"Processing {total_batches} batches of size {refinement_config.batch_size}",
-            extra={"total_batches": total_batches, "batch_size": refinement_config.batch_size},
+            extra={
+                "total_batches": total_batches,
+                "batch_size": refinement_config.batch_size
+            },
         )
 
-        for batch_idx, batch_start in enumerate(range(0, patches_vector.shape[0], refinement_config.batch_size)):
-            batch_end = min(batch_start + refinement_config.batch_size, patches_vector.shape[0])
+        for batch_idx, batch_start in enumerate(
+            range(0, patches_vector.shape[0], refinement_config.batch_size)
+        ):
+            batch_end = min(
+                batch_start + refinement_config.batch_size, patches_vector.shape[0]
+            )
             batch_indices = list(range(batch_start, batch_end))
 
-            batch_logger = logger.with_context(batch=batch_idx, batch_start=batch_start, batch_end=batch_end)
+            batch_logger = logger.with_context(
+                batch=batch_idx, batch_start=batch_start, batch_end=batch_end
+            )
 
             # Skip empty batches
             batch_rgb = patches_rgb.squeeze(1)[batch_indices]
@@ -153,7 +172,9 @@ def render_optimization_hard(
             rasters_batch, initial_vector = batch_processor.get_batch_data(batch_indices)
 
             # Initialize lines with visibility threshold
-            removed_lines = initial_vector[..., -1] < refinement_config.line_visibility_threshold * h
+            removed_lines = (
+                initial_vector[..., -1] < refinement_config.line_visibility_threshold * h
+            )
             rand_x1 = torch.rand_like(initial_vector[removed_lines, [0]]) * w
             rand_y1 = torch.rand_like(initial_vector[removed_lines, [1]]) * h
             initial_vector[removed_lines, [0]] = rand_x1
@@ -172,7 +193,12 @@ def render_optimization_hard(
 
             # Initialize optimization loop
             opt_loop = OptimizationLoop(
-                rasters_batch, initial_vector, device, options.rendering_type, batch_logger, tracer=tracer
+                rasters_batch,
+                initial_vector,
+                device,
+                options.rendering_type,
+                batch_logger,
+                tracer=tracer
             )
 
             # Register signal handler for graceful interruption
@@ -186,24 +212,38 @@ def render_optimization_hard(
             min_iterations = 20  # Run at least 20 iterations before checking early stopping
 
             with batch_logger.timing(f"batch_{batch_idx}_optimization"):
-                for i in tqdm(range(options.diff_render_it), desc=f"Batch {batch_idx + 1}"):
+                for i in tqdm(
+                    range(options.diff_render_it), desc=f"Batch {batch_idx + 1}"
+                ):
                     if not opt_loop.optimize_step(i) or its_time_to_stop[0]:
                         batch_logger.warning("Optimization interrupted or stopped")
                         break
 
                     # Log progress
-                    opt_loop.log_progress(i, patches_rgb_im, batch_indices, iou_mass, mass_for_iou_one)
+                    opt_loop.log_progress(
+                        i, patches_rgb_im, batch_indices, iou_mass, mass_for_iou_one
+                    )
 
                     # Check for early stopping based on IOU convergence
-                    if i >= min_iterations and (i + 1) % refinement_config.logging_interval == 0 and len(iou_mass) >= 3:
+                    if (
+                        i >= min_iterations
+                        and (i + 1) % refinement_config.logging_interval == 0
+                        and len(iou_mass) >= 3
+                    ):
                         # Check if IOU improvement over last 3 measurements is minimal
                         recent_iou = iou_mass[-3:]
-                        improvements = [recent_iou[j + 1] - recent_iou[j] for j in range(len(recent_iou) - 1)]
-                        avg_improvement = sum(improvements) / len(improvements) if improvements else 0
+                        improvements = [
+                            recent_iou[j + 1] - recent_iou[j]
+                            for j in range(len(recent_iou) - 1)
+                        ]
+                        avg_improvement = (
+                            sum(improvements) / len(improvements) if improvements else 0
+                        )
 
                         if avg_improvement < early_stop_threshold:
                             batch_logger.info(
-                                f"Early stopping at iteration {i+1}: IOU improvement {avg_improvement:.6f} < {early_stop_threshold}"
+                                f"Early stopping at iteration {i+1}: IOU improvement "
+                                f"{avg_improvement:.6f} < {early_stop_threshold}"
                             )
                             break
 
@@ -240,11 +280,20 @@ def render_optimization_hard(
         # Save results and metrics
         os.makedirs(options.output_dir + "arrays/", exist_ok=True)
         if options.init_random:
-            np.save(options.output_dir + "arrays/hard_optimization_iou_random_" + name, iou_all)
-            np.save(options.output_dir + "arrays/hard_optimization_iou_mass_random_" + name, mass_for_iou)
+            np.save(
+                options.output_dir + "arrays/hard_optimization_iou_random_" + name,
+                iou_all
+            )
+            np.save(
+                options.output_dir + "arrays/hard_optimization_iou_mass_random_" + name,
+                mass_for_iou
+            )
         else:
             np.save(options.output_dir + "arrays/hard_optimization_iou_" + name, iou_all)
-            np.save(options.output_dir + "arrays/hard_optimization_iou_mass_" + name, mass_for_iou)
+            np.save(
+                options.output_dir + "arrays/hard_optimization_iou_mass_" + name,
+                mass_for_iou
+            )
 
         # Compute and save final metrics via tracer
         try:
@@ -266,7 +315,9 @@ def render_optimization_hard(
                 "total_patches": patches_vector.shape[0],
                 "primitives_per_patch": patches_vector.shape[1],
                 "iterations_per_patch": options.diff_render_it,
-                "final_iou_mean": float(np.mean(iou_all)) if iou_all is not None else None,
+                "final_iou_mean": (
+                    float(np.mean(iou_all)) if iou_all is not None else None
+                ),
             },
         )
 
@@ -276,7 +327,10 @@ def render_optimization_hard(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--output_dir", type=str, default="/vage/Download/testing_line/", help="dir to folder for output"
+        "--output_dir",
+        type=str,
+        default="/vage/Download/testing_line/",
+        help="dir to folder for output"
     )
     parser.add_argument("--diff_render_it", type=int, default=90, help="iteration count")
     parser.add_argument(
@@ -290,6 +344,9 @@ def parse_args() -> argparse.Namespace:
         "--rendering_type",
         type=str,
         default="bezier_splatting",
-        help="hard - analytical rendering, bezier_splatting - fast differentiable rendering (recommended)",
+        help=(
+            "hard - analytical rendering, bezier_splatting - fast differentiable "
+            "rendering (recommended)"
+        ),
     )
     return parser.parse_args()

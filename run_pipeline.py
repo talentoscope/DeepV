@@ -57,7 +57,8 @@ def split_to_patches(rgb, patch_size, overlap=0):
     height, width, channels = rgb.shape
 
     assert patch_size > 0 and 0 <= overlap < patch_size
-    patches = patchify(rgb, patch_size=(patch_size, patch_size, channels), step=patch_size - overlap)
+    patches = patchify(rgb, patch_size=(patch_size, patch_size, channels),
+                       step=patch_size - overlap)
     patches = patches.reshape((-1, patch_size, patch_size, channels))
     height_offsets = np.arange(0, height - patch_size, step=patch_size - overlap)
     width_offsets = np.arange(0, width - patch_size, step=patch_size - overlap)
@@ -67,11 +68,14 @@ def split_to_patches(rgb, patch_size, overlap=0):
 
 def preprocess_image(image):
     patch_height, patch_width = image.shape[1:3]
-    image = torch.as_tensor(image).type(torch.float32).reshape(-1, patch_height, patch_width) / 255
+    image = (torch.as_tensor(image).type(torch.float32)
+             .reshape(-1, patch_height, patch_width) / 255)
     image = 1 - image  # 0 -- background
     mask = (image > 0).type(torch.float32)
-    _xs = np.arange(1, patch_width + 1, dtype=np.float32)[None].repeat(patch_height, 0) / patch_width
-    _ys = np.arange(1, patch_height + 1, dtype=np.float32)[..., None].repeat(patch_width, 1) / patch_height
+    _xs = (np.arange(1, patch_width + 1, dtype=np.float32)[None]
+           .repeat(patch_height, 0) / patch_width)
+    _ys = (np.arange(1, patch_height + 1, dtype=np.float32)[..., None]
+           .repeat(patch_width, 1) / patch_height)
     _xs = torch.from_numpy(_xs)[None]
     _ys = torch.from_numpy(_ys)[None]
     return torch.stack([image, _xs * mask, _ys * mask], dim=1)
@@ -88,26 +92,33 @@ def read_data(options, image_type="RGB"):
         image_names = os.listdir(options.data_dir)
         print(image_names)
         for image_name in image_names:
-            if (image_name[-4:] != "jpeg" and image_name[-3:] != "png" and image_name[-3:] != "jpg") or image_name[
-                0
-            ] == ".":
+            if (image_name[-4:] != "jpeg" and image_name[-3:] != "png" and
+                    image_name[-3:] != "jpg") or image_name[0] == ".":
                 print(image_name[-4:])
                 continue
 
-            img = train_transform(Image.open(os.path.join(options.data_dir, image_name)).convert(image_type))
+            img = train_transform(Image.open(os.path.join(options.data_dir, image_name))
+                                  .convert(image_type))
             print(img.shape)
             img_t = torch.ones(
-                img.shape[0], img.shape[1] + (32 - img.shape[1] % 32), img.shape[2] + (32 - img.shape[2] % 32)
+                img.shape[0],
+                img.shape[1] + (32 - img.shape[1] % 32),
+                img.shape[2] + (32 - img.shape[2] % 32)
             )
             img_t[:, : img.shape[1], : img.shape[2]] = img
             dataset.append(img_t)
         options.image_name = image_names
     else:
-        img = train_transform(Image.open(os.path.join(options.data_dir, options.image_name)).convert(image_type))
+        img = train_transform(
+            Image.open(os.path.join(options.data_dir, options.image_name))
+            .convert(image_type)
+        )
         print(img)
         print(img.shape)
         img_t = torch.ones(
-            img.shape[0], img.shape[1] + (32 - img.shape[1] % 32), img.shape[2] + (32 - img.shape[2] % 32)
+            img.shape[0],
+            img.shape[1] + (32 - img.shape[1] % 32),
+            img.shape[2] + (32 - img.shape[2] % 32)
         )
         img_t[:, : img.shape[1], : img.shape[2]] = img
         dataset.append(img_t)
@@ -137,7 +148,9 @@ def vector_estimation(patches_rgb, model, device, it, options):
             # Check if model supports variable length output
             if hasattr(model.hidden, "max_primitives"):
                 # Variable length model - no need for model_output_count
-                model_output = model(patch_images[it_start:it_batches].to(device).float())
+                model_output = model(
+                    patch_images[it_start:it_batches].to(device).float()
+                )
 
                 # Handle different model output formats
                 if isinstance(model_output, tuple):
@@ -150,7 +163,8 @@ def vector_estimation(patches_rgb, model, device, it, options):
             else:
                 # Fixed length model - use model_output_count
                 batch_output = (
-                    model(patch_images[it_start:it_batches].to(device).float(), options.model_output_count)
+                    model(patch_images[it_start:it_batches].to(device).float(),
+                          options.model_output_count)
                     .detach()
                     .cpu()
                     .numpy()
@@ -195,7 +209,9 @@ class PipelineRunner:
         """Load and initialize the ML model."""
         self.model = load_model(self.options.json_path).to(self.device)
         if not self.options.init_random:
-            checkpoint = serialize(torch.load(self.options.model_path, map_location=self.device))
+            checkpoint = serialize(
+                torch.load(self.options.model_path, map_location=self.device)
+            )
             self.model.load_state_dict(checkpoint["model_state_dict"])
 
     def _process_images(self):
@@ -237,13 +253,16 @@ class PipelineRunner:
         if tracer.enabled:
             for pidx in range(patches_rgb.shape[0]):
                 try:
-                    offset = patches_offsets[pidx].tolist() if pidx < patches_offsets.shape[0] else None
+                    offset = (patches_offsets[pidx].tolist()
+                              if pidx < patches_offsets.shape[0] else None)
                 except Exception:
                     offset = None
-                tracer.save_patch(pidx, patches_rgb[pidx].astype(np.uint8), offset=offset)
+                tracer.save_patch(pidx, patches_rgb[pidx].astype(np.uint8),
+                                  offset=offset)
 
         # Run vector estimation
-        patches_vector = vector_estimation(patches_rgb, self.model, self.device, image_index, self.options)
+        patches_vector = vector_estimation(patches_rgb, self.model, self.device,
+                                           image_index, self.options)
 
         # Save raw model outputs per-patch (compact)
         try:
@@ -262,16 +281,19 @@ class PipelineRunner:
         if tracer.enabled:
             prelist = []
             for pidx in range(patches_vector_np.shape[0]):
-                prelist.append({"patch_id": int(pidx), "vector": patches_vector_np[pidx].tolist()})
+                prelist.append({"patch_id": int(pidx),
+                                "vector": patches_vector_np[pidx].tolist()})
             tracer.save_pre_refinement(prelist)
 
         # Run refinement and merging based on primitive type
         if self.options.primitive_type == "curve":
-            self._process_curve_pipeline(patches_rgb, patches_vector, patches_offsets, input_rgb)
+            self._process_curve_pipeline(patches_rgb, patches_vector, patches_offsets,
+                                         input_rgb)
         elif self.options.primitive_type == "line":
             self._process_line_pipeline(patches_rgb, patches_vector, patches_offsets, input_rgb, image, tracer)
         else:
-            raise ValueError(f"Unsupported primitive type: {self.options.primitive_type}. Supported types are 'line' and 'curve'.")
+            raise ValueError(f"Unsupported primitive type: {self.options.primitive_type}. "
+                             "Supported types are 'line' and 'curve'.")
 
     def _process_curve_pipeline(self, patches_rgb, patches_vector, patches_offsets, input_rgb):
         """Process image using curve primitives pipeline."""
@@ -293,13 +315,15 @@ class PipelineRunner:
     def _process_line_pipeline(self, patches_rgb, patches_vector, patches_offsets, input_rgb, image, tracer):
         """Process image using line primitives pipeline."""
         # Basic validation and logging
-        print(f"[Pipeline] patches_rgb.shape={patches_rgb.shape}, patches_vector.shape={patches_vector.shape}")
+        print(f"[Pipeline] patches_rgb.shape={patches_rgb.shape}, "
+              f"patches_vector.shape={patches_vector.shape}")
         if patches_vector is None or patches_vector.shape[0] == 0:
             print("[Pipeline][Warning] Empty patches_vector received; skipping optimization")
 
         try:
             vector_after_opt = render_optimization_hard(
-                patches_rgb, patches_vector, self.device, self.options, self.options.image_name[0]
+                patches_rgb, patches_vector, self.device, self.options,
+                self.options.image_name[0]
             )
         except Exception as e:
             print(f"[Pipeline][Error] render_optimization_hard failed: {e}")
@@ -316,9 +340,10 @@ class PipelineRunner:
                     )
                 except Exception:
                     va_np = np.asarray(vector_after_opt)
-                postlist = [{"primitive_idx": int(i), "vector": va_np[i].tolist()} for i in range(va_np.shape[0])]
+                postlist = [{"primitive_idx": int(i), "vector": va_np[i].tolist()}
+                            for i in range(va_np.shape[0])]
                 tracer.save_post_refinement(postlist)
-        except Exception as _:
+        except Exception:
             pass
 
         try:
@@ -356,7 +381,8 @@ class PipelineRunner:
 
             # Save merged vectors as numpy for later inspection
             try:
-                vectors_out = os.path.join(self.options.output_dir, f"{self.options.image_name[0]}.npy")
+                vectors_out = os.path.join(self.options.output_dir,
+                                           f"{self.options.image_name[0]}.npy")
                 np.save(vectors_out, merging_result)
                 print(f"[Pipeline] Saved merged vectors to {vectors_out}")
             except Exception as e:
@@ -385,7 +411,8 @@ def parse_args():
     parser.add_argument("-c", "--curve_count", type=int, default=10, help="curve count in patch [default: 10]")
     parser.add_argument("--primitive_type", type=str, default="line", help="line or curve")
     parser.add_argument(
-        "--output_dir", type=str, default="logs/outputs/vectorization/lines/", help="dir to folder for output"
+        "--output_dir", type=str, default="logs/outputs/vectorization/lines/",
+        help="dir to folder for output"
     )
     parser.add_argument("--diff_render_it", type=int, default=400, help="iteration count")
     parser.add_argument(
@@ -413,7 +440,8 @@ def parse_args():
     parser.add_argument("--max_angle_to_connect", type=int, default=10, help="max_angle_to_connect in pixel")
     parser.add_argument("--max_distance_to_connect", type=int, default=3, help="max_distance_to_connect in pixel")
     parser.add_argument(
-        "--trace", action="store_true", default=False, help="Enable per-step tracing outputs for analysis"
+        "--trace", action="store_true", default=False,
+        help="Enable per-step tracing outputs for analysis"
     )
     parser.add_argument("--trace_dir", type=str, default="output/traces", help="Directory to write trace artifacts")
     parser.add_argument(

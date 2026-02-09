@@ -1,7 +1,8 @@
 """DeepV Pipeline with Hydra Configuration.
 
-This is a refactored version of run_pipeline.py that uses Hydra for configuration management.
-It demonstrates how to use the new configuration system for reproducible experiments.
+This is a refactored version of run_pipeline.py that uses Hydra for
+configuration management. It demonstrates how to use the new configuration
+system for reproducible experiments.
 """
 
 import os
@@ -66,7 +67,8 @@ def vectorization_stage(options, model, json_path):
     rgb = np.array(Image.open(image_path).convert("RGB"))
 
     # Split into patches
-    patches, patches_offsets = split_to_patches(rgb, patch_size=64, overlap=options.pipeline.overlap)
+    patches, patches_offsets = split_to_patches(rgb, patch_size=64,
+                                                overlap=options.pipeline.overlap)
 
     # Load model
     model = load_model(json_path, options.model.model_path)
@@ -101,7 +103,8 @@ def refinement_stage(options, patches_vector, patches_offsets):
             diff_render_it=options.pipeline.diff_render_it,
         )
     else:
-        raise ValueError(f"{options.pipeline.primitive_type} not implemented, please choose between line or curve")
+        raise ValueError(f"{options.pipeline.primitive_type} not implemented, "
+                         "please choose between line or curve")
 
 
 def merging_stage(options, refinement_result):
@@ -115,10 +118,12 @@ def merging_stage(options, refinement_result):
     elif options.pipeline.primitive_type == "curve":
         return curve_merging(refinement_result)
     else:
-        raise ValueError(f"{options.pipeline.primitive_type} not implemented, please choose between line or curve")
+        raise ValueError(f"{options.pipeline.primitive_type} not implemented, "
+                         "please choose between line or curve")
 
 
-@hydra.main(config_path="../config", config_name="config", version_base=None)
+@hydra.main(config_path="../config", config_name="config",
+            version_base=None)
 def main(cfg: DictConfig) -> None:
     """Main pipeline function using Hydra configuration."""
     print(f"Running DeepV pipeline with config: {cfg.experiment_name}")
@@ -127,7 +132,8 @@ def main(cfg: DictConfig) -> None:
 
     # Enforce GPU usage
     if not torch.cuda.is_available():
-        raise RuntimeError("GPU is required for DeepV but CUDA is not available on this machine.")
+        raise RuntimeError("GPU is required for DeepV but CUDA is not available "
+                           "on this machine.")
 
     # Set random seed
     if cfg.seed is not None:
@@ -143,7 +149,9 @@ def main(cfg: DictConfig) -> None:
     try:
         # Vectorization
         print("Running vectorization...")
-        patches_vector, patches_offsets = vectorization_stage(cfg, None, cfg.model.json_path)
+        patches_vector, patches_offsets = vectorization_stage(
+            cfg, None, cfg.model.json_path
+        )
 
         # Refinement
         print("Running refinement...")
