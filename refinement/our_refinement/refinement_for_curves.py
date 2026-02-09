@@ -614,7 +614,7 @@ def main(
         pipeline = RefinementPipeline(temp_options)
         return pipeline.run()
     else:
-        raise ValueError("intermediate_output must be provided - job_tuples mode not supported")
+        raise ValueError("intermediate_output must be provided - job_tuples mode is not supported. Use RefinementPipeline instead.")
 
 
 def repatch(raster_patches, patch_offsets, model_output, scale=None, h=None, w=None):

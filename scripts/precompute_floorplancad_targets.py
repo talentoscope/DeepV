@@ -71,7 +71,7 @@ def precompute_targets(split_file, raster_dir, vector_dir, cache_dir, max_primit
                         continue
 
             if not paths:
-                raise ValueError("No valid paths found")
+                raise ValueError("No valid SVG paths found in FloorPlanCAD dataset. Check that SVG files contain valid path elements.")
 
             # Ensure stroke-width is present
             for attr in attributes:

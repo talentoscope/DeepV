@@ -36,7 +36,7 @@ def main(options, vector_image_from_optimization=None, width_percentile=90, fit_
     """
     logger = get_pipeline_logger("merging.curves")
     if vector_image_from_optimization is None:
-        raise ValueError("vector_image_from_optimization must be provided - job_tuples mode not supported")
+        raise ValueError("vector_image_from_optimization must be provided - job_tuples mode is not supported. Use the unified pipeline interface instead.")
 
     sample_name = options.sample_name[:-4]
     vector_image = vector_image_from_optimization

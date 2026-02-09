@@ -123,7 +123,7 @@ class FloorPlanCADDataset(Dataset):
                             continue
 
                 if not paths:
-                    raise ValueError("No valid paths found")
+                    raise ValueError("No valid SVG paths found in FloorPlanCAD dataset. Check that SVG files contain valid path elements.")
 
                 for attr in attributes:
                     if "stroke-width" not in attr:
