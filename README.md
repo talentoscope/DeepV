@@ -66,7 +66,7 @@ Many valuable technical drawings exist only in raster form: scanned pages from o
 - 🎯 **Focus**: Improving FloorPlanCAD performance through architecture changes and training
 - ⚠️ **Known Gap**: FloorPlanCAD performance needs improvement (see [DEVELOPMENT.md](DEVELOPMENT.md#-critical-priority-floorplancad-performance-gap) for details)
 
-See [PLAN.md](PLAN.md) for strategic roadmap and [DEVELOPMENT.md](DEVELOPMENT.md) for active development status.
+See [docs/PLAN.md](docs/PLAN.md) for strategic roadmap and [DEVELOPMENT.md](DEVELOPMENT.md) for active development status.
 
 ## Repository Structure
 
@@ -341,7 +341,7 @@ See `requirements.txt` for complete list.
 - Architectural priors (e.g., walls at right angles, repeated patterns)
 - Improved loss functions (perceptual, geometric, CAD-specific)
 
-See [DEVELOPMENT.md](DEVELOPMENT.md) for active development status and [PLAN.md](PLAN.md) for strategic roadmap.
+See [DEVELOPMENT.md](DEVELOPMENT.md) for active development status and [docs/PLAN.md](docs/PLAN.md) for strategic roadmap.
 
 ## Troubleshooting
 
@@ -357,7 +357,7 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for active development status and [PLAN.md]
 
 - **Issues**: [GitHub Issues](https://github.com/your-repo/DeepV/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/your-repo/DeepV/discussions)
-- **Documentation**: See module-specific READMEs, [QA.md](QA.md), and docstrings
+- **Documentation**: See module-specific READMEs, [docs/QA.md](docs/QA.md), and docstrings
 
 ---
 

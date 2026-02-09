@@ -27,7 +27,7 @@
 - Training optimization on FloorPlanCAD data
 - Reducing over-segmentation and improving geometric accuracy
 
-See [README.md](README.md) and [PLAN.md](PLAN.md) for detailed status and improvement roadmap.
+See [README.md](README.md) and [docs/PLAN.md](docs/PLAN.md) for detailed status and improvement roadmap.
 
 ---
 

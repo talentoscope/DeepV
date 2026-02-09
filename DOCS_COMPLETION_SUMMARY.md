@@ -155,16 +155,16 @@ Reduces root MD files from 13 to 10 (-23%)"
 → [README.md](README.md) → [INSTALL.md](INSTALL.md)
 
 **For Contributors**:
-→ [CONTRIBUTING.md](CONTRIBUTING.md) → [DEVELOPER.md](DEVELOPER.md)
+→ [CONTRIBUTING.md](CONTRIBUTING.md) → [docs/DEVELOPER.md](docs/DEVELOPER.md)
 
-**For Project Planning**:
-→ [PLAN.md](PLAN.md) + [TODO.md](TODO.md) + [REFACTOR.md](REFACTOR.md)
+**For Project Planning & Development Status**:
+→ [DEVELOPMENT.md](DEVELOPMENT.md) (consolidated from TODO.md + REFACTOR.md) + [docs/PLAN.md](docs/PLAN.md)
 
 **For Questions**:
-→ [QA.md](QA.md)
+→ [docs/QA.md](docs/QA.md)
 
 **For Data/Datasets**:
-→ [DATA_SOURCES.md](DATA_SOURCES.md)
+→ [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md)
 
 **For Historical Reference**:
 → [docs/archive/](docs/archive/)

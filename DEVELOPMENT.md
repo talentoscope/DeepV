@@ -357,12 +357,12 @@ from util_files.metrics import calc_iou
 
 ## Links & References
 
-- **Strategic Roadmap**: See [PLAN.md](PLAN.md)
+- **Strategic Roadmap**: See [PLAN.md](docs/PLAN.md)
 - **Installation**: See [INSTALL.md](INSTALL.md)
 - **Contributing**: See [CONTRIBUTING.md](CONTRIBUTING.md)
-- **Developer Guide**: See [DEVELOPER.md](DEVELOPER.md)
-- **Datasets**: See [DATA_SOURCES.md](DATA_SOURCES.md)
-- **FAQ**: See [QA.md](QA.md)
+- **Developer Guide**: See [DEVELOPER.md](docs/DEVELOPER.md)
+- **Datasets**: See [DATA_SOURCES.md](docs/DATA_SOURCES.md)
+- **FAQ**: See [QA.md](docs/QA.md)
 
 ---
 
