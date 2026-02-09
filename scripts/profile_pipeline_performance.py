@@ -8,21 +8,22 @@ Uses PyTorch profiler and Python cProfile to identify performance bottlenecks.
 
 import argparse
 import cProfile
+import gc
 import io
 import os
 import pstats
-import time
-from pathlib import Path
-from typing import Dict, Any, Optional
-import gc
-
-import numpy as np
-import torch
-from torch.profiler import profile, record_function, ProfilerActivity
 
 # Add project root to path
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import time
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+import numpy as np
+import torch
+from torch.profiler import ProfilerActivity, profile, record_function
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import PipelineRunner lazily inside profiling methods to avoid heavy
 # top-level imports (torchvision, etc.) during script startup.
@@ -51,6 +52,7 @@ class DeepVProfiler:
         start_time = time.time()
         try:
             from run_pipeline import PipelineRunner
+
             runner = PipelineRunner(options)
             runner.run()
             end_time = time.time()
@@ -63,14 +65,14 @@ class DeepVProfiler:
 
         # Process results
         s = io.StringIO()
-        ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
+        ps = pstats.Stats(pr, stream=s).sort_stats("cumulative")
         ps.print_stats()
 
         total_time = end_time - start_time
 
         # Save cProfile results
         cprofile_file = self.output_dir / "cprofile_results.txt"
-        with open(cprofile_file, 'w') as f:
+        with open(cprofile_file, "w") as f:
             f.write("DeepV Pipeline cProfile Results\n")
             f.write("=" * 40 + "\n\n")
             f.write(f"Total execution time: {total_time:.3f} seconds\n\n")
@@ -80,11 +82,7 @@ class DeepVProfiler:
 
         print(f"✅ cProfile results saved to {cprofile_file}")
 
-        return {
-            'profile_stats': s.getvalue(),
-            'total_time': total_time,
-            'functions': self._extract_function_stats(ps)
-        }
+        return {"profile_stats": s.getvalue(), "total_time": total_time, "functions": self._extract_function_stats(ps)}
 
     def profile_pipeline_with_pytorch(self, options) -> Dict[str, Any]:
         """Profile pipeline using PyTorch profiler."""
@@ -95,12 +93,13 @@ class DeepVProfiler:
             activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
             record_shapes=False,  # Reduce memory usage
             profile_memory=True,
-            with_stack=False  # Reduce memory usage
+            with_stack=False,  # Reduce memory usage
         ) as prof:
 
             with record_function("deepv_pipeline"):
                 try:
                     from run_pipeline import PipelineRunner
+
                     runner = PipelineRunner(options)
                     runner.run()
                 except Exception as e:
@@ -113,7 +112,7 @@ class DeepVProfiler:
 
         # Generate summary
         summary_file = self.output_dir / "pytorch_summary.txt"
-        with open(summary_file, 'w') as f:
+        with open(summary_file, "w") as f:
             f.write("PyTorch Profiler Summary\n")
             f.write("=" * 50 + "\n\n")
 
@@ -139,7 +138,7 @@ class DeepVProfiler:
                 f.write(str(cuda_stats))
 
         print(f"✅ PyTorch profiling results saved to {profile_file} and {summary_file}")
-        return {'profiler': prof}
+        return {"profiler": prof}
 
     def profile_memory_usage(self, options) -> Dict[str, Any]:
         """Profile memory usage during pipeline execution."""
@@ -153,6 +152,7 @@ class DeepVProfiler:
 
         try:
             from run_pipeline import PipelineRunner
+
             runner = PipelineRunner(options)
             runner.run()
         except Exception as e:
@@ -164,22 +164,22 @@ class DeepVProfiler:
         peak_memory = torch.cuda.max_memory_allocated() if torch.cuda.is_available() else 0
 
         memory_stats = {
-            'initial_memory_mb': initial_memory / 1024 / 1024,
-            'final_memory_mb': final_memory / 1024 / 1024,
-            'peak_memory_mb': peak_memory / 1024 / 1024,
-            'memory_increase_mb': (final_memory - initial_memory) / 1024 / 1024,
-            'cuda_available': torch.cuda.is_available()
+            "initial_memory_mb": initial_memory / 1024 / 1024,
+            "final_memory_mb": final_memory / 1024 / 1024,
+            "peak_memory_mb": peak_memory / 1024 / 1024,
+            "memory_increase_mb": (final_memory - initial_memory) / 1024 / 1024,
+            "cuda_available": torch.cuda.is_available(),
         }
 
         self.memory_stats = memory_stats
 
         # Save memory stats
         memory_file = self.output_dir / "memory_profile.txt"
-        with open(memory_file, 'w') as f:
+        with open(memory_file, "w") as f:
             f.write("DeepV Pipeline Memory Profile\n")
             f.write("=" * 40 + "\n\n")
             for key, value in memory_stats.items():
-                if 'mb' in key:
+                if "mb" in key:
                     f.write(f"{key}: {value:.2f} MB\n")
                 else:
                     f.write(f"{key}: {value}\n")
@@ -195,20 +195,20 @@ class DeepVProfiler:
         results = {}
 
         # 1. Memory profiling (lightweight, run first)
-        results['memory'] = self.profile_memory_usage(self._create_options_copy(options))
+        results["memory"] = self.profile_memory_usage(self._create_options_copy(options))
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
         # 2. cProfile analysis
-        results['cprofile'] = self.profile_pipeline_with_cprofile(self._create_options_copy(options))
+        results["cprofile"] = self.profile_pipeline_with_cprofile(self._create_options_copy(options))
         gc.collect()
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
         # 3. PyTorch profiling (disabled for now to avoid OOM)
         # results['pytorch'] = self.profile_pipeline_with_pytorch(self._create_options_copy(options))
-        results['pytorch'] = {}
+        results["pytorch"] = {}
         print("🔍 Skipping PyTorch profiling to avoid OOM")
 
         # Generate summary report
@@ -220,6 +220,7 @@ class DeepVProfiler:
     def _create_options_copy(self, options):
         """Create a fresh copy of options to avoid state pollution between profiling runs."""
         from argparse import Namespace
+
         new_options = Namespace()
         for key, value in vars(options).items():
             if isinstance(value, list):
@@ -238,30 +239,32 @@ class DeepVProfiler:
         for func, stat in ps.stats.items():
             filename, line, funcname = func
             cc, nc, tt, ct, callers = stat
-            stats.append({
-                'function': funcname,
-                'filename': filename,
-                'line': line,
-                'ncalls': nc,
-                'tottime': tt,
-                'cumtime': ct,
-            })
+            stats.append(
+                {
+                    "function": funcname,
+                    "filename": filename,
+                    "line": line,
+                    "ncalls": nc,
+                    "tottime": tt,
+                    "cumtime": ct,
+                }
+            )
 
         # Sort by cumulative time descending
-        stats = sorted(stats, key=lambda x: x['cumtime'], reverse=True)
+        stats = sorted(stats, key=lambda x: x["cumtime"], reverse=True)
         return stats[:limit]
 
     def _generate_summary_report(self, results: Dict[str, Any]) -> None:
         """Generate a comprehensive summary report."""
         summary_file = self.output_dir / "profiling_summary.md"
 
-        with open(summary_file, 'w') as f:
+        with open(summary_file, "w") as f:
             f.write("# DeepV Pipeline Performance Profile Summary\n\n")
             f.write(f"**Generated:** {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
             # Overall timing
-            if 'cprofile' in results and results['cprofile']:
-                total_time = results['cprofile'].get('total_time', 0)
+            if "cprofile" in results and results["cprofile"]:
+                total_time = results["cprofile"].get("total_time", 0)
                 f.write("## Overall Performance\n\n")
                 f.write(f"- **Total pipeline time:** {total_time:.3f} seconds\n")
 
@@ -278,8 +281,8 @@ class DeepVProfiler:
                 f.write("\n")
 
             # Memory usage
-            if 'memory' in results and results['memory']:
-                mem = results['memory']
+            if "memory" in results and results["memory"]:
+                mem = results["memory"]
                 f.write("## Memory Usage\n\n")
                 f.write(f"- **Peak memory:** {mem.get('peak_memory_mb', 0):.2f} MB\n")
                 f.write(f"- **Memory increase:** {mem.get('memory_increase_mb', 0):.2f} MB\n")
@@ -309,37 +312,41 @@ class DeepVProfiler:
 def main():
     """Main profiling entry point."""
     parser = argparse.ArgumentParser(description="Profile DeepV pipeline performance")
-    parser.add_argument('--data_dir', type=str, default='data/raw/floorplancad/train1',
-                       help='Directory containing test images')
-    parser.add_argument('--image_name', type=str, default='0109-0037.png',
-                       help='Test image filename')
-    parser.add_argument('--image_path', type=str, default=None,
-                       help='Full path to test image (overrides data_dir and image_name)')
-    parser.add_argument('--primitive_type', type=str, default='line',
-                       help='Primitive type to process')
-    parser.add_argument('--output_dir', type=str, default='profiling_results',
-                       help='Directory to save profiling results')
-    parser.add_argument('--model_output_count', type=int, default=5,
-                       help='Number of primitives to generate')
-    parser.add_argument('--init_random', action='store_true',
-                       help='Use random initialization instead of trained model')
-    parser.add_argument('--model_path', type=str, default='models/model_lines.weights',
-                       help='Path to trained model')
-    parser.add_argument('--json_path', type=str, 
-                       default='vectorization/models/specs/resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json',
-                       help='Path to JSON model specification file')
-    parser.add_argument('--diff_render_it', type=int, default=100,
-                       help='Number of refinement iterations (early stopping enabled)')
-    parser.add_argument('--early_stop_threshold', type=float, default=0.001,
-                       help='Early stopping IOU improvement threshold')
-    parser.add_argument('--gpu', action='append', help='GPU to use')
+    parser.add_argument(
+        "--data_dir", type=str, default="data/raw/floorplancad/train1", help="Directory containing test images"
+    )
+    parser.add_argument("--image_name", type=str, default="0109-0037.png", help="Test image filename")
+    parser.add_argument(
+        "--image_path", type=str, default=None, help="Full path to test image (overrides data_dir and image_name)"
+    )
+    parser.add_argument("--primitive_type", type=str, default="line", help="Primitive type to process")
+    parser.add_argument(
+        "--output_dir", type=str, default="profiling_results", help="Directory to save profiling results"
+    )
+    parser.add_argument("--model_output_count", type=int, default=5, help="Number of primitives to generate")
+    parser.add_argument("--init_random", action="store_true", help="Use random initialization instead of trained model")
+    parser.add_argument("--model_path", type=str, default="models/model_lines.weights", help="Path to trained model")
+    parser.add_argument(
+        "--json_path",
+        type=str,
+        default="vectorization/models/specs/resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json",
+        help="Path to JSON model specification file",
+    )
+    parser.add_argument(
+        "--diff_render_it", type=int, default=100, help="Number of refinement iterations (early stopping enabled)"
+    )
+    parser.add_argument(
+        "--early_stop_threshold", type=float, default=0.001, help="Early stopping IOU improvement threshold"
+    )
+    parser.add_argument("--gpu", action="append", help="GPU to use")
 
     args = parser.parse_args()
 
     # Create options object for PipelineRunner (argparse.Namespace)
     from argparse import Namespace
+
     options = Namespace()
-    
+
     # Handle image path specification
     if args.image_path:
         # Use full image path - extract directory and filename
@@ -351,7 +358,7 @@ def main():
         # Use traditional data_dir + image_name
         options.data_dir = args.data_dir
         options.image_name = args.image_name
-    
+
     options.primitive_type = args.primitive_type
     options.output_dir = f"{args.output_dir}/pipeline_output"
     options.model_output_count = args.model_output_count
@@ -362,7 +369,7 @@ def main():
     options.curve_count = 10  # default
     # Reduce iterations for profiling to keep runtime reasonable
     options.diff_render_it = args.diff_render_it  # Use argument
-    options.rendering_type = 'bezier_splatting'
+    options.rendering_type = "bezier_splatting"
     options.overlap = 0
     options.max_angle_to_connect = 10
     options.max_distance_to_connect = 3
@@ -373,11 +380,11 @@ def main():
     results = profiler.run_comprehensive_profiling(options)
 
     print("\n🎯 Profiling completed! Key insights:")
-    if 'cprofile' in results and results['cprofile']:
-        total_time = results['cprofile'].get('total_time', 0)
+    if "cprofile" in results and results["cprofile"]:
+        total_time = results["cprofile"].get("total_time", 0)
         print(".2f")
-    if 'memory' in results and results['memory']:
-        mem = results['memory']
+    if "memory" in results and results["memory"]:
+        mem = results["memory"]
         print(".2f")
 
 

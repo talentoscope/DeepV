@@ -6,8 +6,8 @@ Python equivalent of run_cleaning.sh for training the cleaning UNet model.
 """
 
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 

@@ -58,10 +58,7 @@ class PerformanceBenchmark:
                 "iterations": iterations,
             }
 
-            print(
-                f"  Results: {mean_time:.4f}s ± {std_time:.4f}s "
-                f"(min: {min_time:.4f}s, max: {max_time:.4f}s)"
-            )
+            print(f"  Results: {mean_time:.4f}s ± {std_time:.4f}s " f"(min: {min_time:.4f}s, max: {max_time:.4f}s)")
             return mean_time
         else:
             print(f"  Benchmark failed for {name}")
@@ -83,19 +80,14 @@ class PerformanceBenchmark:
             def render_func():
                 return render(primitives, (64, 64), data_representation="vahe")
 
-            mean_time = self.benchmark_function(
-                render_func, name="rendering_64x64_patch", iterations=10
-            )
+            mean_time = self.benchmark_function(render_func, name="rendering_64x64_patch", iterations=10)
 
             # Target: <10ms per patch
             target_ms = 10
             if mean_time and mean_time * 1000 < target_ms:
                 print(f"  PASS: Rendering meets target (<{target_ms}ms)")
             elif mean_time:
-                print(
-                    f"  FAIL: Rendering exceeds target "
-                    f"({mean_time*1000:.1f}ms > {target_ms}ms)"
-                )
+                print(f"  FAIL: Rendering exceeds target " f"({mean_time*1000:.1f}ms > {target_ms}ms)")
 
         except ImportError as e:
             print(f"  Skipping rendering benchmark: {e}")
@@ -120,18 +112,14 @@ class PerformanceBenchmark:
                     results.append(clipped)
                 return results
 
-            mean_time = self.benchmark_function(
-                merge_func, name="merging_100_lines", iterations=5
-            )
+            mean_time = self.benchmark_function(merge_func, name="merging_100_lines", iterations=5)
 
             # Target: <1s for 100 lines
             target_s = 1.0
             if mean_time and mean_time < target_s:
                 print(f"  PASS: Merging meets target (<{target_s}s)")
             elif mean_time:
-                print(
-                    f"  FAIL: Merging exceeds target ({mean_time:.3f}s > {target_s}s)"
-                )
+                print(f"  FAIL: Merging exceeds target ({mean_time:.3f}s > {target_s}s)")
 
         except ImportError as e:
             print(f"  Skipping merging benchmark: {e}")
@@ -147,19 +135,14 @@ class PerformanceBenchmark:
 
                 return MeanFieldEnergyComputer
 
-            mean_time = self.benchmark_function(
-                refinement_import, name="refinement_import", iterations=3
-            )
+            mean_time = self.benchmark_function(refinement_import, name="refinement_import", iterations=3)
 
             # Target: <0.1s for import
             target_s = 0.1
             if mean_time and mean_time < target_s:
                 print(f"  PASS: Refinement import meets target (<{target_s}s)")
             elif mean_time:
-                print(
-                    f"  FAIL: Refinement import exceeds target "
-                    f"({mean_time:.3f}s > {target_s}s)"
-                )
+                print(f"  FAIL: Refinement import exceeds target " f"({mean_time:.3f}s > {target_s}s)")
 
         except ImportError as e:
             print(f"  Skipping refinement benchmark: {e}")
@@ -183,18 +166,14 @@ class PerformanceBenchmark:
             mask = (inverted > 0).float()
             return inverted, mask
 
-        mean_time = self.benchmark_function(
-            preprocess_func, name="image_preprocessing_256x256", iterations=10
-        )
+        mean_time = self.benchmark_function(preprocess_func, name="image_preprocessing_256x256", iterations=10)
 
         # Target: <0.01s for 256x256 image
         target_s = 0.01
         if mean_time and mean_time < target_s:
             print(f"  PASS: Preprocessing meets target (<{target_s}s)")
         elif mean_time:
-            print(
-                f"  FAIL: Preprocessing exceeds target ({mean_time:.4f}s > {target_s}s)"
-            )
+            print(f"  FAIL: Preprocessing exceeds target ({mean_time:.4f}s > {target_s}s)")
 
     def generate_report(self):
         """Generate a performance report."""

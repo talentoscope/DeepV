@@ -8,11 +8,11 @@ raster-vector pairs by filename/folder structure.
 
 import argparse
 import os
+import random
 import shutil
+from collections import defaultdict
 from pathlib import Path
 from typing import List, Tuple
-import random
-from collections import defaultdict
 
 
 def get_svg_files_by_subdir(data_dir: Path) -> dict:
@@ -26,7 +26,9 @@ def get_svg_files_by_subdir(data_dir: Path) -> dict:
     return dict(svg_files)
 
 
-def create_split_files(svg_files_by_subdir: dict, train_ratio: float = 0.8, val_ratio: float = 0.1) -> Tuple[List[str], List[str], List[str]]:
+def create_split_files(
+    svg_files_by_subdir: dict, train_ratio: float = 0.8, val_ratio: float = 0.1
+) -> Tuple[List[str], List[str], List[str]]:
     """
     Create train/val/test splits from SVG files.
 
@@ -34,12 +36,12 @@ def create_split_files(svg_files_by_subdir: dict, train_ratio: float = 0.8, val_
     """
     # Use existing test directory as test set
     test_files = []
-    for filename in svg_files_by_subdir.get('test', []):
+    for filename in svg_files_by_subdir.get("test", []):
         test_files.append(str(filename.relative_to(filename.parents[1])))
 
     # Combine train1 and train2 for train/val split
     train_val_files = []
-    for subdir in ['train1', 'train2']:
+    for subdir in ["train1", "train2"]:
         for filename in svg_files_by_subdir.get(subdir, []):
             train_val_files.append(str(filename.relative_to(filename.parents[1])))
 
@@ -53,8 +55,8 @@ def create_split_files(svg_files_by_subdir: dict, train_ratio: float = 0.8, val_
     n_val = int(n_total * val_ratio)
     # Remaining go to train to ensure we use all data
 
-    train_files = train_val_files[:n_train + (n_total - n_train - n_val)]  # Add remainder to train
-    val_files = train_val_files[n_train:n_train + n_val]
+    train_files = train_val_files[: n_train + (n_total - n_train - n_val)]  # Add remainder to train
+    val_files = train_val_files[n_train : n_train + n_val]
 
     return train_files, val_files, test_files
 
@@ -83,22 +85,21 @@ def create_symlinks_or_copy(source_dir: Path, target_dir: Path, file_list: List[
 
 def main():
     parser = argparse.ArgumentParser(description="Create train/val/test splits for FloorPlanCAD dataset")
-    parser.add_argument("--data_dir", type=str, default="data",
-                       help="Base data directory")
-    parser.add_argument("--vector_subdir", type=str, default="vector/floorplancad",
-                       help="Vector data subdirectory")
-    parser.add_argument("--raster_subdir", type=str, default="raster/floorplancad",
-                       help="Raster data subdirectory")
-    parser.add_argument("--output_dir", type=str, default="data/splits/floorplancad",
-                       help="Output directory for splits")
-    parser.add_argument("--train_ratio", type=float, default=0.8,
-                       help="Ratio of training data")
-    parser.add_argument("--val_ratio", type=float, default=0.1,
-                       help="Ratio of validation data")
-    parser.add_argument("--copy_files", action="store_true", default=True,
-                       help="Copy files instead of creating symlinks (default: True on Windows)")
-    parser.add_argument("--seed", type=int, default=42,
-                       help="Random seed for reproducibility")
+    parser.add_argument("--data_dir", type=str, default="data", help="Base data directory")
+    parser.add_argument("--vector_subdir", type=str, default="vector/floorplancad", help="Vector data subdirectory")
+    parser.add_argument("--raster_subdir", type=str, default="raster/floorplancad", help="Raster data subdirectory")
+    parser.add_argument(
+        "--output_dir", type=str, default="data/splits/floorplancad", help="Output directory for splits"
+    )
+    parser.add_argument("--train_ratio", type=float, default=0.8, help="Ratio of training data")
+    parser.add_argument("--val_ratio", type=float, default=0.1, help="Ratio of validation data")
+    parser.add_argument(
+        "--copy_files",
+        action="store_true",
+        default=True,
+        help="Copy files instead of creating symlinks (default: True on Windows)",
+    )
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
 
     args = parser.parse_args()
 
@@ -122,9 +123,7 @@ def main():
         print(f"  {subdir}: {len(files)} files")
 
     # Create splits
-    train_files, val_files, test_files = create_split_files(
-        svg_files_by_subdir, args.train_ratio, args.val_ratio
-    )
+    train_files, val_files, test_files = create_split_files(svg_files_by_subdir, args.train_ratio, args.val_ratio)
 
     print("\nSplit sizes:")
     print(f"  Train: {len(train_files)} files")
@@ -142,18 +141,19 @@ def main():
     # Create symlinks/copies for each split
     print("\nCreating train split...")
     create_symlinks_or_copy(vector_dir, train_vector_dir, train_files, args.copy_files)
-    create_symlinks_or_copy(raster_dir, train_raster_dir,
-                           [f.replace('.svg', '.png') for f in train_files], args.copy_files)
+    create_symlinks_or_copy(
+        raster_dir, train_raster_dir, [f.replace(".svg", ".png") for f in train_files], args.copy_files
+    )
 
     print("Creating val split...")
     create_symlinks_or_copy(vector_dir, val_vector_dir, val_files, args.copy_files)
-    create_symlinks_or_copy(raster_dir, val_raster_dir,
-                           [f.replace('.svg', '.png') for f in val_files], args.copy_files)
+    create_symlinks_or_copy(raster_dir, val_raster_dir, [f.replace(".svg", ".png") for f in val_files], args.copy_files)
 
     print("Creating test split...")
     create_symlinks_or_copy(vector_dir, test_vector_dir, test_files, args.copy_files)
-    create_symlinks_or_copy(raster_dir, test_raster_dir,
-                           [f.replace('.svg', '.png') for f in test_files], args.copy_files)
+    create_symlinks_or_copy(
+        raster_dir, test_raster_dir, [f.replace(".svg", ".png") for f in test_files], args.copy_files
+    )
 
     # Create file lists for reference
     (output_dir / "file_lists").mkdir(parents=True, exist_ok=True)

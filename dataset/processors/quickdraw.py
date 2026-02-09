@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 from .base import Processor
 
@@ -50,7 +50,7 @@ class QuickDrawProcessor(Processor):
             try:
                 print(f"Processing {ndjson_file.name}...")
 
-                with open(ndjson_file, 'r', encoding='utf-8') as f:
+                with open(ndjson_file, "r", encoding="utf-8") as f:
                     for line_num, line in enumerate(f):
                         if drawings_processed >= max_drawings:
                             break
@@ -65,7 +65,7 @@ class QuickDrawProcessor(Processor):
                             if svg_content:
                                 if not dry_run:
                                     svg_path = vector_dir / f"{drawing_id}.svg"
-                                    with open(svg_path, 'w', encoding='utf-8') as svg_file:
+                                    with open(svg_path, "w", encoding="utf-8") as svg_file:
                                         svg_file.write(svg_content)
                                 svg_count += 1
                                 processed_files += 1
@@ -102,13 +102,13 @@ class QuickDrawProcessor(Processor):
                         drawing_id = f"{parquet_file.stem}_{idx:06d}"
 
                         # Assume the drawing data is in a 'drawing' column
-                        if 'drawing' in row:
-                            svg_content = self._strokes_to_svg({'drawing': row['drawing']}, drawing_id)
+                        if "drawing" in row:
+                            svg_content = self._strokes_to_svg({"drawing": row["drawing"]}, drawing_id)
 
                             if svg_content:
                                 if not dry_run:
                                     svg_path = vector_dir / f"{drawing_id}.svg"
-                                    with open(svg_path, 'w', encoding='utf-8') as svg_file:
+                                    with open(svg_path, "w", encoding="utf-8") as svg_file:
                                         svg_file.write(svg_content)
                                 svg_count += 1
                                 processed_files += 1
@@ -146,7 +146,7 @@ class QuickDrawProcessor(Processor):
             SVG string representation of the drawing
         """
         try:
-            strokes = drawing_data.get('drawing', [])
+            strokes = drawing_data.get("drawing", [])
 
             if not strokes:
                 return ""
@@ -192,12 +192,12 @@ class QuickDrawProcessor(Processor):
             if not paths:
                 return ""
 
-            svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+            svg_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}">
   <g id="{drawing_id}">
     {"".join(paths)}
   </g>
-</svg>'''
+</svg>"""
 
             return svg_content
 

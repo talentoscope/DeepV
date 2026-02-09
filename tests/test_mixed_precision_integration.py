@@ -7,15 +7,19 @@ in both vectorization and cleaning training scripts.
 """
 
 import argparse
-import sys
 import os
+import sys
 
 # Add the project root to the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+
 def test_mixed_precision_trainer():
     """Test basic mixed precision trainer functionality."""
-    from util_files.mixed_precision import MixedPrecisionTrainer, create_mixed_precision_trainer
+    from util_files.mixed_precision import (
+        MixedPrecisionTrainer,
+        create_mixed_precision_trainer,
+    )
 
     print("Testing MixedPrecisionTrainer...")
 
@@ -33,11 +37,17 @@ def test_mixed_precision_trainer():
 
     print("✓ MixedPrecisionTrainer tests passed")
 
+
 def test_mixed_precision_wrapper():
     """Test mixed precision model wrapper."""
     import torch
     import torch.nn as nn
-    from util_files.mixed_precision import MixedPrecisionWrapper, enable_mixed_precision_for_model, create_mixed_precision_trainer
+
+    from util_files.mixed_precision import (
+        MixedPrecisionWrapper,
+        create_mixed_precision_trainer,
+        enable_mixed_precision_for_model,
+    )
 
     print("Testing MixedPrecisionWrapper...")
 
@@ -57,11 +67,16 @@ def test_mixed_precision_wrapper():
     # Test convenience function
     model2, trainer2 = enable_mixed_precision_for_model(nn.Linear(10, 1), enabled=True)
     if trainer2.is_enabled():
-        assert isinstance(model2, MixedPrecisionWrapper), "Convenience function should return wrapped model when enabled"
+        assert isinstance(
+            model2, MixedPrecisionWrapper
+        ), "Convenience function should return wrapped model when enabled"
     else:
-        assert not isinstance(model2, MixedPrecisionWrapper), "Convenience function should return original model when disabled"
+        assert not isinstance(
+            model2, MixedPrecisionWrapper
+        ), "Convenience function should return original model when disabled"
 
     print("✓ MixedPrecisionWrapper tests passed")
+
 
 def test_training_script_args():
     """Test that training scripts accept mixed precision arguments."""
@@ -70,6 +85,7 @@ def test_training_script_args():
     # Test vectorization script
     try:
         from vectorization.scripts.train_vectorization import parse_args
+
         # We can't easily test argument parsing due to the complex job array logic
         # Just verify the module imports correctly
         print("Vectorization script imports successfully")
@@ -83,8 +99,9 @@ def test_training_script_args():
     # Test cleaning script
     try:
         from cleaning.scripts.main_cleaning import parse_args
+
         # Test that --mixed-precision argument is accepted
-        test_args = ['--model', 'UNET', '--datadir', '/tmp', '--valdatadir', '/tmp', '--mixed-precision', '--help']
+        test_args = ["--model", "UNET", "--datadir", "/tmp", "--valdatadir", "/tmp", "--mixed-precision", "--help"]
         try:
             args = parse_args(test_args)
         except SystemExit:
@@ -97,6 +114,7 @@ def test_training_script_args():
     print("✓ Training script argument parsing tests passed")
     return True
 
+
 def test_checkpoint_state_dict():
     """Test checkpoint save/load functionality."""
     from util_files.mixed_precision import MixedPrecisionTrainer
@@ -108,7 +126,7 @@ def test_checkpoint_state_dict():
     # Get state dict
     state_dict = trainer.state_dict()
     if trainer.is_enabled():
-        assert 'scaler' in state_dict, "State dict should contain scaler when enabled"
+        assert "scaler" in state_dict, "State dict should contain scaler when enabled"
     else:
         assert state_dict == {}, "State dict should be empty when disabled"
 
@@ -123,6 +141,7 @@ def test_checkpoint_state_dict():
         assert trainer2.scaler is None, "Scaler should remain None when disabled"
 
     print("✓ Checkpoint state dict tests passed")
+
 
 def main():
     """Run all mixed precision integration tests."""
@@ -140,8 +159,10 @@ def main():
     except Exception as e:
         print(f"\n❌ Mixed precision integration test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

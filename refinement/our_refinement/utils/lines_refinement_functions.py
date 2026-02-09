@@ -3,7 +3,7 @@ import os
 import signal
 import sys
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Union, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -12,22 +12,28 @@ from matplotlib import pyplot as plt
 from PIL import Image
 from tqdm import tqdm
 
+from util_files.data.graphics_primitives import (
+    PT_ARC,
+    PT_CBEZIER,
+    PT_LINE,
+    PT_QBEZIER,
+    repr_len_by_type,
+)
+
 ### Todo check this metric or change it
 from util_files.exceptions import EmptyPixelError, OptimizationError
 from util_files.rendering.bezier_splatting import BezierSplatting
-from util_files.rendering.gpu_line_renderer import GPULineRenderer
 from util_files.rendering.cairo import render as original_render
 from util_files.rendering.cairo import (
     render_with_skeleton as original_render_with_skeleton,
 )
-from util_files.data.graphics_primitives import (
-    PT_LINE, PT_QBEZIER, PT_CBEZIER, PT_ARC, repr_len_by_type
-)
+from util_files.rendering.gpu_line_renderer import GPULineRenderer
 
 # Load config for magic numbers
 try:
     from omegaconf import OmegaConf
-    config = OmegaConf.load(os.path.join(os.path.dirname(__file__), '../../../config/refinement/default.yaml'))
+
+    config = OmegaConf.load(os.path.join(os.path.dirname(__file__), "../../../config/refinement/default.yaml"))
     h = config.render_res
     w = config.render_res
     padding = config.padding
@@ -125,7 +131,9 @@ def render(data: Any, dimensions: Tuple[int, int], data_representation: Any) -> 
     return original_render(data, dimensions, data_representation, linecaps="butt", linejoin="miter")
 
 
-def render_skeleton(data: np.ndarray, dimensions: Tuple[int, int], data_representation: Any, padding: int = 0, scaling: int = 4) -> Any:
+def render_skeleton(
+    data: np.ndarray, dimensions: Tuple[int, int], data_representation: Any, padding: int = 0, scaling: int = 4
+) -> Any:
     w, h = dimensions
     data[..., [0, 2]] = np.clip(data[..., [0, 2]], 0.5, w - 0.5)
     data[..., [1, 3]] = np.clip(data[..., [1, 3]], 0.5, h - 0.5)
@@ -321,7 +329,9 @@ supersampling_strategy = RegularSupersampling(4)
 sample_coordinates = supersampling_strategy.supersample(raster_coordinates)
 
 
-def render_lines_pt(lines_batch: torch.Tensor, samples: torch.Tensor = None, uint: bool = False) -> Union[torch.Tensor, np.ndarray]:
+def render_lines_pt(
+    lines_batch: torch.Tensor, samples: torch.Tensor = None, uint: bool = False
+) -> Union[torch.Tensor, np.ndarray]:
     rasters = render_lines(
         lines_batch[:, :, 0],
         lines_batch[:, :, 1],
@@ -340,7 +350,9 @@ def render_lines_pt(lines_batch: torch.Tensor, samples: torch.Tensor = None, uin
         return rasters
 
 
-def render_lines_with_type(lines_batch: torch.Tensor, rendering_type: str = "hard", supersampling: int = 4, uint: bool = False) -> Union[torch.Tensor, np.ndarray]:
+def render_lines_with_type(
+    lines_batch: torch.Tensor, rendering_type: str = "hard", supersampling: int = 4, uint: bool = False
+) -> Union[torch.Tensor, np.ndarray]:
     """
     Render line primitives using the specified rendering method.
 
@@ -359,7 +371,12 @@ def render_lines_with_type(lines_batch: torch.Tensor, rendering_type: str = "har
         return render_lines_pt(lines_batch, uint=uint)
 
 
-def render_primitives_with_type(primitives_batch: List[Dict[str, Any]], rendering_type: str = "bezier_splatting", supersampling: int = 4, uint: bool = False) -> Union[torch.Tensor, np.ndarray]:
+def render_primitives_with_type(
+    primitives_batch: List[Dict[str, Any]],
+    rendering_type: str = "bezier_splatting",
+    supersampling: int = 4,
+    uint: bool = False,
+) -> Union[torch.Tensor, np.ndarray]:
     """
     Render multiple primitive types using the specified rendering type.
 
@@ -515,7 +532,7 @@ def render_lines_differentiable_fast(lines: torch.Tensor, canvas_size: Tuple[int
     # Create coordinate grids once
     y_coords = torch.arange(h, dtype=torch.float32, device=device)
     x_coords = torch.arange(w, dtype=torch.float32, device=device)
-    grid_y, grid_x = torch.meshgrid(y_coords, x_coords, indexing='ij')
+    grid_y, grid_x = torch.meshgrid(y_coords, x_coords, indexing="ij")
 
     # Initialize canvas
     canvas = torch.zeros((h, w), dtype=torch.float32, device=device)
@@ -566,7 +583,7 @@ def render_lines_differentiable_fast(lines: torch.Tensor, canvas_size: Tuple[int
         closest_x = x1 + proj_line_clamped * line_dirs[:, 0]
         closest_y = y1 + proj_line_clamped * line_dirs[:, 1]
 
-        distances = torch.sqrt((grid_x_exp - closest_x)**2 + (grid_y_exp - closest_y)**2)
+        distances = torch.sqrt((grid_x_exp - closest_x) ** 2 + (grid_y_exp - closest_y) ** 2)
 
         # Anti-aliasing with smooth falloff: (h, w, batch_size)
         half_widths = widths / 2
@@ -601,7 +618,9 @@ def render_lines_skeleton(lines_batch: torch.Tensor) -> np.ndarray:
     )
 
 
-def line_to_point_energy_canonical(line_length: torch.Tensor, line_halfwidth: torch.Tensor, point_x: torch.Tensor, point_y: torch.Tensor, R: float) -> torch.Tensor:
+def line_to_point_energy_canonical(
+    line_length: torch.Tensor, line_halfwidth: torch.Tensor, point_x: torch.Tensor, point_y: torch.Tensor, R: float
+) -> torch.Tensor:
     r"""Gives the total energy of interaction of a line and a point
      for a point-to-point interaction energy given by `-exp(-r**2/R**2)`.
     Coordinates of the point `point_x` and `point_y` correspond to the coordiante system
@@ -614,7 +633,14 @@ def line_to_point_energy_canonical(line_length: torch.Tensor, line_halfwidth: to
     )
 
 
-def line_to_point_energy(lines_batch: torch.Tensor, point_charges: torch.Tensor, division_epsilon: float = 1e-12, R_close: float = 1, R_far: float = 32, far_weight: float = 1 / 50) -> torch.Tensor:
+def line_to_point_energy(
+    lines_batch: torch.Tensor,
+    point_charges: torch.Tensor,
+    division_epsilon: float = 1e-12,
+    R_close: float = 1,
+    R_far: float = 32,
+    far_weight: float = 1 / 50,
+) -> torch.Tensor:
     r"""For each line in `lines_batch` gives the total energy of interaction of this line with `point_charges`.
 
     Parameters
@@ -633,7 +659,9 @@ def line_to_point_energy(lines_batch: torch.Tensor, point_charges: torch.Tensor,
     # Validate shapes
     expected_rasters_n = raster_coordinates.shape[1]
     if rasters_n != expected_rasters_n:
-        raise ValueError(f"Shape mismatch in line_to_point_energy: point_charges last dim {rasters_n}, expected {expected_rasters_n} from raster_coordinates")
+        raise ValueError(
+            f"Shape mismatch in line_to_point_energy: point_charges last dim {rasters_n}, expected {expected_rasters_n} from raster_coordinates"
+        )
 
     # Get parameters of the lines
     x1 = lines_batch[..., 0]
@@ -682,7 +710,14 @@ def line_to_point_energy(lines_batch: torch.Tensor, point_charges: torch.Tensor,
     return energies
 
 
-def line_to_vector_energy(lines_batch: torch.Tensor, vector_field: torch.Tensor, division_epsilon: float = 1e-12, R_close: float = 1, collinearity_beta: Optional[float] = None, collinearity_field_weight: float = 2) -> torch.Tensor:
+def line_to_vector_energy(
+    lines_batch: torch.Tensor,
+    vector_field: torch.Tensor,
+    division_epsilon: float = 1e-12,
+    R_close: float = 1,
+    collinearity_beta: Optional[float] = None,
+    collinearity_field_weight: float = 2,
+) -> torch.Tensor:
     r"""For each line in `lines_batch` gives the total energy of interaction of this line with `vector_field`.
 
     Parameters
@@ -703,7 +738,9 @@ def line_to_vector_energy(lines_batch: torch.Tensor, vector_field: torch.Tensor,
     # Validate shapes
     expected_rasters_n = raster_coordinates.shape[1]
     if rasters_n != expected_rasters_n:
-        raise ValueError(f"Shape mismatch in line_to_vector_energy: vector_field last dim {rasters_n}, expected {expected_rasters_n} from raster_coordinates")
+        raise ValueError(
+            f"Shape mismatch in line_to_vector_energy: vector_field last dim {rasters_n}, expected {expected_rasters_n} from raster_coordinates"
+        )
 
     # Get parameters of the lines
     x1 = lines_batch[..., 0]
@@ -761,7 +798,17 @@ def line_to_vector_energy(lines_batch: torch.Tensor, vector_field: torch.Tensor,
 class MeanFieldEnergyComputer:
     """Computes mean field energy for line refinement using excess charge fields."""
 
-    def __init__(self, empty_charge=0, close_range_weight=2 * (1 / 0.5), elementary_halfwidth=1 / 2, visibility_padding=2, division_epsilon=1e-12, r_close=1, r_far=32, far_weight=1/50):
+    def __init__(
+        self,
+        empty_charge=0,
+        close_range_weight=2 * (1 / 0.5),
+        elementary_halfwidth=1 / 2,
+        visibility_padding=2,
+        division_epsilon=1e-12,
+        r_close=1,
+        r_far=32,
+        far_weight=1 / 50,
+    ):
         self.empty_charge = empty_charge
         self.close_range_weight = close_range_weight
         self.elementary_halfwidth = elementary_halfwidth
@@ -821,7 +868,9 @@ class MeanFieldEnergyComputer:
         lx = x2 - x1
         ly = y2 - y1
         length = torch.sqrt(lx**2 + ly**2)
-        nonzero_length = torch.max(length, torch.full([1], self.division_epsilon, dtype=length.dtype, device=length.device))
+        nonzero_length = torch.max(
+            length, torch.full([1], self.division_epsilon, dtype=length.dtype, device=length.device)
+        )
         lx = lx / nonzero_length
         ly = ly / nonzero_length
         del nonzero_length
@@ -832,10 +881,23 @@ class MeanFieldEnergyComputer:
         # Validate excess_raster shape
         expected_rasters_n = raster_coordinates.shape[1]
         if excess_raster.shape[-1] != expected_rasters_n:
-            raise ValueError(f"Shape mismatch in MeanFieldEnergyComputer.compute: excess_raster last dim {excess_raster.shape[-1]}, expected {expected_rasters_n} from raster_coordinates")
+            raise ValueError(
+                f"Shape mismatch in MeanFieldEnergyComputer.compute: excess_raster last dim {excess_raster.shape[-1]}, expected {expected_rasters_n} from raster_coordinates"
+            )
 
         # 9. For each line calculate the energy of its interaction with the excess raster field
-        mean_field_energy = line_to_point_energy(lines_batch, excess_raster, division_epsilon=self.division_epsilon, R_close=self.r_close, R_far=self.r_far, far_weight=self.far_weight).sum(-1).mean()
+        mean_field_energy = (
+            line_to_point_energy(
+                lines_batch,
+                excess_raster,
+                division_epsilon=self.division_epsilon,
+                R_close=self.r_close,
+                R_far=self.r_far,
+                far_weight=self.far_weight,
+            )
+            .sum(-1)
+            .mean()
+        )
         del excess_raster
         return mean_field_energy
 
@@ -875,7 +937,9 @@ class MeanFieldEnergyComputer:
         del x1, x2, y1, y2
         # Debug: log shapes to diagnose broadcasting mismatches
         try:
-            print(f"[DEBUG] shapes before broadcast: cx={tuple(cx.unsqueeze(-1).shape)}, cy={tuple(cy.unsqueeze(-1).shape)}, lx={tuple(lx.unsqueeze(-1).shape)}, ly={tuple(ly.unsqueeze(-1).shape)}, excess_raster={tuple(excess_raster.shape)}, rasters_batch={tuple(rasters_batch.shape)}, raster_coordinates0={tuple(raster_coordinates[0].shape)}, raster_coordinates1={tuple(raster_coordinates[1].shape)}")
+            print(
+                f"[DEBUG] shapes before broadcast: cx={tuple(cx.unsqueeze(-1).shape)}, cy={tuple(cy.unsqueeze(-1).shape)}, lx={tuple(lx.unsqueeze(-1).shape)}, ly={tuple(ly.unsqueeze(-1).shape)}, excess_raster={tuple(excess_raster.shape)}, rasters_batch={tuple(rasters_batch.shape)}, raster_coordinates0={tuple(raster_coordinates[0].shape)}, raster_coordinates1={tuple(raster_coordinates[1].shape)}"
+            )
         except Exception:
             pass
 
@@ -971,7 +1035,7 @@ def mean_field_energy_lines(
     division_epsilon: float = 1e-12,
     r_close: float = 1,
     r_far: float = 32,
-    far_weight: float = 1/50,
+    far_weight: float = 1 / 50,
 ) -> torch.Tensor:
     """
     Compute mean field energy for lines batch using MeanFieldEnergyComputer.
@@ -1014,7 +1078,14 @@ def mean_field_energy_lines(
     return computer.compute(lines_batch, rasters_batch)
 
 
-def mean_vector_field_energy_lines(lines_batch, supersampling_strategy=RegularSupersampling(4), division_epsilon=1e-12, r_close=1, collinearity_beta=None, collinearity_field_weight=2):
+def mean_vector_field_energy_lines(
+    lines_batch,
+    supersampling_strategy=RegularSupersampling(4),
+    division_epsilon=1e-12,
+    r_close=1,
+    collinearity_beta=None,
+    collinearity_field_weight=2,
+):
     r"""...
     Algorithm is (for each batch):
     1. Render each line on binary supersample grid and subsample
@@ -1057,7 +1128,18 @@ def mean_vector_field_energy_lines(lines_batch, supersampling_strategy=RegularSu
         del patch_vector_fields, individual_vector_fields
 
     # 5. For each line calculate the energy of its interaction with complementary vector charge field
-    mean_field_energy = line_to_vector_energy(lines_batch, complimentary_vector_fields, division_epsilon=division_epsilon, R_close=r_close, collinearity_beta=collinearity_beta, collinearity_field_weight=collinearity_field_weight).sum(-1).mean()
+    mean_field_energy = (
+        line_to_vector_energy(
+            lines_batch,
+            complimentary_vector_fields,
+            division_epsilon=division_epsilon,
+            R_close=r_close,
+            collinearity_beta=collinearity_beta,
+            collinearity_field_weight=collinearity_field_weight,
+        )
+        .sum(-1)
+        .mean()
+    )
     del complimentary_vector_fields
     return mean_field_energy
 
@@ -1071,7 +1153,7 @@ def size_energy(
     division_epsilon: float = 1e-12,
     r_close: float = 1,
     r_far: float = 32,
-    far_weight: float = 1/50
+    far_weight: float = 1 / 50,
 ) -> torch.Tensor:
     r"""...
     Algorithm is (for each batch):
@@ -1229,7 +1311,18 @@ def size_energy(
         ### ax_debug.imshow(excess_raster[0, 0].detach().cpu().reshape(padded_h, padded_w))
 
     # 8. For each line calculate the energy of its interaction with the excess raster field
-    mean_field_energy = line_to_point_energy(lines_batch, excess_raster, division_epsilon=division_epsilon, R_close=r_close, R_far=r_far, far_weight=far_weight).sum(-1).mean()
+    mean_field_energy = (
+        line_to_point_energy(
+            lines_batch,
+            excess_raster,
+            division_epsilon=division_epsilon,
+            R_close=r_close,
+            R_far=r_far,
+            far_weight=far_weight,
+        )
+        .sum(-1)
+        .mean()
+    )
     del excess_raster
     return mean_field_energy
 
@@ -1293,16 +1386,12 @@ def reinit_excess_lines(
 
         # Corresponding raster positions of maximum excess per selected patch
         max_excess_id_selected = max_excess_id[reinit_patch_indices]
-        
+
         # 5. In every such patch put the line with the minimal width from step 3
         #    into the position maximum excess raster from step 1
         #    and reinitialize the length and width of this line
-        cx.data[reinit_patch_indices, lines_to_reinit_selected] = raster_coordinates_device[
-            0, max_excess_id_selected
-        ]
-        cy.data[reinit_patch_indices, lines_to_reinit_selected] = raster_coordinates_device[
-            1, max_excess_id_selected
-        ]
+        cx.data[reinit_patch_indices, lines_to_reinit_selected] = raster_coordinates_device[0, max_excess_id_selected]
+        cy.data[reinit_patch_indices, lines_to_reinit_selected] = raster_coordinates_device[1, max_excess_id_selected]
         length.data[reinit_patch_indices, lines_to_reinit_selected] = initial_length
         width.data[reinit_patch_indices, lines_to_reinit_selected] = initial_width
 

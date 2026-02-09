@@ -16,6 +16,4 @@ class SummaryWriter(OriginalSummaryWriter):
         """
         tag = tensorboardX.summary._clean_tag(tag)
         image = tensorboardX.summary.make_image(img_np)
-        self.file_writer.add_summary(
-            Summary(value=[Summary.Value(tag=tag, image=image)]), global_step
-        )
+        self.file_writer.add_summary(Summary(value=[Summary.Value(tag=tag, image=image)]), global_step)

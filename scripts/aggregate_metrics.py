@@ -6,6 +6,7 @@ and print basic statistics (mean/median/std) for key metrics.
 Usage:
   python scripts/aggregate_metrics.py --metrics_dir logs/outputs/batch_run/metrics --out_csv logs/metrics/summary.csv
 """
+
 import argparse
 import csv
 import json
@@ -30,19 +31,19 @@ def load_jsons(metrics_dir: Path):
             continue
         # pick common fields if present
         row = {
-            "image": data.get("image_name") or f.stem.replace("_summary",""),
+            "image": data.get("image_name") or f.stem.replace("_summary", ""),
             "iou": data.get("geometric", {}).get("iou"),
             "ssim": data.get("visual", {}).get("ssim"),
             "psnr": data.get("visual", {}).get("psnr"),
             "chamfer": data.get("geometric", {}).get("chamfer_distance"),
-            "num_primitives": data.get("structural", {}).get("primitive_count")
+            "num_primitives": data.get("structural", {}).get("primitive_count"),
         }
         rows.append(row)
     return rows
 
 
 def write_csv(rows, out_csv: Path):
-    keys = ["image","iou","ssim","psnr","chamfer","num_primitives"]
+    keys = ["image", "iou", "ssim", "psnr", "chamfer", "num_primitives"]
     with open(out_csv, "w", newline="", encoding="utf-8") as csvf:
         writer = csv.DictWriter(csvf, fieldnames=keys)
         writer.writeheader()
@@ -51,7 +52,7 @@ def write_csv(rows, out_csv: Path):
 
 
 def print_stats(rows):
-    metrics = ["iou","ssim","psnr","chamfer","num_primitives"]
+    metrics = ["iou", "ssim", "psnr", "chamfer", "num_primitives"]
     print("Aggregated stats:")
     for m in metrics:
         vals = [r[m] for r in rows if isinstance(r.get(m), (int, float))]
@@ -77,5 +78,5 @@ def main():
     print_stats(rows)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

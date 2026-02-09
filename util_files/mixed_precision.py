@@ -5,11 +5,12 @@ Provides automatic mixed-precision training support with gradient scaling
 to improve training speed and reduce memory usage.
 """
 
+from contextlib import contextmanager
+from typing import Any, Dict, Optional
+
 import torch
 import torch.nn as nn
 from torch.amp import GradScaler, autocast
-from typing import Optional, Dict, Any
-from contextlib import contextmanager
 
 
 class MixedPrecisionTrainer:
@@ -85,9 +86,7 @@ class MixedPrecisionTrainer:
             return self.scaler.scale(loss)
         return loss
 
-    def step_optimizer(
-        self, optimizer: torch.optim.Optimizer, loss: Optional[torch.Tensor] = None
-    ) -> bool:
+    def step_optimizer(self, optimizer: torch.optim.Optimizer, loss: Optional[torch.Tensor] = None) -> bool:
         """
         Perform optimizer step with gradient scaling.
 
@@ -197,9 +196,7 @@ class MixedPrecisionWrapper(nn.Module):
             return self.model(*args, **kwargs)
 
 
-def create_mixed_precision_trainer(
-    enabled: bool = True, init_scale: float = 2.0**16
-) -> MixedPrecisionTrainer:
+def create_mixed_precision_trainer(enabled: bool = True, init_scale: float = 2.0**16) -> MixedPrecisionTrainer:
     """
     Convenience function to create a mixed precision trainer.
 
@@ -271,10 +268,7 @@ def example_training_loop():
 
         if batch % 10 == 0:
             scale_info = mp_trainer.get_scale_info()
-            print(
-                f"Batch {batch}: Loss={loss.item():.4f}, "
-                f"Scale={scale_info.get('scale', 'N/A')}"
-            )
+            print(f"Batch {batch}: Loss={loss.item():.4f}, " f"Scale={scale_info.get('scale', 'N/A')}")
 
 
 if __name__ == "__main__":

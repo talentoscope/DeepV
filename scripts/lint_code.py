@@ -9,8 +9,8 @@ Usage:
     python scripts/lint_code.py
 """
 
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -54,9 +54,7 @@ def main():
     python_exe = activate_venv()
 
     # Upgrade pip and install dev requirements
-    if not run_command(
-        [python_exe, "-m", "pip", "install", "--upgrade", "pip"], "pip upgrade"
-    ):
+    if not run_command([python_exe, "-m", "pip", "install", "--upgrade", "pip"], "pip upgrade"):
         return 1
 
     if not run_command(
@@ -68,9 +66,7 @@ def main():
     # Run linters
     success = True
     success &= run_command([python_exe, "-m", "black", "--check", "."], "black (check)")
-    success &= run_command(
-        [python_exe, "-m", "isort", "--check-only", "."], "isort (check)"
-    )
+    success &= run_command([python_exe, "-m", "isort", "--check-only", "."], "isort (check)")
     success &= run_command([python_exe, "-m", "flake8", "."], "flake8")
 
     if success:

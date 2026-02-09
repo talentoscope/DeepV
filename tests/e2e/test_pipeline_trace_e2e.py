@@ -5,10 +5,12 @@ Runs a minimal pipeline with tracing enabled and asserts that all expected
 trace artifacts (provenance, metrics, primitives, iterations) are produced
 and well-formed.
 """
+
 import json
 import os
-import numpy as np
 from pathlib import Path
+
+import numpy as np
 import pytest
 
 
@@ -18,13 +20,7 @@ def test_trace_artifacts_exist(tmp_path):
 
     # Create a tracer in temp directory
     image_id = "test_synthetic_001"
-    tracer = Tracer(
-        enabled=True,
-        base_dir=str(tmp_path),
-        image_id=image_id,
-        seed=42,
-        device="cpu"
-    )
+    tracer = Tracer(enabled=True, base_dir=str(tmp_path), image_id=image_id, seed=42, device="cpu")
 
     # Simulate per-stage exports
     # 1. Save patch
@@ -68,7 +64,9 @@ def test_trace_artifacts_exist(tmp_path):
         assert det["device"] == "cpu"
 
     # Patches
-    assert (trace_dir / "patches" / "p0" / "patch.png").exists() or (trace_dir / "patches" / "p0" / "patch.npz").exists()
+    assert (trace_dir / "patches" / "p0" / "patch.png").exists() or (
+        trace_dir / "patches" / "p0" / "patch.npz"
+    ).exists()
     assert (trace_dir / "patches" / "p0" / "model_output.npz").exists()
 
     # Pre/post refinement

@@ -49,9 +49,7 @@ def profile_refinement_hard(profiler):
     test_primitives = {PT_LINE: np.concatenate((lines, line_widths), axis=1)}
 
     # Profile rendering (which is called during refinement)
-    result = profiler.profile_rendering(
-        lambda p: render(p, (64, 64), data_representation="vahe"), test_primitives
-    )
+    result = profiler.profile_rendering(lambda p: render(p, (64, 64), data_representation="vahe"), test_primitives)
 
     return result
 
@@ -73,9 +71,7 @@ def profile_rendering(profiler):
     test_primitives = {PT_LINE: line_data, PT_QBEZIER: curve_data}
 
     # Profile rendering
-    result = profiler.profile_rendering(
-        lambda p: render(p, (256, 256), data_representation="vahe"), test_primitives
-    )
+    result = profiler.profile_rendering(lambda p: render(p, (256, 256), data_representation="vahe"), test_primitives)
 
     return result
 

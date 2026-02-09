@@ -15,6 +15,7 @@ from typing import Any, Dict, Optional, Union
 
 try:
     from omegaconf import OmegaConf
+
     logging_config = OmegaConf.load(Path(__file__).parent.parent.parent / "config" / "logging" / "default.yaml")
 except:
     # Fallback config
@@ -26,6 +27,7 @@ except:
         json_format = False
         performance_timing = True
         context_fields = ["module", "operation", "batch_size"]
+
     logging_config = FallbackConfig()
 
 
@@ -36,7 +38,7 @@ class StructuredLogger(logging.Logger):
         super().__init__(name, level)
         self.context: Dict[str, Any] = {}
 
-    def with_context(self, **context) -> 'StructuredLogger':
+    def with_context(self, **context) -> "StructuredLogger":
         """Return a logger with additional context fields."""
         new_logger = StructuredLogger(self.name, self.level)
         new_logger.context = {**self.context, **context}
@@ -52,14 +54,19 @@ class StructuredLogger(logging.Logger):
             yield
         finally:
             duration = time.time() - start_time
-            self.log(log_level, f"Operation '{operation}' completed in {duration:.3f}s",
-                    extra={"operation": operation, "duration": duration, "timing": True})
+            self.log(
+                log_level,
+                f"Operation '{operation}' completed in {duration:.3f}s",
+                extra={"operation": operation, "duration": duration, "timing": True},
+            )
 
-    def log_performance(self, operation: str, metrics: Dict[str, Union[int, float]],
-                       log_level: int = logging.INFO):
+    def log_performance(self, operation: str, metrics: Dict[str, Union[int, float]], log_level: int = logging.INFO):
         """Log performance metrics."""
-        self.log(log_level, f"Performance metrics for '{operation}': {metrics}",
-                extra={"operation": operation, "metrics": metrics, "performance": True})
+        self.log(
+            log_level,
+            f"Performance metrics for '{operation}': {metrics}",
+            extra={"operation": operation, "metrics": metrics, "performance": True},
+        )
 
     def log_error(self, error: Exception, operation: str = None, **extra_context):
         """Log an exception with context."""
@@ -68,11 +75,9 @@ class StructuredLogger(logging.Logger):
             context["operation"] = operation
         context.update(extra_context)
 
-        self.error(f"Exception in {operation or 'unknown operation'}: {error}",
-                  extra=context, exc_info=True)
+        self.error(f"Exception in {operation or 'unknown operation'}: {error}", extra=context, exc_info=True)
 
-    def log_pipeline_step(self, step: str, status: str = "started",
-                         progress: Optional[float] = None, **extra):
+    def log_pipeline_step(self, step: str, status: str = "started", progress: Optional[float] = None, **extra):
         """Log pipeline step progress."""
         message = f"Pipeline step '{step}' {status}"
         if progress is not None:
@@ -101,10 +106,27 @@ class JSONFormatter(logging.Formatter):
         extra_fields = {}
         for key, value in record.__dict__.items():
             if key not in {
-                'name', 'msg', 'args', 'levelname', 'levelno', 'pathname', 'filename',
-                'module', 'exc_info', 'exc_text', 'stack_info', 'lineno', 'funcName',
-                'created', 'msecs', 'relativeCreated', 'thread', 'threadName',
-                'processName', 'process', 'message'
+                "name",
+                "msg",
+                "args",
+                "levelname",
+                "levelno",
+                "pathname",
+                "filename",
+                "module",
+                "exc_info",
+                "exc_text",
+                "stack_info",
+                "lineno",
+                "funcName",
+                "created",
+                "msecs",
+                "relativeCreated",
+                "thread",
+                "threadName",
+                "processName",
+                "process",
+                "message",
             }:
                 extra_fields[key] = value
 
@@ -140,7 +162,7 @@ class StructuredFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         # Add context fields to the record
-        if hasattr(record, 'context') and record.context and self.include_context:
+        if hasattr(record, "context") and record.context and self.include_context:
             context_str = " ".join(f"[{k}={v}]" for k, v in record.context.items())
             record.msg = f"{record.msg} {context_str}"
 
@@ -152,7 +174,7 @@ def create_structured_logger(
     level: str = "INFO",
     log_file: Optional[str] = None,
     json_format: bool = False,
-    include_context: bool = True
+    include_context: bool = True,
 ) -> StructuredLogger:
     """
     Create a structured logger with configurable output.
@@ -204,10 +226,10 @@ def get_pipeline_logger(module: str = "deepv") -> StructuredLogger:
     """Get a logger configured for the DeepV pipeline."""
     return create_structured_logger(
         name=f"deepv.{module}",
-        level=logging_config.level if hasattr(logging_config, 'level') else "INFO",
-        log_file=logging_config.file_path if hasattr(logging_config, 'file_path') else None,
-        json_format=getattr(logging_config, 'json_format', False),
-        include_context=getattr(logging_config, 'include_context', True)
+        level=logging_config.level if hasattr(logging_config, "level") else "INFO",
+        log_file=logging_config.file_path if hasattr(logging_config, "file_path") else None,
+        json_format=getattr(logging_config, "json_format", False),
+        include_context=getattr(logging_config, "include_context", True),
     )
 
 
@@ -216,13 +238,16 @@ def log_pipeline_start(logger: StructuredLogger, pipeline_name: str, **context):
     """Log the start of a pipeline operation."""
     logger.with_context(**context).log_pipeline_step(pipeline_name, "started")
 
+
 def log_pipeline_progress(logger: StructuredLogger, pipeline_name: str, progress: float, **context):
     """Log pipeline progress."""
     logger.with_context(**context).log_pipeline_step(pipeline_name, "in_progress", progress)
 
+
 def log_pipeline_complete(logger: StructuredLogger, pipeline_name: str, **context):
     """Log pipeline completion."""
     logger.with_context(**context).log_pipeline_step(pipeline_name, "completed")
+
 
 def log_performance_metrics(logger: StructuredLogger, operation: str, **metrics):
     """Log performance metrics."""

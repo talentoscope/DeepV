@@ -5,12 +5,13 @@ Consolidates separate line/curve refinement and merging pipelines into unified i
 """
 
 import sys
-from typing import Dict, Any, Union, Tuple
+from typing import Any, Dict, Tuple, Union
+
 import numpy as np
 import torch
 
 # Add project root to path
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
 
 
 class UnifiedPipeline:
@@ -27,8 +28,9 @@ class UnifiedPipeline:
         if self.primitive_type not in ["line", "curve"]:
             raise ValueError(f"Unsupported primitive type: {primitive_type}")
 
-    def run_refinement(self, patches_rgb: np.ndarray, patches_vector: torch.Tensor,
-                       device: torch.device, options: Any) -> torch.Tensor:
+    def run_refinement(
+        self, patches_rgb: np.ndarray, patches_vector: torch.Tensor, device: torch.device, options: Any
+    ) -> torch.Tensor:
         """
         Run refinement for the specified primitive type.
 
@@ -42,7 +44,10 @@ class UnifiedPipeline:
             Refined vector primitives
         """
         if self.primitive_type == "line":
-            from refinement.our_refinement.refinement_for_lines import render_optimization_hard
+            from refinement.our_refinement.refinement_for_lines import (
+                render_optimization_hard,
+            )
+
             return render_optimization_hard(patches_rgb, patches_vector, device, options, options.sample_name)
         elif self.primitive_type == "curve":
             # Curve refinement has a different interface - would need adaptation
@@ -50,9 +55,14 @@ class UnifiedPipeline:
         else:
             raise ValueError(f"Unknown primitive type: {self.primitive_type}")
 
-    def run_merging(self, vector_data: Union[torch.Tensor, Dict],
-                    patches_offsets: np.ndarray, input_rgb: np.ndarray,
-                    cleaned_image: torch.Tensor, options: Any) -> Tuple[Any, Any]:
+    def run_merging(
+        self,
+        vector_data: Union[torch.Tensor, Dict],
+        patches_offsets: np.ndarray,
+        input_rgb: np.ndarray,
+        cleaned_image: torch.Tensor,
+        options: Any,
+    ) -> Tuple[Any, Any]:
         """
         Run merging for the specified primitive type.
 
@@ -68,6 +78,7 @@ class UnifiedPipeline:
         """
         if self.primitive_type == "line":
             from merging.merging_for_lines import postprocess
+
             return postprocess(vector_data, patches_offsets, input_rgb, cleaned_image, 0, options)
         elif self.primitive_type == "curve":
             # Curve merging has different interface - would need adaptation
@@ -75,8 +86,9 @@ class UnifiedPipeline:
         else:
             raise ValueError(f"Unknown primitive type: {self.primitive_type}")
 
-    def run_full_pipeline(self, image_tensor: torch.Tensor, model: torch.nn.Module,
-                          device: torch.device, options: Any) -> Any:
+    def run_full_pipeline(
+        self, image_tensor: torch.Tensor, model: torch.nn.Module, device: torch.device, options: Any
+    ) -> Any:
         """
         Run the complete pipeline: preprocessing -> vectorization -> refinement -> merging.
 

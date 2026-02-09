@@ -5,12 +5,14 @@ Integration test for early stopping functionality.
 Tests that early stopping works correctly in training scenarios.
 """
 
-import numpy as np
-import sys
 import os
+import sys
+
+import numpy as np
 
 # Add the project root to the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 def test_early_stopping_basic():
     """Test basic early stopping functionality."""
@@ -30,7 +32,9 @@ def test_early_stopping_basic():
             break
 
     assert not should_stop, "Should not stop with decreasing loss"
-    assert abs(early_stopping.get_best_score() - 0.74) < 1e-6, f"Best score should be 0.74, got {early_stopping.get_best_score()}"
+    assert (
+        abs(early_stopping.get_best_score() - 0.74) < 1e-6
+    ), f"Best score should be 0.74, got {early_stopping.get_best_score()}"
 
     # Reset for next test
     early_stopping.reset()
@@ -44,9 +48,12 @@ def test_early_stopping_basic():
             break
 
     assert should_stop, "Should stop after patience exceeded"
-    assert early_stopping2.get_stopped_epoch() == 3, f"Should stop at epoch 3, got {early_stopping2.get_stopped_epoch()}"
+    assert (
+        early_stopping2.get_stopped_epoch() == 3
+    ), f"Should stop at epoch 3, got {early_stopping2.get_stopped_epoch()}"
 
     print("✓ Basic EarlyStopping tests passed")
+
 
 def test_early_stopping_maximization():
     """Test early stopping with maximization objective."""
@@ -55,7 +62,7 @@ def test_early_stopping_maximization():
     print("Testing EarlyStopping with maximization...")
 
     # Test maximization (accuracy, IoU)
-    early_stopping = EarlyStopping(patience=2, mode='max', min_delta=0.01, verbose=False)
+    early_stopping = EarlyStopping(patience=2, mode="max", min_delta=0.01, verbose=False)
 
     # Simulate increasing accuracy
     accuracies = [0.5, 0.6, 0.7, 0.75, 0.78]
@@ -70,10 +77,12 @@ def test_early_stopping_maximization():
 
     print("✓ Maximization EarlyStopping tests passed")
 
+
 def test_early_stopping_restore_weights():
     """Test weight restoration functionality."""
     import torch
     import torch.nn as nn
+
     from util_files.early_stopping import EarlyStopping
 
     print("Testing weight restoration...")
@@ -95,7 +104,7 @@ def test_early_stopping_restore_weights():
     # Save the best weights from early stopping
     best_weights = early_stopping.best_weights
     assert best_weights is not None, "Best weights should be saved"
-    assert 'weight' in best_weights, "Best weights should contain weight parameter"
+    assert "weight" in best_weights, "Best weights should contain weight parameter"
 
     # Modify weights to simulate continued training
     model.weight.data += 1.0
@@ -104,9 +113,10 @@ def test_early_stopping_restore_weights():
     early_stopping.restore_weights(model)
 
     # Check that weights were restored
-    assert torch.allclose(model.weight.data, best_weights['weight']), "Weights should be restored to best"
+    assert torch.allclose(model.weight.data, best_weights["weight"]), "Weights should be restored to best"
 
     print("✓ Weight restoration tests passed")
+
 
 def test_early_stopping_state_dict():
     """Test state dict save/load functionality."""
@@ -114,7 +124,7 @@ def test_early_stopping_state_dict():
 
     print("Testing state dict functionality...")
 
-    early_stopping = EarlyStopping(patience=5, min_delta=0.001, mode='min', verbose=False)
+    early_stopping = EarlyStopping(patience=5, min_delta=0.001, mode="min", verbose=False)
 
     # Simulate some training
     losses = [1.0, 0.9, 0.8]
@@ -131,30 +141,35 @@ def test_early_stopping_state_dict():
     # Check that state was loaded correctly
     assert new_early_stopping.patience == 5, "Patience should be loaded"
     assert new_early_stopping.min_delta == 0.001, "Min delta should be loaded"
-    assert new_early_stopping.mode == 'min', "Mode should be loaded"
+    assert new_early_stopping.mode == "min", "Mode should be loaded"
     assert new_early_stopping.get_best_score() == 0.8, "Best score should be loaded"
 
     print("✓ State dict tests passed")
 
+
 def test_convenience_functions():
     """Test convenience functions for different training types."""
-    from util_files.early_stopping import create_early_stopping_for_vectorization, create_early_stopping_for_cleaning
+    from util_files.early_stopping import (
+        create_early_stopping_for_cleaning,
+        create_early_stopping_for_vectorization,
+    )
 
     print("Testing convenience functions...")
 
     # Test vectorization early stopping
     vec_es = create_early_stopping_for_vectorization(patience=20)
     assert vec_es.patience == 20, "Vectorization patience should be set"
-    assert vec_es.mode == 'min', "Vectorization should minimize loss"
+    assert vec_es.mode == "min", "Vectorization should minimize loss"
     assert vec_es.min_delta == 1e-4, "Vectorization min delta should be correct"
 
     # Test cleaning early stopping
     clean_es = create_early_stopping_for_cleaning(patience=15)
     assert clean_es.patience == 15, "Cleaning patience should be set"
-    assert clean_es.mode == 'min', "Cleaning should minimize loss"
+    assert clean_es.mode == "min", "Cleaning should minimize loss"
     assert clean_es.min_delta == 1e-3, "Cleaning min delta should be correct"
 
     print("✓ Convenience function tests passed")
+
 
 def test_training_script_integration():
     """Test that training scripts can import early stopping functionality."""
@@ -163,6 +178,7 @@ def test_training_script_integration():
     try:
         # Test vectorization script import
         from vectorization.scripts.train_vectorization import parse_args
+
         print("Vectorization script imports successfully")
     except Exception as e:
         if "Descriptors cannot be created directly" in str(e):
@@ -174,6 +190,7 @@ def test_training_script_integration():
     try:
         # Test cleaning script import
         from cleaning.scripts.main_cleaning import parse_args
+
         print("Cleaning script imports successfully")
     except Exception as e:
         print(f"✗ Cleaning script import failed: {e}")
@@ -181,6 +198,7 @@ def test_training_script_integration():
 
     print("✓ Training script integration tests passed")
     return True
+
 
 def main():
     """Run all early stopping integration tests."""
@@ -200,8 +218,10 @@ def main():
     except Exception as e:
         print(f"\n❌ Early stopping integration test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

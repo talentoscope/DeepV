@@ -7,6 +7,7 @@ import os
 import random
 from pathlib import Path
 
+
 def regenerate_splits():
     """Regenerate train/val/test splits based on actual FloorPlanCAD data."""
 

@@ -8,10 +8,10 @@ from itertools import islice
 
 import numpy as np
 import torch
-import torch.nn
-import torch.optim
 import torch.distributed as dist
 import torch.multiprocessing as mp
+import torch.nn
+import torch.optim
 
 __dir__ = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
 sys.path[1:1] = [__dir__]

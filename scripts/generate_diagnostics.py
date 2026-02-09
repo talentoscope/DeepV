@@ -2,9 +2,11 @@
 """
 Generate diagnostics report from aggregated metrics.
 """
-import json
+
 import csv
+import json
 from pathlib import Path
+
 
 def main():
     csv_path = Path("logs/metrics/summary.csv")
@@ -44,5 +46,6 @@ def main():
         f.write(report)
     print("Wrote diagnostics.md")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

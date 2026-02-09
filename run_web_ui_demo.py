@@ -10,15 +10,16 @@ command-line interface to test the core functionality.
 import argparse
 import os
 import sys
-import torch
+
 import numpy as np
+import torch
 from PIL import Image
 
 # Add the project root to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
-def demo_vectorize_image(image_path, output_path=None, method='analytical'):
+def demo_vectorize_image(image_path, output_path=None, method="analytical"):
     """
     Demo function that mimics the web UI functionality.
     """
@@ -26,7 +27,7 @@ def demo_vectorize_image(image_path, output_path=None, method='analytical'):
 
     # Load image
     try:
-        image = Image.open(image_path).convert('L')  # Convert to grayscale
+        image = Image.open(image_path).convert("L")  # Convert to grayscale
         image_array = np.array(image) / 255.0  # Normalize to [0, 1]
         print(f"Image loaded: shape {image_array.shape}")
     except Exception as e:
@@ -42,7 +43,7 @@ def demo_vectorize_image(image_path, output_path=None, method='analytical'):
 
     # This would normally call the actual vectorization pipeline
     # For demo, we'll create some dummy primitives
-    if method == 'analytical':
+    if method == "analytical":
         # Simulate analytical rendering
         rendered = torch.rand(1, 70, 70) * 0.5 + 0.25
     else:
@@ -55,7 +56,7 @@ def demo_vectorize_image(image_path, output_path=None, method='analytical'):
     svg_content = create_svg_from_lines(rendered.squeeze().numpy())
 
     if output_path:
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write(svg_content)
         print(f"SVG saved to: {output_path}")
 
@@ -77,20 +78,21 @@ def create_svg_from_lines(rendered_array):
                 # Draw a small circle at this position
                 svg_lines.append(f'<circle cx="{x*2}" cy="{y*2}" r="1" fill="black"/>')
 
-    svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+    svg_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <svg width="{width*2}" height="{height*2}" xmlns="http://www.w3.org/2000/svg">
     {''.join(svg_lines)}
-</svg>'''
+</svg>"""
 
     return svg_content
 
 
 def main():
-    parser = argparse.ArgumentParser(description='DeepV Web UI Demo')
-    parser.add_argument('--image', '-i', required=True, help='Path to input image')
-    parser.add_argument('--output', '-o', help='Path to save SVG output')
-    parser.add_argument('--method', '-m', choices=['analytical', 'bezier'],
-                        default='analytical', help='Vectorization method')
+    parser = argparse.ArgumentParser(description="DeepV Web UI Demo")
+    parser.add_argument("--image", "-i", required=True, help="Path to input image")
+    parser.add_argument("--output", "-o", help="Path to save SVG output")
+    parser.add_argument(
+        "--method", "-m", choices=["analytical", "bezier"], default="analytical", help="Vectorization method"
+    )
 
     args = parser.parse_args()
 
@@ -119,5 +121,5 @@ def main():
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

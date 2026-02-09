@@ -9,8 +9,8 @@ Usage:
     python scripts/run_tests_local.py
 """
 
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -65,22 +65,20 @@ def main():
     print("Using virtual environment Python:", python_exe)
 
     # Upgrade pip and install dev requirements
-    if not run_command([python_exe, "-m", "pip", "install", "--upgrade", "pip"],
-                       "pip upgrade", python_exe):
+    if not run_command([python_exe, "-m", "pip", "install", "--upgrade", "pip"], "pip upgrade", python_exe):
         return 1
 
-    if not run_command([python_exe, "-m", "pip", "install", "-r", "requirements-dev.txt"],
-                       "dev requirements installation", python_exe):
+    if not run_command(
+        [python_exe, "-m", "pip", "install", "-r", "requirements-dev.txt"], "dev requirements installation", python_exe
+    ):
         return 1
 
     # Run environment validator
-    if not run_command([python_exe, "scripts/validate_env.py"],
-                       "environment validator", python_exe):
+    if not run_command([python_exe, "scripts/validate_env.py"], "environment validator", python_exe):
         return 1
 
     # Run pytest
-    if not run_command([python_exe, "-m", "pytest", "-q"],
-                       "pytest", python_exe):
+    if not run_command([python_exe, "-m", "pytest", "-q"], "pytest", python_exe):
         return 1
 
     print("✅ All tests completed successfully!")

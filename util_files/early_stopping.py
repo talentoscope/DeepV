@@ -5,7 +5,7 @@ Provides automatic training termination based on validation metrics to prevent
 overfitting and optimize training time.
 """
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 
 class EarlyStopping:
@@ -87,10 +87,7 @@ class EarlyStopping:
             if self.restore_best_weights and model is not None:
                 self.best_weights = self._get_model_weights(model)
             if self.verbose:
-                print(
-                    f"EarlyStopping: Initial {self.monitor} = "
-                    f"{current_score:.6f}{epoch_str}"
-                )
+                print(f"EarlyStopping: Initial {self.monitor} = " f"{current_score:.6f}{epoch_str}")
             return False
 
         if self.is_better(current_score, self.best_score):
@@ -104,10 +101,7 @@ class EarlyStopping:
 
             if self.verbose:
                 improvement = "decreased" if self.mode == "min" else "increased"
-                print(
-                    f"EarlyStopping: {self.monitor} {improvement} to "
-                    f"{current_score:.6f}{epoch_str}"
-                )
+                print(f"EarlyStopping: {self.monitor} {improvement} to " f"{current_score:.6f}{epoch_str}")
         else:
             # No improvement
             self.wait_count += 1
@@ -141,10 +135,7 @@ class EarlyStopping:
         if self.restore_best_weights and self.best_weights is not None:
             self._set_model_weights(model, self.best_weights)
             if self.verbose:
-                print(
-                    f"EarlyStopping: Restored model weights from epoch "
-                    f"{self.best_epoch}"
-                )
+                print(f"EarlyStopping: Restored model weights from epoch " f"{self.best_epoch}")
         elif self.verbose:
             print("EarlyStopping: No weights to restore")
 
@@ -189,9 +180,7 @@ class EarlyStopping:
         self.patience = state_dict.get("patience", self.patience)
         self.min_delta = state_dict.get("min_delta", self.min_delta)
         self.mode = state_dict.get("mode", self.mode)
-        self.restore_best_weights = state_dict.get(
-            "restore_best_weights", self.restore_best_weights
-        )
+        self.restore_best_weights = state_dict.get("restore_best_weights", self.restore_best_weights)
         self.best_score = state_dict.get("best_score")
         self.wait_count = state_dict.get("wait_count", 0)
         self.stopped_epoch = state_dict.get("stopped_epoch", 0)
@@ -214,9 +203,7 @@ class EarlyStopping:
         elif hasattr(model, "set_weights") and "weights" in weights:
             model.set_weights(weights["weights"])
         else:
-            raise ValueError(
-                "Model must have load_state_dict() or set_weights() method"
-            )
+            raise ValueError("Model must have load_state_dict() or set_weights() method")
 
 
 class EarlyStoppingWithMetrics:
@@ -310,15 +297,10 @@ class EarlyStoppingWithMetrics:
             elif hasattr(model, "set_weights"):
                 model.set_weights(self.best_weights["weights"])
             if self.verbose:
-                print(
-                    f"EarlyStopping: Restored model weights from epoch "
-                    f"{self.best_epoch}"
-                )
+                print(f"EarlyStopping: Restored model weights from epoch " f"{self.best_epoch}")
 
 
-def create_early_stopping_for_vectorization(
-    patience: int = 15, min_delta: float = 1e-4
-) -> EarlyStopping:
+def create_early_stopping_for_vectorization(patience: int = 15, min_delta: float = 1e-4) -> EarlyStopping:
     """
     Create early stopping configured for vectorization training.
 
@@ -339,9 +321,7 @@ def create_early_stopping_for_vectorization(
     )
 
 
-def create_early_stopping_for_cleaning(
-    patience: int = 10, min_delta: float = 1e-3
-) -> EarlyStopping:
+def create_early_stopping_for_cleaning(patience: int = 10, min_delta: float = 1e-3) -> EarlyStopping:
     """
     Create early stopping configured for cleaning training.
 
@@ -405,7 +385,4 @@ if __name__ == "__main__":
             print(f"Training stopped at epoch {epoch}")
             break
 
-    print(
-        f"Best loss: {early_stopping.get_best_score()} at epoch "
-        f"{early_stopping.get_best_epoch()}"
-    )
+    print(f"Best loss: {early_stopping.get_best_score()} at epoch " f"{early_stopping.get_best_epoch()}")

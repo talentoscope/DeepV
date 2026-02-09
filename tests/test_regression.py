@@ -4,14 +4,15 @@ Regression testing framework for DeepV.
 Establishes baseline outputs and compares future changes against them to catch regressions.
 """
 
-import os
-import sys
-import json
 import hashlib
-import tempfile
+import json
+import os
 import shutil
+import sys
+import tempfile
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 import torch
 from PIL import Image
@@ -44,7 +45,7 @@ class RegressionTestFramework:
         Returns:
             Path to generated test image
         """
-        img = Image.new('L', size, color=255)  # White background
+        img = Image.new("L", size, color=255)  # White background
         draw = img.load()
 
         if pattern == "simple_lines":
@@ -91,13 +92,13 @@ class RegressionTestFramework:
             data = output.detach().cpu().numpy().tobytes()
         elif isinstance(output, (list, tuple)):
             # Convert list/tuple to string representation
-            data = str(output).encode('utf-8')
+            data = str(output).encode("utf-8")
         elif isinstance(output, dict):
             # Convert dict to sorted JSON string
-            data = json.dumps(output, sort_keys=True).encode('utf-8')
+            data = json.dumps(output, sort_keys=True).encode("utf-8")
         else:
             # Convert to string
-            data = str(output).encode('utf-8')
+            data = str(output).encode("utf-8")
 
         return hashlib.sha256(data).hexdigest()
 
@@ -117,7 +118,7 @@ class RegressionTestFramework:
             "output_hash": self.compute_output_hash(output),
             "output_type": type(output).__name__,
             "timestamp": "2026-02-04",  # Current date
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
 
         # Also save a copy of the actual output if it's serializable
@@ -125,9 +126,9 @@ class RegressionTestFramework:
             baseline_data["output"] = output
         elif isinstance(output, (np.ndarray, torch.Tensor)):
             # Save as list for JSON serialization
-            baseline_data["output"] = output.tolist() if hasattr(output, 'tolist') else str(output)
+            baseline_data["output"] = output.tolist() if hasattr(output, "tolist") else str(output)
 
-        with open(baseline_file, 'w') as f:
+        with open(baseline_file, "w") as f:
             json.dump(baseline_data, f, indent=2, default=str)
 
         print(f"Saved baseline for {test_name} to {baseline_file}")
@@ -146,11 +147,10 @@ class RegressionTestFramework:
         if not baseline_file.exists():
             raise FileNotFoundError(f"No baseline found for {test_name}")
 
-        with open(baseline_file, 'r') as f:
+        with open(baseline_file, "r") as f:
             return json.load(f)
 
-    def compare_with_baseline(self, test_name: str, output: Any,
-                            tolerance: float = 0.0) -> Tuple[bool, str]:
+    def compare_with_baseline(self, test_name: str, output: Any, tolerance: float = 0.0) -> Tuple[bool, str]:
         """
         Compare output with baseline.
 
@@ -185,8 +185,7 @@ class RegressionTestFramework:
         except Exception as e:
             return False, f"✗ {test_name}: Comparison failed: {e}"
 
-    def run_pipeline_test(self, test_name: str, image_path: str,
-                         primitive_type: str = "line") -> Any:
+    def run_pipeline_test(self, test_name: str, image_path: str, primitive_type: str = "line") -> Any:
         """
         Run a pipeline test and return the output.
 
@@ -213,26 +212,22 @@ class RegressionTestFramework:
                     "primitives": [
                         [10, 10, 100, 10, 2, 1],  # Sample line
                         [10, 10, 10, 100, 2, 1],  # Sample line
-                    ]
+                    ],
                 }
             elif "complex_shapes" in test_name:
                 mock_output = {
                     "test_name": test_name,
                     "primitive_type": primitive_type,
                     "primitives": [
-                        [50, 50, 150, 50, 2, 1],   # Horizontal line
-                        [50, 50, 50, 150, 2, 1],   # Vertical line
-                        [50, 150, 150, 150, 2, 1], # Bottom horizontal
-                        [150, 50, 150, 150, 2, 1], # Right vertical
+                        [50, 50, 150, 50, 2, 1],  # Horizontal line
+                        [50, 50, 50, 150, 2, 1],  # Vertical line
+                        [50, 150, 150, 150, 2, 1],  # Bottom horizontal
+                        [150, 50, 150, 150, 2, 1],  # Right vertical
                         [50, 50, 150, 150, 2, 1],  # Diagonal
-                    ]
+                    ],
                 }
             else:
-                mock_output = {
-                    "test_name": test_name,
-                    "primitive_type": primitive_type,
-                    "primitives": []
-                }
+                mock_output = {"test_name": test_name, "primitive_type": primitive_type, "primitives": []}
 
             return mock_output
 
@@ -265,11 +260,7 @@ def establish_baselines():
 
         if output:
             # Save baseline
-            metadata = {
-                "pattern": pattern,
-                "primitive_type": primitive_type,
-                "image_size": "256x256"
-            }
+            metadata = {"pattern": pattern, "primitive_type": primitive_type, "image_size": "256x256"}
             framework.save_baseline(test_name, output, metadata)
         else:
             print(f"Failed to generate output for {test_name}")
@@ -292,7 +283,7 @@ def run_regression_tests():
 
     for test_name, primitive_type in test_cases:
         # Generate fresh test image
-        pattern = test_name.split('_')[0]
+        pattern = test_name.split("_")[0]
         image_path = framework.generate_test_image(pattern)
 
         # Run current pipeline
@@ -316,10 +307,8 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="DeepV Regression Testing")
-    parser.add_argument("--establish-baselines", action="store_true",
-                       help="Establish baseline outputs")
-    parser.add_argument("--run-tests", action="store_true",
-                       help="Run regression tests")
+    parser.add_argument("--establish-baselines", action="store_true", help="Establish baseline outputs")
+    parser.add_argument("--run-tests", action="store_true", help="Run regression tests")
 
     args = parser.parse_args()
 

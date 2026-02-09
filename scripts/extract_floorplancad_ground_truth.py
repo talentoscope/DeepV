@@ -7,20 +7,22 @@ This script parses FloorPlanCAD SVG files and extracts geometric primitives
 create ground truth vectors in the same format as DeepV outputs.
 """
 
-import os
-import sys
 import argparse
-import numpy as np
+import os
+import re
+import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from typing import Any, Dict, List, Tuple
+
+import numpy as np
 import svgpathtools
-from typing import List, Tuple, Dict, Any
-import re
+
 
 def parse_svg_path_d(d_string: str) -> List[Tuple[str, List[float]]]:
     """Parse SVG path 'd' attribute into commands and coordinates."""
     # Split by command letters, keeping the letters
-    commands = re.findall(r'[MLHVCSQTAZ][^MLHVCSQTAZ]*', d_string.upper())
+    commands = re.findall(r"[MLHVCSQTAZ][^MLHVCSQTAZ]*", d_string.upper())
 
     parsed_commands = []
     for cmd in commands:
@@ -30,7 +32,7 @@ def parse_svg_path_d(d_string: str) -> List[Tuple[str, List[float]]]:
         if coords_str:
             # Split by whitespace and commas, convert to float
             coords = []
-            for part in re.split(r'[,\s]+', coords_str):
+            for part in re.split(r"[,\s]+", coords_str):
                 part = part.strip()
                 if part:
                     try:
@@ -43,13 +45,14 @@ def parse_svg_path_d(d_string: str) -> List[Tuple[str, List[float]]]:
 
     return parsed_commands
 
+
 def extract_line_segments_from_path(path_elem) -> List[np.ndarray]:
     """Extract line segments from an SVG path element."""
     lines = []
-    if 'd' not in path_elem.attrib:
+    if "d" not in path_elem.attrib:
         return lines
 
-    d_string = path_elem.attrib['d']
+    d_string = path_elem.attrib["d"]
     try:
         # Use svgpathtools to parse the path
         path = svgpathtools.parse_path(d_string)
@@ -63,9 +66,9 @@ def extract_line_segments_from_path(path_elem) -> List[np.ndarray]:
 
                 # Get stroke width, default to 0.1 if not specified
                 stroke_width = 0.1
-                if 'stroke-width' in path_elem.attrib:
+                if "stroke-width" in path_elem.attrib:
                     try:
-                        stroke_width = float(path_elem.attrib['stroke-width'])
+                        stroke_width = float(path_elem.attrib["stroke-width"])
                     except ValueError:
                         pass
 
@@ -87,6 +90,7 @@ def extract_line_segments_from_path(path_elem) -> List[np.ndarray]:
 
     return lines
 
+
 def extract_ground_truth_vectors(svg_file: str, relevant_layers: List[str] = None) -> np.ndarray:
     """
     Extract ground truth vectors from FloorPlanCAD SVG file.
@@ -101,24 +105,23 @@ def extract_ground_truth_vectors(svg_file: str, relevant_layers: List[str] = Non
     """
     if relevant_layers is None:
         # Default to structural layers
-        relevant_layers = ['A-WALL', 'DOOR_FIRE', 'WINDOW']
+        relevant_layers = ["A-WALL", "DOOR_FIRE", "WINDOW"]
 
     try:
         tree = ET.parse(svg_file)
         root = tree.getroot()
 
         # Define namespaces
-        ns = {
-            'inkscape': 'http://www.inkscape.org/namespaces/inkscape',
-            'svg': 'http://www.w3.org/2000/svg'
-        }
+        ns = {"inkscape": "http://www.inkscape.org/namespaces/inkscape", "svg": "http://www.w3.org/2000/svg"}
 
         # Debug: print all layer IDs
-        all_layers = root.findall(".//{http://www.w3.org/2000/svg}g[@{http://www.inkscape.org/namespaces/inkscape}groupmode='layer']")
+        all_layers = root.findall(
+            ".//{http://www.w3.org/2000/svg}g[@{http://www.inkscape.org/namespaces/inkscape}groupmode='layer']"
+        )
         print(f"Found {len(all_layers)} layers total:")
         for layer in all_layers:
-            layer_id = layer.get('{http://www.w3.org/2000/svg}id', 'no-id')
-            label = layer.get('{http://www.inkscape.org/namespaces/inkscape}label', 'no-label')
+            layer_id = layer.get("{http://www.w3.org/2000/svg}id", "no-id")
+            label = layer.get("{http://www.inkscape.org/namespaces/inkscape}label", "no-label")
             print(f"  Layer ID: '{layer_id}', Label: '{label}'")
 
         all_lines = []
@@ -126,7 +129,9 @@ def extract_ground_truth_vectors(svg_file: str, relevant_layers: List[str] = Non
         # Find all path elements in relevant layers
         for layer_label in relevant_layers:
             # Find layer groups by label (since id is empty)
-            layer_groups = root.findall(f".//{{http://www.w3.org/2000/svg}}g[@{{http://www.inkscape.org/namespaces/inkscape}}label='{layer_label}']")
+            layer_groups = root.findall(
+                f".//{{http://www.w3.org/2000/svg}}g[@{{http://www.inkscape.org/namespaces/inkscape}}label='{layer_label}']"
+            )
             print(f"Found {len(layer_groups)} groups with label '{layer_label}'")
             for layer_group in layer_groups:
                 # Find all path elements in this layer
@@ -153,8 +158,10 @@ def extract_ground_truth_vectors(svg_file: str, relevant_layers: List[str] = Non
         print(f"Error parsing SVG {svg_file}: {e}")
         return np.array([]).reshape(0, 5)
 
-def convert_svg_coords_to_pixel(vectors: np.ndarray, svg_viewbox: Tuple[float, float, float, float],
-                               target_size: Tuple[int, int] = (1000, 1000)) -> np.ndarray:
+
+def convert_svg_coords_to_pixel(
+    vectors: np.ndarray, svg_viewbox: Tuple[float, float, float, float], target_size: Tuple[int, int] = (1000, 1000)
+) -> np.ndarray:
     """
     Convert SVG coordinates to pixel coordinates.
 
@@ -188,14 +195,15 @@ def convert_svg_coords_to_pixel(vectors: np.ndarray, svg_viewbox: Tuple[float, f
 
     return pixel_vectors
 
+
 def get_svg_viewbox(svg_file: str) -> Tuple[float, float, float, float]:
     """Extract viewBox from SVG file."""
     try:
         tree = ET.parse(svg_file)
         root = tree.getroot()
 
-        if 'viewBox' in root.attrib:
-            viewbox_str = root.attrib['viewBox']
+        if "viewBox" in root.attrib:
+            viewbox_str = root.attrib["viewBox"]
             parts = viewbox_str.split()
             if len(parts) == 4:
                 return tuple(float(x) for x in parts)
@@ -207,14 +215,15 @@ def get_svg_viewbox(svg_file: str) -> Tuple[float, float, float, float]:
         print(f"Warning: Could not extract viewBox: {e}")
         return (0, 0, 100, 100)
 
+
 def main():
-    parser = argparse.ArgumentParser(description='Extract ground truth vectors from FloorPlanCAD SVG')
-    parser.add_argument('--svg_file', required=True, help='Path to SVG file')
-    parser.add_argument('--output_file', required=True, help='Output numpy file path')
-    parser.add_argument('--layers', nargs='+', default=['A-WALL', 'DOOR_FIRE', 'WINDOW'],
-                       help='Layers to extract from')
-    parser.add_argument('--target_size', nargs=2, type=int, default=[1000, 1000],
-                       help='Target pixel dimensions (width height)')
+    parser = argparse.ArgumentParser(description="Extract ground truth vectors from FloorPlanCAD SVG")
+    parser.add_argument("--svg_file", required=True, help="Path to SVG file")
+    parser.add_argument("--output_file", required=True, help="Output numpy file path")
+    parser.add_argument("--layers", nargs="+", default=["A-WALL", "DOOR_FIRE", "WINDOW"], help="Layers to extract from")
+    parser.add_argument(
+        "--target_size", nargs=2, type=int, default=[1000, 1000], help="Target pixel dimensions (width height)"
+    )
 
     args = parser.parse_args()
 
@@ -244,5 +253,6 @@ def main():
     print(f"Sample vectors:")
     print(final_vectors[:5])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

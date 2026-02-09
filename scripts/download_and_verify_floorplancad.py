@@ -1,7 +1,9 @@
 """Download FloorPlanCAD up to max_items and verify results."""
-from pathlib import Path
-from dataset.downloaders import download_dataset as mod
+
 import json
+from pathlib import Path
+
+from dataset.downloaders import download_dataset as mod
 
 OUT = Path("data")
 NAME = "floorplancad"
@@ -15,9 +17,7 @@ VECTOR_EXT = {".svg", ".dxf", ".dwg", ".eps", ".ps"}
 
 candidates = []
 for p in ds_dir.rglob("*"):
-    if p.is_file() and (
-        p.suffix.lower() in RASTER_EXT or p.suffix.lower() in VECTOR_EXT
-    ):
+    if p.is_file() and (p.suffix.lower() in RASTER_EXT or p.suffix.lower() in VECTOR_EXT):
         candidates.append(p)
 
 overflow_dir = ds_dir / "_overflow"

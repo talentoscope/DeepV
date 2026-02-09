@@ -2,12 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
+from util_files.structured_logging import get_pipeline_logger
+
 from ..parameters import (
     neighbourhood_pos_weight,
     pixel_center_coodinates_are_integer,
     reinit_period,
 )
-from util_files.structured_logging import get_pipeline_logger
 
 
 class PrimitiveAligner:

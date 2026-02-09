@@ -7,9 +7,7 @@ from typing import Protocol
 class Processor(Protocol):
     """Protocol for dataset processors."""
 
-    def standardize(
-        self, raw_dir: Path, output_base: Path, dry_run: bool = True
-    ) -> dict:
+    def standardize(self, raw_dir: Path, output_base: Path, dry_run: bool = True) -> dict:
         """Standardize raw dataset files.
 
         Args:

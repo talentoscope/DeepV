@@ -1,8 +1,10 @@
-from pathlib import Path
 import shutil
-from .base import Processor
+from pathlib import Path
 from typing import Dict
+
 from tqdm import tqdm
+
+from .base import Processor
 
 
 class CADVGDrawingProcessor(Processor):
@@ -12,9 +14,7 @@ class CADVGDrawingProcessor(Processor):
     generates raster PNG versions for training.
     """
 
-    def standardize(
-        self, input_dir: Path, output_base: Path, dry_run: bool = True
-    ) -> Dict:
+    def standardize(self, input_dir: Path, output_base: Path, dry_run: bool = True) -> Dict:
         input_dir = Path(input_dir)
         output_base = Path(output_base)
         vec_dir = output_base / "vector" / "cadvgdrawing"
@@ -24,9 +24,9 @@ class CADVGDrawingProcessor(Processor):
         svg_files = list(input_dir.rglob("*.svg"))
 
         # Filter out any non-SVG files and ensure we're in the svg_raw directory
-        svg_files = [
-            f for f in svg_files if f.suffix.lower() == ".svg" and "svg_raw" in str(f)
-        ][:10000]  # Limit to 10,000
+        svg_files = [f for f in svg_files if f.suffix.lower() == ".svg" and "svg_raw" in str(f)][
+            :10000
+        ]  # Limit to 10,000
 
         if dry_run:
             return {
@@ -69,14 +69,15 @@ class CADVGDrawingProcessor(Processor):
                 # Render PNG from SVG
                 try:
                     import cairosvg
-                    png_path = ras_dir / new_filename.replace('.svg', '.png')
-                    with open(svg_file, 'r', encoding='utf-8') as f:
+
+                    png_path = ras_dir / new_filename.replace(".svg", ".png")
+                    with open(svg_file, "r", encoding="utf-8") as f:
                         svg_content = f.read()
                     cairosvg.svg2png(
-                        bytestring=svg_content.encode('utf-8'),
+                        bytestring=svg_content.encode("utf-8"),
                         write_to=str(png_path),
                         output_width=1000,
-                        output_height=1000
+                        output_height=1000,
                     )
                     png_count += 1
                 except Exception as e:

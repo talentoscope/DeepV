@@ -1,13 +1,13 @@
 """Processor for CubiCasa5K Dataset."""
 
-from pathlib import Path
-from typing import Dict, Any
-import shutil
 import base64
-import numpy as np
-import cv2
-from PIL import Image
+import shutil
+from pathlib import Path
+from typing import Any, Dict
 
+import cv2
+import numpy as np
+from PIL import Image
 
 from .base import Processor
 
@@ -81,7 +81,7 @@ class CubiCasa5KProcessor(Processor):
                     svg_content = self._process_svg_annotations(model_svg, floorplan_id)
                     if svg_content:
                         svg_dest = vector_dir / f"{floorplan_id}.svg"
-                        with open(svg_dest, 'w', encoding='utf-8') as f:
+                        with open(svg_dest, "w", encoding="utf-8") as f:
                             f.write(svg_content)
                         svg_count += 1
 
@@ -102,14 +102,14 @@ class CubiCasa5KProcessor(Processor):
         """Save raster image from CubiCasa data."""
         try:
             # CubiCasa stores images as base64 encoded data or numpy arrays
-            if 'data' in image_data:
+            if "data" in image_data:
                 # Assume base64 encoded image
-                image_bytes = base64.b64decode(image_data['data'])
+                image_bytes = base64.b64decode(image_data["data"])
                 image_array = np.frombuffer(image_bytes, dtype=np.uint8)
 
                 # Decode image
-                if 'shape' in image_data:
-                    height, width, channels = image_data['shape']
+                if "shape" in image_data:
+                    height, width, channels = image_data["shape"]
                     image = image_array.reshape((height, width, channels))
                 else:
                     # Try to decode as PNG/JPEG
@@ -126,9 +126,9 @@ class CubiCasa5KProcessor(Processor):
                     pil_image.save(png_path)
                     return png_path
 
-            elif 'path' in image_data:
+            elif "path" in image_data:
                 # Image stored as file path
-                image_path = Path(image_data['path'])
+                image_path = Path(image_data["path"])
                 if image_path.exists():
                     # Copy to raster directory
                     png_path = raster_dir / f"{key_str}.png"
@@ -147,8 +147,8 @@ class CubiCasa5KProcessor(Processor):
             # CubiCasa SVG data contains polygon annotations for rooms, walls, etc.
             # Structure: {'polygons': [...], 'labels': [...], 'metadata': {...}}
 
-            polygons = svg_data.get('polygons', [])
-            labels = svg_data.get('labels', [])
+            polygons = svg_data.get("polygons", [])
+            labels = svg_data.get("labels", [])
 
             if not polygons:
                 return None
@@ -207,8 +207,7 @@ class CubiCasa5KProcessor(Processor):
                     # Color based on label (simplified)
                     fill_color = self._get_color_for_label(label)
                     svg_elements.append(
-                        f'<path d="{path_data}" fill="{fill_color}" '
-                        'stroke="black" stroke-width="1" opacity="0.7"/>'
+                        f'<path d="{path_data}" fill="{fill_color}" ' 'stroke="black" stroke-width="1" opacity="0.7"/>'
                     )
 
                     # Add label text at centroid
@@ -225,12 +224,12 @@ class CubiCasa5KProcessor(Processor):
                 return None
 
             # Create SVG content
-            svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+            svg_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
   <rect width="100%" height="100%" fill="white"/>
   {"".join(svg_elements)}
   <text x="10" y="20" font-size="12" fill="black">CubiCasa5K {key_str}</text>
-</svg>'''
+</svg>"""
 
             return svg_content
 
@@ -287,18 +286,18 @@ class CubiCasa5KProcessor(Processor):
         """Get color for semantic label."""
         # Simplified color mapping for common room types
         color_map = {
-            'living_room': '#FFB6C1',  # Light pink
-            'kitchen': '#FFA07A',     # Light salmon
-            'bedroom': '#98FB98',     # Pale green
-            'bathroom': '#87CEEB',    # Sky blue
-            'hallway': '#DDA0DD',     # Plum
-            'wall': '#000000',        # Black
-            'door': '#8B4513',        # Saddle brown
-            'window': '#00CED1',      # Dark turquoise
+            "living_room": "#FFB6C1",  # Light pink
+            "kitchen": "#FFA07A",  # Light salmon
+            "bedroom": "#98FB98",  # Pale green
+            "bathroom": "#87CEEB",  # Sky blue
+            "hallway": "#DDA0DD",  # Plum
+            "wall": "#000000",  # Black
+            "door": "#8B4513",  # Saddle brown
+            "window": "#00CED1",  # Dark turquoise
         }
 
         # Default color
-        return color_map.get(label.lower().replace(' ', '_'), '#CCCCCC')
+        return color_map.get(label.lower().replace(" ", "_"), "#CCCCCC")
 
     def _process_svg_annotations(self, svg_path: Path, floorplan_id: str) -> str:
         """Process SVG annotations from CubiCasa model.svg file.
@@ -321,30 +320,30 @@ class CubiCasa5KProcessor(Processor):
             root = tree.getroot()
 
             # Define namespaces
-            ns = {'svg': 'http://www.w3.org/2000/svg'}
+            ns = {"svg": "http://www.w3.org/2000/svg"}
 
             # Get SVG dimensions
-            width = root.get('width', '1000')
-            height = root.get('height', '800')
+            width = root.get("width", "1000")
+            height = root.get("height", "800")
 
             # Extract line segments from polygons
             line_segments = []
 
             # Find all g elements with polygons
-            for g_element in root.findall('.//svg:g', ns):
-                class_attr = g_element.get('class', '')
-                if 'Wall' in class_attr or 'Space' in class_attr:
+            for g_element in root.findall(".//svg:g", ns):
+                class_attr = g_element.get("class", "")
+                if "Wall" in class_attr or "Space" in class_attr:
                     # Find polygons in this g element
-                    polygons = g_element.findall('svg:polygon', ns)
+                    polygons = g_element.findall("svg:polygon", ns)
                     for polygon in polygons:
                         # Get polygon points
-                        points_str = polygon.get('points', '')
+                        points_str = polygon.get("points", "")
                         if points_str:
                             # Parse points string
                             coords = []
                             for point in points_str.strip().split():
                                 try:
-                                    x, y = map(float, point.split(','))
+                                    x, y = map(float, point.split(","))
                                     coords.append((x, y))
                                 except ValueError:
                                     continue
@@ -358,7 +357,7 @@ class CubiCasa5KProcessor(Processor):
 
             # Create SVG with line segments
             svg_elements = []
-            for (start, end) in line_segments:
+            for start, end in line_segments:
                 x1, y1 = start
                 x2, y2 = end
                 svg_elements.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="black" stroke-width="1"/>')
@@ -367,10 +366,10 @@ class CubiCasa5KProcessor(Processor):
                 print(f"  Warning: No line segments extracted from {svg_path}")
                 return None
 
-            svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+            svg_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
 {chr(10).join(svg_elements)}
-</svg>'''
+</svg>"""
 
             return svg_content
 

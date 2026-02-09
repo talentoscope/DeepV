@@ -184,6 +184,7 @@ def main(args):
     import torch
     from tensorboardX import SummaryWriter
     from tqdm import tqdm
+
     from util_files.early_stopping import create_early_stopping_for_cleaning
     from util_files.mixed_precision import MixedPrecisionTrainer
 
@@ -204,14 +205,18 @@ def main(args):
     opt = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Initialize mixed precision trainer
-    mp_trainer = MixedPrecisionTrainer(enabled=getattr(args, 'mixed_precision', False))
+    mp_trainer = MixedPrecisionTrainer(enabled=getattr(args, "mixed_precision", False))
     print(f"Mixed precision training: {'enabled' if mp_trainer.is_enabled() else 'disabled'}")
 
     # Initialize early stopping
-    early_stopping = create_early_stopping_for_cleaning(
-        patience=getattr(args, 'early_stopping_patience', 10),
-        min_delta=getattr(args, 'early_stopping_min_delta', 1e-3)
-    ) if getattr(args, 'early_stopping', False) else None
+    early_stopping = (
+        create_early_stopping_for_cleaning(
+            patience=getattr(args, "early_stopping_patience", 10),
+            min_delta=getattr(args, "early_stopping_min_delta", 1e-3),
+        )
+        if getattr(args, "early_stopping", False)
+        else None
+    )
     if early_stopping:
         print(f"Early stopping enabled: patience={early_stopping.patience}, min_delta={early_stopping.min_delta}")
 

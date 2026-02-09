@@ -13,9 +13,7 @@ def liang_barsky_screen(point0, point1, bbox):
     point0_flip, point1_flip = flip_y(point0), flip_y(point1)
     bbox_flip = flip_bb(bbox)
 
-    point0_clip, point1_clip, is_draw = liang_barsky_clipping(
-        point0_flip, point1_flip, bbox_flip
-    )
+    point0_clip, point1_clip, is_draw = liang_barsky_clipping(point0_flip, point1_flip, bbox_flip)
     if is_draw:
         point0_clip, point1_clip = flip_y(point0_clip), flip_y(point1_clip)
     return point0_clip, point1_clip, is_draw

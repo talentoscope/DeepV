@@ -1,10 +1,12 @@
-from pathlib import Path
-import shutil
-from .base import Processor
-from typing import Dict
 import base64
 import random
+import shutil
+from pathlib import Path
+from typing import Dict
+
 from tqdm import tqdm
+
+from .base import Processor
 
 
 class FloorPlanCADProcessor(Processor):
@@ -16,8 +18,8 @@ class FloorPlanCADProcessor(Processor):
     def standardize(self, raw_dir: Path, output_base: Path, dry_run: bool = True) -> Dict:
         raw_dir = Path(raw_dir)
         output_base = Path(output_base)
-        vec_dir = output_base / 'vector' / 'floorplancad'
-        ras_dir = output_base / 'raster' / 'floorplancad'
+        vec_dir = output_base / "vector" / "floorplancad"
+        ras_dir = output_base / "raster" / "floorplancad"
 
         try:
             from datasets import load_dataset
@@ -32,16 +34,17 @@ class FloorPlanCADProcessor(Processor):
             if samples_json.exists():
                 if dry_run:
                     # Count PNGs as estimate
-                    pngs = list(raw_dir.rglob('*.png'))
+                    pngs = list(raw_dir.rglob("*.png"))
                     return {
-                        'dataset': 'floorplancad',
-                        'estimated_samples': len(pngs),
-                        'vec_dir': str(vec_dir),
-                        'ras_dir': str(ras_dir),
-                        'dry_run': True,
+                        "dataset": "floorplancad",
+                        "estimated_samples": len(pngs),
+                        "vec_dir": str(vec_dir),
+                        "ras_dir": str(ras_dir),
+                        "dry_run": True,
                     }
                 try:
                     import fiftyone as fo
+
                     dataset = fo.Dataset.from_json(str(samples_json))
                 except ImportError:
                     raise ImportError("Install fiftyone: pip install fiftyone")
@@ -49,53 +52,53 @@ class FloorPlanCADProcessor(Processor):
                 vec_dir.mkdir(parents=True, exist_ok=True)
                 ras_dir.mkdir(parents=True, exist_ok=True)
 
-                actions = {'extracted': 0, 'skipped': 0}
+                actions = {"extracted": 0, "skipped": 0}
 
                 for sample in dataset:
                     sample_id = sample.id
 
                     # Extract SVG
-                    if 'svg' in sample:
-                        svg_content = sample['svg']
+                    if "svg" in sample:
+                        svg_content = sample["svg"]
                         svg_path = vec_dir / f"{sample_id}.svg"
                         if not svg_path.exists():
-                            with open(svg_path, 'w') as f:
+                            with open(svg_path, "w") as f:
                                 f.write(svg_content)
-                            actions['extracted'] += 1
+                            actions["extracted"] += 1
                         else:
-                            actions['skipped'] += 1
+                            actions["skipped"] += 1
 
                     # Copy PNG (flatten by using only sample ID, no subdirectories)
-                    if 'png' in sample:
-                        png_path_src = Path(sample['png'])
+                    if "png" in sample:
+                        png_path_src = Path(sample["png"])
                         if not png_path_src.is_absolute():
                             png_path_src = raw_dir / png_path_src
                         png_path_dst = ras_dir / f"{sample_id}.png"
                         if not png_path_dst.exists() and png_path_src.exists():
                             shutil.copy2(png_path_src, png_path_dst)
-                            actions['extracted'] += 1
+                            actions["extracted"] += 1
                         else:
-                            actions['skipped'] += 1
+                            actions["skipped"] += 1
 
                 meta = {
-                    'dataset': 'floorplancad',
-                    'extracted': actions['extracted'],
-                    'skipped': actions['skipped'],
+                    "dataset": "floorplancad",
+                    "extracted": actions["extracted"],
+                    "skipped": actions["skipped"],
                 }
                 return meta
             else:
                 # Fallback to existing SVGs/PNGs if no Parquet or samples.json
-                svgs = list(raw_dir.rglob('*.svg'))
+                svgs = list(raw_dir.rglob("*.svg"))
                 # Filter to only SVGs that have corresponding PNGs
-                svgs_with_png = [s for s in svgs if s.with_suffix('.png').exists()]
+                svgs_with_png = [s for s in svgs if s.with_suffix(".png").exists()]
                 if dry_run:
                     return {
-                        'dataset': 'floorplancad',
-                        'svg_count': len(svgs),
-                        'png_count': len(svgs_with_png),
-                        'vec_dir': str(vec_dir),
-                        'ras_dir': str(ras_dir),
-                        'dry_run': True,
+                        "dataset": "floorplancad",
+                        "svg_count": len(svgs),
+                        "png_count": len(svgs_with_png),
+                        "vec_dir": str(vec_dir),
+                        "ras_dir": str(ras_dir),
+                        "dry_run": True,
                     }
                 vec_dir.mkdir(parents=True, exist_ok=True)
                 ras_dir.mkdir(parents=True, exist_ok=True)
@@ -107,24 +110,24 @@ class FloorPlanCADProcessor(Processor):
                     flat_name = s.name
                     shutil.copy2(s, vec_dir / flat_name)
                     # Copy corresponding PNG with same flat structure
-                    png_path = s.with_suffix('.png')
-                    shutil.copy2(png_path, ras_dir / flat_name.replace('.svg', '.png'))
-                return {'dataset': 'floorplancad', 'selected_samples': len(selected_svgs)}
+                    png_path = s.with_suffix(".png")
+                    shutil.copy2(png_path, ras_dir / flat_name.replace(".svg", ".png"))
+                return {"dataset": "floorplancad", "selected_samples": len(selected_svgs)}
 
         # Load dataset
         dataset = load_dataset("parquet", data_files=[str(p) for p in parquet_files])
 
-        actions = {'extracted': 0, 'skipped': 0}
+        actions = {"extracted": 0, "skipped": 0}
 
         if dry_run:
             # Estimate counts
             total_samples = sum(len(split) for split in dataset.values())
             return {
-                'dataset': 'floorplancad',
-                'estimated_samples': total_samples,
-                'vec_dir': str(vec_dir),
-                'ras_dir': str(ras_dir),
-                'dry_run': True,
+                "dataset": "floorplancad",
+                "estimated_samples": total_samples,
+                "vec_dir": str(vec_dir),
+                "ras_dir": str(ras_dir),
+                "dry_run": True,
             }
 
         vec_dir.mkdir(parents=True, exist_ok=True)
@@ -135,34 +138,34 @@ class FloorPlanCADProcessor(Processor):
                 sample_id = f"{split_name}_{i}"
 
                 # Extract SVG
-                if 'svg' in sample:
-                    svg_content = sample['svg']
+                if "svg" in sample:
+                    svg_content = sample["svg"]
                     if isinstance(svg_content, str):
                         svg_path = vec_dir / f"{sample_id}.svg"
                         if not svg_path.exists():
-                            with open(svg_path, 'w') as f:
+                            with open(svg_path, "w") as f:
                                 f.write(svg_content)
-                            actions['extracted'] += 1
+                            actions["extracted"] += 1
                         else:
-                            actions['skipped'] += 1
+                            actions["skipped"] += 1
 
                 # Extract PNG
-                if 'png' in sample:
-                    png_data = sample['png']
-                    if isinstance(png_data, str) and png_data.startswith('data:image/png;base64,'):
-                        png_b64 = png_data.split(',')[1]
+                if "png" in sample:
+                    png_data = sample["png"]
+                    if isinstance(png_data, str) and png_data.startswith("data:image/png;base64,"):
+                        png_b64 = png_data.split(",")[1]
                         png_bytes = base64.b64decode(png_b64)
                         png_path = ras_dir / f"{sample_id}.png"
                         if not png_path.exists():
-                            with open(png_path, 'wb') as f:
+                            with open(png_path, "wb") as f:
                                 f.write(png_bytes)
-                            actions['extracted'] += 1
+                            actions["extracted"] += 1
                         else:
-                            actions['skipped'] += 1
+                            actions["skipped"] += 1
 
         meta = {
-            'dataset': 'floorplancad',
-            'extracted': actions['extracted'],
-            'skipped': actions['skipped'],
+            "dataset": "floorplancad",
+            "extracted": actions["extracted"],
+            "skipped": actions["skipped"],
         }
         return meta

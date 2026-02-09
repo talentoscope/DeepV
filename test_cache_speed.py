@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Quick test to verify cache-loading works and measure batch speed"""
 import sys
+
 sys.path.append(".")
 sys.path.append("scripts")
 
-import torch
-from pathlib import Path
-from train_floorplancad import create_data_loaders
 import time
+from pathlib import Path
+
+import torch
+from train_floorplancad import create_data_loaders
 
 print("Testing cache loading and batch speed...")
 

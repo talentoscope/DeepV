@@ -460,9 +460,7 @@ class VectorImage:
         )
 
         def split_path_to_patches(path):
-            return path.split_to_patches(
-                origin=origin, patch_size=patch_size, patches_n=patches_n
-            )
+            return path.split_to_patches(origin=origin, patch_size=patch_size, patches_n=patches_n)
 
         def distribute_path_in_patches(iS, jS, paths):
             for idx in range(len(iS)):

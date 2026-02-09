@@ -8,11 +8,12 @@ import os
 import random
 from pathlib import Path
 
+
 def create_train_val_test_split():
     """Create 80/10/10 train/val/test split from FloorPlanCAD filenames."""
 
     # Read all filenames
-    with open('floorplancad_files.txt', 'r') as f:
+    with open("floorplancad_files.txt", "r") as f:
         filenames = [line.strip() for line in f if line.strip()]
 
     print(f"Total files: {len(filenames)}")
@@ -29,8 +30,8 @@ def create_train_val_test_split():
 
     # Create splits
     train_files = filenames[:train_size]
-    val_files = filenames[train_size:train_size + val_size]
-    test_files = filenames[train_size + val_size:]
+    val_files = filenames[train_size : train_size + val_size]
+    test_files = filenames[train_size + val_size :]
 
     print(f"Train: {len(train_files)} files")
     print(f"Val: {len(val_files)} files")
@@ -42,7 +43,7 @@ def create_train_val_test_split():
 
     def write_split_file(split_name, files):
         split_file = splits_dir / f"{split_name}.txt"
-        with open(split_file, 'w') as f:
+        with open(split_file, "w") as f:
             for filename in sorted(files):  # Sort for consistency
                 f.write(f"{filename}\n")
         print(f"Created {split_file}")
@@ -53,10 +54,11 @@ def create_train_val_test_split():
 
     # Also create a combined file with all filenames for reference
     all_file = splits_dir / "all.txt"
-    with open(all_file, 'w') as f:
+    with open(all_file, "w") as f:
         for filename in sorted(filenames):
             f.write(f"{filename}\n")
     print(f"Created {all_file}")
+
 
 if __name__ == "__main__":
     create_train_val_test_split()

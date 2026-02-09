@@ -8,22 +8,22 @@ visualization, and comparison against state-of-the-art baselines.
 import argparse
 import json
 import sys
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
 import warnings
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from PIL import Image
-import matplotlib.pyplot as plt
 import seaborn as sns
+from PIL import Image
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from util_files.metrics.vector_metrics import METRICS_BY_NAME
 from util_files.file_utils import ensure_dir
+from util_files.metrics.vector_metrics import METRICS_BY_NAME
 
 
 class DatasetEvaluator:

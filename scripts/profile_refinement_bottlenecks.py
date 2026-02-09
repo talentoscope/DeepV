@@ -5,13 +5,13 @@ Profiles the refinement pipeline components to identify and optimize bottlenecks
 Target: <2s per 64x64 patch
 """
 
+import cProfile
+import io
+import pstats
 import sys
 import time
-import cProfile
-import pstats
 from pathlib import Path
-from typing import Dict, Any, List, Tuple
-import io
+from typing import Any, Dict, List, Tuple
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -79,9 +79,7 @@ class RefinementProfiler:
 
         return np.array(patches_rgb), np.array(patches_vector)
 
-    def profile_function_detailed(
-        self, func, *args, name: str = "", **kwargs
-    ) -> Dict[str, Any]:
+    def profile_function_detailed(self, func, *args, name: str = "", **kwargs) -> Dict[str, Any]:
         """
         Profile a function with detailed timing and memory analysis.
 
@@ -153,10 +151,7 @@ class RefinementProfiler:
             if torch.cuda.is_available():
                 memory_delta = result_dict["memory_delta"]
                 peak_memory = result_dict["peak_memory"]
-                print(
-                    f"  Memory: {memory_delta / 1024 / 1024:.1f} MB "
-                    f"(peak: {peak_memory / 1024 / 1024:.1f} MB)"
-                )
+                print(f"  Memory: {memory_delta / 1024 / 1024:.1f} MB " f"(peak: {peak_memory / 1024 / 1024:.1f} MB)")
         else:
             print(f"  FAILED: {error}")
 
@@ -167,14 +162,15 @@ class RefinementProfiler:
         print("=== Profiling Refinement Components ===")
 
         # Create test data
-        patches_rgb, patches_vector = self.create_test_patch_data(
-            num_patches=1, primitives_per_patch=10
-        )
+        patches_rgb, patches_vector = self.create_test_patch_data(num_patches=1, primitives_per_patch=10)
 
         # Profile rendering (used heavily in refinement)
         try:
-            from refinement.our_refinement.utils.lines_refinement_functions import render_lines_with_type
             import torch
+
+            from refinement.our_refinement.utils.lines_refinement_functions import (
+                render_lines_with_type,
+            )
 
             def render_test():
                 lines_tensor = torch.tensor(patches_vector[0], dtype=torch.float32)
@@ -194,9 +190,7 @@ class RefinementProfiler:
                 lines_tensor = torch.tensor(patches_vector[0], dtype=torch.float32)
                 return renderer.render_lines(lines_tensor)
 
-            self.profile_function_detailed(
-                gpu_render_test, name="gpu_line_renderer_64x64"
-            )
+            self.profile_function_detailed(gpu_render_test, name="gpu_line_renderer_64x64")
 
         except Exception as e:
             print(f"  Skipping GPU renderer profiling: {e}")
@@ -224,9 +218,7 @@ class RefinementProfiler:
         print("\n=== Profiling Full Refinement Pipeline ===")
 
         # Create test data
-        patches_rgb, patches_vector = self.create_test_patch_data(
-            num_patches=4, primitives_per_patch=10
-        )
+        patches_rgb, patches_vector = self.create_test_patch_data(num_patches=4, primitives_per_patch=10)
 
         # Mock device and options for testing
         device = torch.device("cpu")  # Use CPU for profiling
@@ -249,28 +241,18 @@ class RefinementProfiler:
             )
 
             def full_refinement_test():
-                return render_optimization_hard(
-                    patches_rgb, patches_vector, device, options, "test"
-                )
+                return render_optimization_hard(patches_rgb, patches_vector, device, options, "test")
 
-            result = self.profile_function_detailed(
-                full_refinement_test, name="full_refinement_pipeline"
-            )
+            result = self.profile_function_detailed(full_refinement_test, name="full_refinement_pipeline")
 
             # Check if we meet the target (<2s per patch)
             if result["success"]:
                 time_per_patch = result["total_time"] / 4  # 4 patches
                 target_time = 2.0
                 if time_per_patch < target_time:
-                    print(
-                        f"  ✓ MEETS TARGET: {time_per_patch:.3f}s < "
-                        f"{target_time}s per patch"
-                    )
+                    print(f"  ✓ MEETS TARGET: {time_per_patch:.3f}s < " f"{target_time}s per patch")
                 else:
-                    print(
-                        f"  ✗ EXCEEDS TARGET: {time_per_patch:.3f}s > "
-                        f"{target_time}s per patch"
-                    )
+                    print(f"  ✗ EXCEEDS TARGET: {time_per_patch:.3f}s > " f"{target_time}s per patch")
                     print("    Optimization needed!")
 
         except Exception as e:
@@ -291,9 +273,7 @@ class RefinementProfiler:
             full_time = self.results["full_refinement_pipeline"]["total_time"]
             per_patch = full_time / 4
             if per_patch > 2.0:
-                bottlenecks.append(
-                    f"Full pipeline: {per_patch:.3f}s per patch (target: <2.0s)"
-                )
+                bottlenecks.append(f"Full pipeline: {per_patch:.3f}s per patch (target: <2.0s)")
 
         return bottlenecks
 
@@ -312,14 +292,9 @@ class RefinementProfiler:
             if data["success"]:
                 report += f"- **Time**: {data['total_time']:.4f}s\n"
                 if data.get("peak_memory", 0) > 0:
-                    report += (
-                        "- **Peak Memory**: " +
-                        f"{data['peak_memory'] / 1024 / 1024:.1f} MB\n"
-                    )
+                    report += "- **Peak Memory**: " + f"{data['peak_memory'] / 1024 / 1024:.1f} MB\n"
             else:
-                report += (
-                    f"- **Status**: FAILED - {data.get('error', 'Unknown error')}\n"
-                )
+                report += f"- **Status**: FAILED - {data.get('error', 'Unknown error')}\n"
             report += "\n"
 
         # Bottlenecks
@@ -337,9 +312,7 @@ class RefinementProfiler:
             render_time = self.results["render_64x64_patch"]["total_time"]
             if render_time > 0.01:
                 report += "### Rendering Optimization\n"
-                report += (
-                    "- Consider using Bézier splatting instead of Cairo rendering\n"
-                )
+                report += "- Consider using Bézier splatting instead of Cairo rendering\n"
                 report += "- Implement GPU-accelerated rendering\n"
                 report += "- Cache rendered results for similar primitives\n\n"
 

@@ -12,6 +12,7 @@ import os
 def _get_torch():
     try:
         import torch
+
         return torch
     except ImportError:
         return None
@@ -20,6 +21,7 @@ def _get_torch():
 def _get_numpy():
     try:
         import numpy as np
+
         return np
     except ImportError:
         return None
@@ -108,13 +110,13 @@ def export_to_svg(lines, filename: str, width: int = 256, height: int = 256) -> 
         x1, y1, x2, y2, line_width = line
         svg_lines.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="black" stroke-width="{line_width}"/>')
 
-    svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+    svg_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
 {chr(10).join(svg_lines)}
-</svg>'''
+</svg>"""
 
     try:
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             f.write(svg_content)
         print(f"SVG exported to: {filename}")
         return True
@@ -140,18 +142,18 @@ def create_cad_from_primitives(primitives: dict, output_dir: str = "output") -> 
     results = {}
 
     # Export lines to DXF
-    if 'lines' in primitives and len(primitives['lines']) > 0:
+    if "lines" in primitives and len(primitives["lines"]) > 0:
         dxf_path = os.path.join(output_dir, "primitives.dxf")
         svg_path = os.path.join(output_dir, "primitives.svg")
 
-        dxf_success = export_to_dxf(primitives['lines'], dxf_path)
-        svg_success = export_to_svg(primitives['lines'], svg_path)
+        dxf_success = export_to_dxf(primitives["lines"], dxf_path)
+        svg_success = export_to_svg(primitives["lines"], svg_path)
 
-        results['dxf'] = {'path': dxf_path, 'success': dxf_success}
-        results['svg'] = {'path': svg_path, 'success': svg_success}
+        results["dxf"] = {"path": dxf_path, "success": dxf_success}
+        results["svg"] = {"path": svg_path, "success": svg_success}
 
     # Future: Add support for curves, arcs, etc.
-    if 'curves' in primitives:
+    if "curves" in primitives:
         print("Curve export not yet implemented")
 
     return results
@@ -175,21 +177,21 @@ def validate_cad_export(filename: str) -> bool:
         return False
 
     # For DXF files, check if it contains basic structure
-    if filename.endswith('.dxf'):
+    if filename.endswith(".dxf"):
         try:
-            with open(filename, 'r') as f:
+            with open(filename, "r") as f:
                 content = f.read()
                 # Check for basic DXF structure
-                return 'SECTION' in content and 'ENDSEC' in content
+                return "SECTION" in content and "ENDSEC" in content
         except Exception:
             return False
 
     # For SVG files, check for basic XML structure
-    if filename.endswith('.svg'):
+    if filename.endswith(".svg"):
         try:
-            with open(filename, 'r') as f:
+            with open(filename, "r") as f:
                 content = f.read()
-                return '<svg' in content and '</svg>' in content
+                return "<svg" in content and "</svg>" in content
         except Exception:
             return False
 
@@ -204,21 +206,23 @@ if __name__ == "__main__":
         exit(1)
 
     # Create some sample line primitives
-    sample_lines = np_module.array([
-        [10.0, 20.0, 100.0, 20.0, 2.0],  # horizontal line
-        [50.0, 10.0, 50.0, 100.0, 1.5],  # vertical line
-        [10.0, 10.0, 100.0, 100.0, 1.0],  # diagonal line
-    ])
+    sample_lines = np_module.array(
+        [
+            [10.0, 20.0, 100.0, 20.0, 2.0],  # horizontal line
+            [50.0, 10.0, 50.0, 100.0, 1.5],  # vertical line
+            [10.0, 10.0, 100.0, 100.0, 1.0],  # diagonal line
+        ]
+    )
 
     # Export to CAD formats
-    results = create_cad_from_primitives({'lines': sample_lines})
+    results = create_cad_from_primitives({"lines": sample_lines})
 
     print("CAD Export Results:")
     for format_name, result in results.items():
-        status = "✅ Success" if result['success'] else "❌ Failed"
+        status = "✅ Success" if result["success"] else "❌ Failed"
         print(f"{format_name.upper()}: {status} - {result['path']}")
 
         # Validate the export
-        if result['success']:
-            valid = validate_cad_export(result['path'])
+        if result["success"]:
+            valid = validate_cad_export(result["path"])
             print(f"  Validation: {'✅ Valid' if valid else '❌ Invalid'}")

@@ -3,6 +3,7 @@ Integration tests for DeepV components.
 
 Tests the improved components: error handling, logging, and core functionality.
 """
+
 import os
 import sys
 import tempfile
@@ -16,7 +17,7 @@ from PIL import Image
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import improved components
-from util_files.exceptions import DeepVError, EmptyPixelError, ClippingError
+from util_files.exceptions import ClippingError, DeepVError, EmptyPixelError
 from util_files.structured_logging import get_pipeline_logger
 
 
@@ -31,6 +32,7 @@ class TestIntegration(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_exception_hierarchy(self):
@@ -59,9 +61,9 @@ class TestIntegration(unittest.TestCase):
         logger = get_pipeline_logger("test.integration")
 
         # Test logging methods exist
-        self.assertTrue(hasattr(logger, 'info'))
-        self.assertTrue(hasattr(logger, 'warning'))
-        self.assertTrue(hasattr(logger, 'error'))
+        self.assertTrue(hasattr(logger, "info"))
+        self.assertTrue(hasattr(logger, "warning"))
+        self.assertTrue(hasattr(logger, "error"))
 
         # Test logging doesn't crash
         try:
@@ -76,7 +78,9 @@ class TestIntegration(unittest.TestCase):
     def test_refinement_error_handling(self):
         """Test that refinement functions handle errors properly."""
         try:
-            from refinement.our_refinement.utils.lines_refinement_functions import MeanFieldEnergyComputer
+            from refinement.our_refinement.utils.lines_refinement_functions import (
+                MeanFieldEnergyComputer,
+            )
         except ImportError:
             self.skipTest("Refinement modules not available")
 
@@ -110,7 +114,7 @@ class TestIntegration(unittest.TestCase):
     def test_image_processing_pipeline(self):
         """Test basic image processing that doesn't require heavy dependencies."""
         # Create a test image
-        img = Image.new('L', (64, 64), color=255)
+        img = Image.new("L", (64, 64), color=255)
         # Draw a simple shape
         for i in range(10, 54):
             img.putpixel((i, 32), 0)  # Horizontal line
@@ -128,9 +132,9 @@ class TestIntegration(unittest.TestCase):
         self.assertTrue(torch.allclose(inverted + img_tensor, torch.ones_like(img_tensor)))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

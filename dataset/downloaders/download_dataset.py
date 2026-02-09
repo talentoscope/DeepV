@@ -27,13 +27,16 @@ def download_with_progress(url: str, output_path: Path, chunk_size: int = 8192):
 
     total_size = int(response.headers.get("content-length", 0))
 
-    with open(output_path, "wb") as f, tqdm(
-        desc=output_path.name,
-        total=total_size,
-        unit="iB",
-        unit_scale=True,
-        unit_divisor=1024,
-    ) as pbar:
+    with (
+        open(output_path, "wb") as f,
+        tqdm(
+            desc=output_path.name,
+            total=total_size,
+            unit="iB",
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as pbar,
+    ):
         for chunk in response.iter_content(chunk_size=chunk_size):
             size = f.write(chunk)
             pbar.update(size)
@@ -82,6 +85,7 @@ def download_floorplancad(output_dir: Path, test_mode: bool = False) -> Dict:
     # Extract the zip files
     import shutil
     import tarfile
+
     for zip_path in downloaded_files:
         extract_dir = dataset_dir / zip_path.stem  # e.g., train1
         if extract_dir.exists() and any(extract_dir.iterdir()):
@@ -95,7 +99,7 @@ def download_floorplancad(output_dir: Path, test_mode: bool = False) -> Dict:
         except shutil.ReadError:
             # Try uncompressed tar
             try:
-                with tarfile.open(zip_path, 'r') as tar_ref:
+                with tarfile.open(zip_path, "r") as tar_ref:
                     tar_ref.extractall(extract_dir)
                 print(f"[OK] Extracted {zip_path} (tar) to {extract_dir}")
             except Exception as e2:
@@ -196,12 +200,10 @@ def download_quickdraw(output_dir: Path, test_mode: bool = False) -> Dict:
     # QuickDraw data is available as NDJSON files from Google Cloud Storage
     # We'll download a small subset of classes for practical use
     base_url = "https://storage.googleapis.com/quickdraw_dataset/full/simplified"
-    
+
     # Select a few representative classes for the subset
-    classes = [
-        "airplane", "apple", "bird", "cat", "dog", "fish", "house", "tree", "car", "sun"
-    ]
-    
+    classes = ["airplane", "apple", "bird", "cat", "dog", "fish", "house", "tree", "car", "sun"]
+
     if test_mode:
         classes = classes[:2]  # Just 2 classes for testing
         print(f"Test mode: downloading {len(classes)} classes")
@@ -209,17 +211,17 @@ def download_quickdraw(output_dir: Path, test_mode: bool = False) -> Dict:
         print(f"Downloading {len(classes)} classes")
 
     downloaded_files = []
-    
+
     for class_name in classes:
         filename = f"{class_name}.ndjson"
         url = f"{base_url}/{filename}"
         output_path = dataset_dir / filename
-        
+
         if output_path.exists():
             print(f"Skipping {filename} (already exists)")
             downloaded_files.append(str(output_path))
             continue
-            
+
         try:
             print(f"Downloading {filename}...")
             download_with_progress(url, output_path)
@@ -385,7 +387,6 @@ def download_sketchgraphs(output_dir: Path, test_mode: bool = False) -> Dict:
         print(f"[ERR] Failed to download SketchGraphs: {e}")
         print("Note: Requires git installed and internet connection.")
         raise
-
 
 
 def download_resplan(output_dir: Path, test_mode: bool = False) -> Dict:

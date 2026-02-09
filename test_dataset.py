@@ -3,16 +3,17 @@
 Test script to verify FloorPlanCADDataset SVG parsing and primitive extraction.
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add current directory to path for local imports
 sys.path.append(".")
 sys.path.append("./scripts")
 
-from train_floorplancad import FloorPlanCADDataset
 import torch
+from train_floorplancad import FloorPlanCADDataset
+
 
 def test_dataset_loading():
     """Test loading a few samples from the FloorPlanCAD dataset."""

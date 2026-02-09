@@ -5,9 +5,10 @@ Provides fast GPU-based rendering as an alternative to Cairo rendering.
 Based on antialiased differentiable rendering techniques.
 """
 
+from typing import Optional, Tuple
+
 import torch
 import torch.nn.functional as F
-from typing import Tuple, Optional
 
 
 class GPULineRenderer:
@@ -42,7 +43,7 @@ class GPULineRenderer:
         x_coords = torch.linspace(0.5, w - 0.5, w)
 
         # Use indexing='ij' for proper meshgrid behavior
-        self.grid_y, self.grid_x = torch.meshgrid(y_coords, x_coords, indexing='ij')
+        self.grid_y, self.grid_x = torch.meshgrid(y_coords, x_coords, indexing="ij")
 
     def to_device(self, device: torch.device):
         """Move grids to specified device."""
@@ -70,10 +71,10 @@ class GPULineRenderer:
 
         # Extract line parameters
         start_points = lines[:, :2]  # (N, 2)
-        end_points = lines[:, 2:4]   # (N, 2)
-        widths = lines[:, 4]         # (N,)
+        end_points = lines[:, 2:4]  # (N, 2)
+        widths = lines[:, 4]  # (N,)
         if lines.shape[1] > 5:
-            opacity = lines[:, 5]    # (N,)
+            opacity = lines[:, 5]  # (N,)
         else:
             opacity = torch.ones_like(widths)
 
@@ -90,13 +91,14 @@ class GPULineRenderer:
         # Canvas is already (H, W) in supersampled space, downsample to target size
         if canvas.shape != canvas_size:
             canvas = canvas.unsqueeze(0).unsqueeze(0)  # (1, 1, H, W)
-            canvas = F.interpolate(canvas, size=canvas_size, mode='bilinear', align_corners=False)
+            canvas = F.interpolate(canvas, size=canvas_size, mode="bilinear", align_corners=False)
             canvas = canvas.squeeze(0).squeeze(0)  # (H, W)
 
         return canvas
 
-    def _render_lines_batch(self, start_points: torch.Tensor, end_points: torch.Tensor,
-                           widths: torch.Tensor, opacity: torch.Tensor) -> torch.Tensor:
+    def _render_lines_batch(
+        self, start_points: torch.Tensor, end_points: torch.Tensor, widths: torch.Tensor, opacity: torch.Tensor
+    ) -> torch.Tensor:
         """
         Render multiple lines in parallel using vectorized operations.
         """
@@ -126,8 +128,9 @@ class GPULineRenderer:
 
         return canvas
 
-    def _render_lines_batch_vectorized(self, start_points: torch.Tensor, end_points: torch.Tensor,
-                                      widths: torch.Tensor, opacity: torch.Tensor) -> torch.Tensor:
+    def _render_lines_batch_vectorized(
+        self, start_points: torch.Tensor, end_points: torch.Tensor, widths: torch.Tensor, opacity: torch.Tensor
+    ) -> torch.Tensor:
         """
         Render a batch of lines using vectorized operations.
         """
@@ -140,9 +143,7 @@ class GPULineRenderer:
         # For simplicity, fall back to the working single-line approach but optimize the compositing
         line_canvases = []
         for i in range(num_lines):
-            line_canvas = self._render_single_line(
-                start_points[i], end_points[i], widths[i], opacity[i]
-            )
+            line_canvas = self._render_single_line(start_points[i], end_points[i], widths[i], opacity[i])
             line_canvases.append(line_canvas)
 
         # Stack and take maximum across all lines at once
@@ -152,8 +153,9 @@ class GPULineRenderer:
 
         return canvas
 
-    def _render_single_line(self, start: torch.Tensor, end: torch.Tensor,
-                           width: torch.Tensor, opacity: torch.Tensor) -> torch.Tensor:
+    def _render_single_line(
+        self, start: torch.Tensor, end: torch.Tensor, width: torch.Tensor, opacity: torch.Tensor
+    ) -> torch.Tensor:
         """
         Render a single line using differentiable antialiased rendering.
         """
@@ -213,7 +215,7 @@ def _render_point(self, center: torch.Tensor, size: torch.Tensor, opacity: torch
     """
     Render a point (degenerate line) as a circle.
     """
-    distances = torch.sqrt((self.grid_x - center[0])**2 + (self.grid_y - center[1])**2)
+    distances = torch.sqrt((self.grid_x - center[0]) ** 2 + (self.grid_y - center[1]) ** 2)
     half_size = size / 2
     falloff_width = min(size * 0.1, 1.0)
 
@@ -228,8 +230,9 @@ def _render_point(self, center: torch.Tensor, size: torch.Tensor, opacity: torch
 GPULineRenderer._render_point = _render_point
 
 
-def render_lines_gpu(lines: torch.Tensor, canvas_size: Tuple[int, int] = (64, 64),
-                    supersampling: int = 2) -> torch.Tensor:
+def render_lines_gpu(
+    lines: torch.Tensor, canvas_size: Tuple[int, int] = (64, 64), supersampling: int = 2
+) -> torch.Tensor:
     """
     Convenience function for GPU-accelerated line rendering.
 
@@ -249,6 +252,7 @@ def render_lines_gpu(lines: torch.Tensor, canvas_size: Tuple[int, int] = (64, 64
 def benchmark_renderers():
     """Benchmark different rendering approaches."""
     import time
+
     import numpy as np
 
     # Create test data

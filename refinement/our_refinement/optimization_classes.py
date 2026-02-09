@@ -33,7 +33,8 @@ from util_files.structured_logging import StructuredLogger
 # Load refinement config
 try:
     from omegaconf import OmegaConf
-    refinement_config = OmegaConf.load(os.path.join(os.path.dirname(__file__), '../../config/refinement/default.yaml'))
+
+    refinement_config = OmegaConf.load(os.path.join(os.path.dirname(__file__), "../../config/refinement/default.yaml"))
 except:
     # Fallback
     class FallbackConfig:
@@ -50,6 +51,7 @@ except:
         reinit_interval = 20
         logging_interval = 20
         snap_interval = 20
+
     refinement_config = FallbackConfig()
 
 
@@ -67,7 +69,13 @@ class LineOptimizationState:
         self.device = device
 
         # Convert to canonical parameters
-        x1, y1, x2, y2, width = lines_batch[..., 0], lines_batch[..., 1], lines_batch[..., 2], lines_batch[..., 3], lines_batch[..., 4]
+        x1, y1, x2, y2, width = (
+            lines_batch[..., 0],
+            lines_batch[..., 1],
+            lines_batch[..., 2],
+            lines_batch[..., 3],
+            lines_batch[..., 4],
+        )
 
         X = x2 - x1
         Y = y2 - y1
@@ -105,21 +113,35 @@ class LineOptimizationState:
     def apply_constraints(self):
         """Apply parameter constraints to keep lines within bounds."""
         constrain_parameters(
-            self.cx, self.cy, self.theta, self.length, self.width,
-            canvas_width=w, canvas_height=h, size_optimizer=self.size_optimizer
+            self.cx,
+            self.cy,
+            self.theta,
+            self.length,
+            self.width,
+            canvas_width=w,
+            canvas_height=h,
+            size_optimizer=self.size_optimizer,
         )
 
     def snap_lines(self):
         """Snap lines that have coinciding ends, close orientations and close widths."""
-        snap_lines(self.cx, self.cy, self.theta, self.length, self.width,
-                  pos_optimizer=self.pos_optimizer, size_optimizer=self.size_optimizer)
+        snap_lines(
+            self.cx,
+            self.cy,
+            self.theta,
+            self.length,
+            self.width,
+            pos_optimizer=self.pos_optimizer,
+            size_optimizer=self.size_optimizer,
+        )
 
 
 class BatchProcessor:
     """Handles batch processing for refinement optimization."""
 
-    def __init__(self, patches_rgb: torch.Tensor, patches_vector: torch.Tensor,
-                 batch_size: int = refinement_config.batch_size):
+    def __init__(
+        self, patches_rgb: torch.Tensor, patches_vector: torch.Tensor, batch_size: int = refinement_config.batch_size
+    ):
         """
         Initialize batch processor.
 
@@ -156,8 +178,15 @@ class BatchProcessor:
 class OptimizationLoop:
     """Manages the main optimization loop for line refinement."""
 
-    def __init__(self, rasters_batch: torch.Tensor, initial_vector: np.ndarray,
-                 device: torch.device, rendering_type: str, logger: StructuredLogger, tracer=None):
+    def __init__(
+        self,
+        rasters_batch: torch.Tensor,
+        initial_vector: np.ndarray,
+        device: torch.device,
+        rendering_type: str,
+        logger: StructuredLogger,
+        tracer=None,
+    ):
         """
         Initialize optimization loop.
 
@@ -238,9 +267,12 @@ class OptimizationLoop:
         im.masked_fill_(self.vector_rendering[self.patches_to_optimize] > 0, 0)
 
         reinit_excess_lines(
-            self.opt_state.cx, self.opt_state.cy, self.opt_state.width,
-            self.opt_state.length, im.reshape(im.shape[0], -1),
-            patches_to_consider=self.patches_to_optimize
+            self.opt_state.cx,
+            self.opt_state.cy,
+            self.opt_state.width,
+            self.opt_state.length,
+            im.reshape(im.shape[0], -1),
+            patches_to_consider=self.patches_to_optimize,
         )
 
     def _optimize_positions(self):
@@ -278,11 +310,15 @@ class OptimizationLoop:
         # Update centers
         self.opt_state.cx.data[self.patches_to_optimize] = (
             x1.data[self.patches_to_optimize]
-            + self.opt_state.length.data[self.patches_to_optimize] * torch.cos(self.opt_state.theta.data[self.patches_to_optimize]) / 2
+            + self.opt_state.length.data[self.patches_to_optimize]
+            * torch.cos(self.opt_state.theta.data[self.patches_to_optimize])
+            / 2
         )
         self.opt_state.cy.data[self.patches_to_optimize] = (
             y1.data[self.patches_to_optimize]
-            + self.opt_state.length.data[self.patches_to_optimize] * torch.sin(self.opt_state.theta.data[self.patches_to_optimize]) / 2
+            + self.opt_state.length.data[self.patches_to_optimize]
+            * torch.sin(self.opt_state.theta.data[self.patches_to_optimize])
+            / 2
         )
         self.opt_state.apply_constraints()
 
@@ -308,18 +344,28 @@ class OptimizationLoop:
         # Update centers
         self.opt_state.cx.data[self.patches_to_optimize] = (
             x2.data[self.patches_to_optimize]
-            - self.opt_state.length.data[self.patches_to_optimize] * torch.cos(self.opt_state.theta.data[self.patches_to_optimize]) / 2
+            - self.opt_state.length.data[self.patches_to_optimize]
+            * torch.cos(self.opt_state.theta.data[self.patches_to_optimize])
+            / 2
         )
         self.opt_state.cy.data[self.patches_to_optimize] = (
             y2.data[self.patches_to_optimize]
-            - self.opt_state.length.data[self.patches_to_optimize] * torch.sin(self.opt_state.theta.data[self.patches_to_optimize]) / 2
+            - self.opt_state.length.data[self.patches_to_optimize]
+            * torch.sin(self.opt_state.theta.data[self.patches_to_optimize])
+            / 2
         )
         self.opt_state.apply_constraints()
 
-    def log_progress(self, iteration: int, patches_rgb_im: np.ndarray,
-                    take_batches: List[int], iou_mass: List, mass_for_iou_one: List):
+    def log_progress(
+        self,
+        iteration: int,
+        patches_rgb_im: np.ndarray,
+        take_batches: List[int],
+        iou_mass: List,
+        mass_for_iou_one: List,
+    ):
         """Log progress and update tracking variables."""
-        if (iteration % refinement_config.logging_interval == 0):
+        if iteration % refinement_config.logging_interval == 0:
             # Record current parameters
             self.cx_final[self.patches_to_optimize] = self.opt_state.cx.data[self.patches_to_optimize]
             self.cy_final[self.patches_to_optimize] = self.opt_state.cy.data[self.patches_to_optimize]
@@ -332,27 +378,38 @@ class OptimizationLoop:
 
             # Collapse redundant lines
             collapse_redundant_lines(
-                self.cx_final, self.cy_final, self.theta_final,
-                self.length_final, self.width_final,
-                patches_to_consider=self.patches_to_optimize
+                self.cx_final,
+                self.cy_final,
+                self.theta_final,
+                self.length_final,
+                self.width_final,
+                patches_to_consider=self.patches_to_optimize,
             )
 
             # Convert back to line format
             x1 = (
                 self.cx_final.data[self.patches_to_optimize]
-                - self.length_final.data[self.patches_to_optimize] * torch.cos(self.theta_final.data[self.patches_to_optimize]) / 2
+                - self.length_final.data[self.patches_to_optimize]
+                * torch.cos(self.theta_final.data[self.patches_to_optimize])
+                / 2
             )
             y1 = (
                 self.cy_final.data[self.patches_to_optimize]
-                - self.length_final.data[self.patches_to_optimize] * torch.sin(self.theta_final.data[self.patches_to_optimize]) / 2
+                - self.length_final.data[self.patches_to_optimize]
+                * torch.sin(self.theta_final.data[self.patches_to_optimize])
+                / 2
             )
             x2 = (
                 self.cx_final.data[self.patches_to_optimize]
-                + self.length_final.data[self.patches_to_optimize] * torch.cos(self.theta_final.data[self.patches_to_optimize]) / 2
+                + self.length_final.data[self.patches_to_optimize]
+                * torch.cos(self.theta_final.data[self.patches_to_optimize])
+                / 2
             )
             y2 = (
                 self.cy_final.data[self.patches_to_optimize]
-                + self.length_final.data[self.patches_to_optimize] * torch.sin(self.theta_final.data[self.patches_to_optimize]) / 2
+                + self.length_final.data[self.patches_to_optimize]
+                * torch.sin(self.theta_final.data[self.patches_to_optimize])
+                / 2
             )
 
             self.lines_batch_final[self.patches_to_optimize] = torch.stack(
@@ -365,17 +422,15 @@ class OptimizationLoop:
             )
 
             # Calculate IOU
-            iou_val = calc_iou__vect_image(
-                self.lines_batch_final.data.cpu() / 64, patches_rgb_im[take_batches]
-            )
+            iou_val = calc_iou__vect_image(self.lines_batch_final.data.cpu() / 64, patches_rgb_im[take_batches])
             # Ensure it's a scalar by taking mean if it's an array
-            if hasattr(iou_val, '__len__') and len(iou_val) > 1:
+            if hasattr(iou_val, "__len__") and len(iou_val) > 1:
                 iou_val = float(np.mean(iou_val))
             iou_mass.append(iou_val)
             mass_for_iou_one.append(self.lines_batch_final.cpu().data.detach().numpy())
             # Save per-iteration snapshot if tracer is enabled
             try:
-                if self.tracer is not None and getattr(self.tracer, 'enabled', False):
+                if self.tracer is not None and getattr(self.tracer, "enabled", False):
                     lines_np = self.lines_batch_final.cpu().data.detach().numpy()
                     renders_np = self.vector_rendering.cpu().data.detach().numpy()
                     # Save a lightweight subset to avoid large disk usage

@@ -1,8 +1,10 @@
-from pathlib import Path
 import shutil
-from .base import Processor
+from pathlib import Path
 from typing import Dict
+
 from tqdm import tqdm
+
+from .base import Processor
 
 
 class FPLANPOLYProcessor(Processor):
@@ -15,30 +17,30 @@ class FPLANPOLYProcessor(Processor):
     def standardize(self, input_dir: Path, output_base: Path, dry_run: bool = True) -> Dict:
         input_dir = Path(input_dir)
         output_base = Path(output_base)
-        vec_dir = output_base / 'vector' / 'fplanpoly'
+        vec_dir = output_base / "vector" / "fplanpoly"
 
         # Find DXF files in floorplans and symbols directories
-        floorplans_dir = input_dir / 'Floorplans'
-        symbols_dir = input_dir / 'Model Symbols'
+        floorplans_dir = input_dir / "Floorplans"
+        symbols_dir = input_dir / "Model Symbols"
 
         dxf_files = []
 
         # Collect floorplan DXF files
         if floorplans_dir.exists():
-            dxf_files.extend(list(floorplans_dir.glob('*.dxf')))
+            dxf_files.extend(list(floorplans_dir.glob("*.dxf")))
 
         # Collect symbol DXF files
         if symbols_dir.exists():
-            dxf_files.extend(list(symbols_dir.glob('*.dxf')))
+            dxf_files.extend(list(symbols_dir.glob("*.dxf")))
 
         dxf_files = dxf_files[:10000]  # Limit to 10,000
 
         if dry_run:
             return {
-                'dataset': 'fplanpoly',
-                'dxf_count': len(dxf_files),
-                'vec_dir': str(vec_dir),
-                'dry_run': True,
+                "dataset": "fplanpoly",
+                "dxf_count": len(dxf_files),
+                "vec_dir": str(vec_dir),
+                "dry_run": True,
             }
 
         vec_dir.mkdir(parents=True, exist_ok=True)
@@ -55,7 +57,7 @@ class FPLANPOLYProcessor(Processor):
                 dxf_copied += 1
 
         return {
-            'dataset': 'fplanpoly',
-            'dxf_count': len(dxf_files),
-            'dxf_copied': dxf_copied,
+            "dataset": "fplanpoly",
+            "dxf_count": len(dxf_files),
+            "dxf_copied": dxf_copied,
         }

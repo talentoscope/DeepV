@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+
 import numpy as np
 from PIL import Image, ImageDraw
 
@@ -23,12 +24,12 @@ def load_patch_image(trace_dir: Path, patch_id: str):
             # handle single-channel or 3-channel arrays robustly
             if arr.ndim == 3:
                 if arr.shape[2] == 3:
-                    return Image.fromarray(arr.astype('uint8')).convert("L")
+                    return Image.fromarray(arr.astype("uint8")).convert("L")
                 if arr.shape[2] == 1:
                     arr2 = arr.squeeze(axis=2)
-                    return Image.fromarray(arr2.astype('uint8'))
+                    return Image.fromarray(arr2.astype("uint8"))
             if arr.ndim == 2:
-                return Image.fromarray(arr.astype('uint8'))
+                return Image.fromarray(arr.astype("uint8"))
     return None
 
 
@@ -207,7 +208,7 @@ def make_patch_composite(trace_dir: Path, patch_id: str, out_dir: Path, history_
         "iou_model": iou_model,
         "iou_final": iou_final,
         "n_model_primitives": int(vecn.shape[0]),
-        "n_final_primitives": int(finaln.shape[0]) if 'finaln' in locals() else int(vecn.shape[0]),
+        "n_final_primitives": int(finaln.shape[0]) if "finaln" in locals() else int(vecn.shape[0]),
     }
 
     # per-iteration IOU curve if history provided as (I, num_patches, num_prims, D) for this patch
@@ -221,7 +222,9 @@ def make_patch_composite(trace_dir: Path, patch_id: str, out_dir: Path, history_
                     vec_this = it[pidx]
                 else:
                     vec_this = it
-                r = render_primitives_pil(normalize_vectors(vec_this, patch_size=patch_size), size=(patch_size, patch_size))
+                r = render_primitives_pil(
+                    normalize_vectors(vec_this, patch_size=patch_size), size=(patch_size, patch_size)
+                )
                 ious.append(pixel_iou(gt, r))
             metrics["iou_curve"] = ious
         except Exception:
@@ -234,5 +237,7 @@ def select_patch_ids(trace_dir: Path, count=20):
     patches_dir = trace_dir / "patches"
     if not patches_dir.exists():
         return []
-    ids = [p.name for p in sorted(patches_dir.iterdir(), key=lambda x: int(x.name) if x.name.isdigit() else x.name)][:count]
+    ids = [p.name for p in sorted(patches_dir.iterdir(), key=lambda x: int(x.name) if x.name.isdigit() else x.name)][
+        :count
+    ]
     return ids

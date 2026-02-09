@@ -293,13 +293,7 @@ def to_parametric_representation(seg, attributes):
         "finding such parameter from an image. Need to convert arcs to bezier curves."
     )
 
-    if isinstance(
-        seg,
-        (
-            svgpathtools.Line,
-            svgpathtools.CubicBezier
-        )
-    ):
+    if isinstance(seg, (svgpathtools.Line, svgpathtools.CubicBezier)):
         points = seg.bpoints()
     # convert quadratic bezier to cubic bezier
     if isinstance(seg, svgpathtools.QuadraticBezier):
@@ -340,13 +334,7 @@ def to_primitive_representation(seg, attributes):
         "finding such parameter from an image. Need to convert arcs to bezier curves."
     )
 
-    if isinstance(
-        seg,
-        (
-            svgpathtools.Line,
-            svgpathtools.CubicBezier
-        )
-    ):
+    if isinstance(seg, (svgpathtools.Line, svgpathtools.CubicBezier)):
         points = seg.bpoints()
     # convert quadratic bezier to cubic bezier
     if isinstance(seg, svgpathtools.QuadraticBezier):

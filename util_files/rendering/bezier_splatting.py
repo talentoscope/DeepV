@@ -318,11 +318,7 @@ class BezierSplatting:
 
         # Compute tangents for width calculation
         # Derivative: B'(t) = 3(1-t)²(P₁-P₀) + 6(1-t)t(P₂-P₁) + 3t²(P₃-P₂)
-        tangents = (
-            3 * (1 - t) ** 2 * (p1 - p0) +
-            6 * (1 - t) * t * (p2 - p1) +
-            3 * t**2 * (p3 - p2)
-        )
+        tangents = 3 * (1 - t) ** 2 * (p1 - p0) + 6 * (1 - t) * t * (p2 - p1) + 3 * t**2 * (p3 - p2)
         tangent_norms = torch.norm(tangents, dim=-1, keepdim=True)
         tangent_norms = torch.clamp(tangent_norms, min=1e-6)
         tangents = tangents / tangent_norms
@@ -382,9 +378,7 @@ class BezierSplatting:
 
         return canvas
 
-    def _render_single_arc(
-        self, arc_params: torch.Tensor, width: torch.Tensor, opacity: torch.Tensor
-    ) -> torch.Tensor:
+    def _render_single_arc(self, arc_params: torch.Tensor, width: torch.Tensor, opacity: torch.Tensor) -> torch.Tensor:
         """
         Render a single circular arc.
 

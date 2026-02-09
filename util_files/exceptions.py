@@ -5,16 +5,19 @@ Custom exceptions for DeepV refinement and merging operations.
 
 class DeepVError(Exception):
     """Base exception class for DeepV operations."""
+
     pass
 
 
 class RefinementError(DeepVError):
     """Base class for refinement-related errors."""
+
     pass
 
 
 class MergingError(DeepVError):
     """Base class for merging-related errors."""
+
     pass
 
 

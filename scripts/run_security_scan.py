@@ -6,9 +6,9 @@ Runs automated security scans on dependencies and provides reports.
 This script helps maintain security hygiene for the DeepV project.
 """
 
+import os
 import subprocess
 import sys
-import os
 from pathlib import Path
 
 

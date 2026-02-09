@@ -3,8 +3,10 @@
 This keeps a stable API under `dataset.downloaders.download()` while reusing
 the current implementations in `dataset_downloaders`.
 """
+
 from pathlib import Path
 from typing import Dict
+
 from . import download_dataset as _dlmod
 
 
@@ -25,14 +27,15 @@ def download(dataset_name: str, output_dir: Path | str = "./data", test: bool = 
         sig = None
         try:
             import inspect
+
             sig = inspect.signature(fn)
         except Exception:
             sig = None
 
-        if sig and 'output_dir' in sig.parameters:
-            kwargs2['output_dir'] = output_dir
-        if sig and 'test_mode' in sig.parameters:
-            kwargs2['test_mode'] = test
+        if sig and "output_dir" in sig.parameters:
+            kwargs2["output_dir"] = output_dir
+        if sig and "test_mode" in sig.parameters:
+            kwargs2["test_mode"] = test
         # forward any other args if accepted
         if sig:
             for k, v in kwargs.items():

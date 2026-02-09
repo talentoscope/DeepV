@@ -1,7 +1,8 @@
 """Processor for SketchGraphs Dataset."""
 
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
 from tqdm import tqdm
 
 from .base import Processor
@@ -41,11 +42,12 @@ class SketchGraphsProcessor(Processor):
             try:
                 # Load the sequence data
                 from sketchgraphs.data import flat_array
+
                 data = flat_array.load_dictionary_flat(str(npy_file))
 
-                sequences = data['sequences']
-                sequence_lengths = data['sequence_lengths']
-                sketch_ids = data['sketch_ids']
+                sequences = data["sequences"]
+                sequence_lengths = data["sequence_lengths"]
+                sketch_ids = data["sketch_ids"]
 
                 print(f"Loaded {len(sequences)} sequences from {split_name}")
 
@@ -73,7 +75,7 @@ class SketchGraphsProcessor(Processor):
 
                             if svg_content and not dry_run:
                                 svg_path = vector_dir / f"{sketch_unique_id}.svg"
-                                with open(svg_path, 'w') as f:
+                                with open(svg_path, "w") as f:
                                     f.write(svg_content)
                                 svg_count += 1
 
@@ -100,6 +102,7 @@ class SketchGraphsProcessor(Processor):
         """Convert a sequence back to a Sketch object."""
         try:
             from sketchgraphs.data.sequence import sketch_from_sequence
+
             sketch = sketch_from_sequence(sequence)
             return sketch
         except Exception as e:
@@ -118,13 +121,13 @@ class SketchGraphsProcessor(Processor):
             for entity in sketch.entities.values():
                 entity_type = type(entity).__name__
 
-                if entity_type == 'Line':
+                if entity_type == "Line":
                     # Line has start_point and end_point
                     start = entity.start_point
                     end = entity.end_point
                     all_points.extend([start, end])
 
-                elif entity_type == 'Circle':
+                elif entity_type == "Circle":
                     # Circle has center and radius
                     center = (entity.xCenter, entity.yCenter)
                     radius = entity.radius
@@ -132,11 +135,11 @@ class SketchGraphsProcessor(Processor):
                     all_points.append((center[0] - radius, center[1] - radius))
                     all_points.append((center[0] + radius, center[1] + radius))
 
-                elif entity_type == 'Point':
+                elif entity_type == "Point":
                     # Point has coordinates (need to check attribute name)
-                    if hasattr(entity, 'x') and hasattr(entity, 'y'):
+                    if hasattr(entity, "x") and hasattr(entity, "y"):
                         all_points.append((entity.x, entity.y))
-                    elif hasattr(entity, 'coordinates'):
+                    elif hasattr(entity, "coordinates"):
                         all_points.append(entity.coordinates)
 
             if not all_points:
@@ -170,12 +173,12 @@ class SketchGraphsProcessor(Processor):
             if not svg_elements:
                 return None
 
-            svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
+            svg_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">
   <rect width="100%" height="100%" fill="white"/>
   {"".join(svg_elements)}
   <text x="10" y="20" font-size="12" fill="black">SketchGraphs {sketch_id}</text>
-</svg>'''
+</svg>"""
 
             return svg_content
 
@@ -188,7 +191,7 @@ class SketchGraphsProcessor(Processor):
         try:
             entity_type = type(entity).__name__
 
-            if entity_type == 'Line':
+            if entity_type == "Line":
                 # Convert line to SVG
                 start = entity.start_point
                 end = entity.end_point
@@ -201,7 +204,7 @@ class SketchGraphsProcessor(Processor):
 
                 return f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="black" stroke-width="2"/>'
 
-            elif entity_type == 'Circle':
+            elif entity_type == "Circle":
                 # Convert circle to SVG
                 cx = (entity.xCenter - offset_x) * scale + svg_width * 0.1
                 cy = svg_height - ((entity.yCenter - offset_y) * scale + svg_height * 0.1)  # Flip Y
@@ -209,12 +212,12 @@ class SketchGraphsProcessor(Processor):
 
                 return f'<circle cx="{cx}" cy="{cy}" r="{r}" stroke="black" stroke-width="2" fill="none"/>'
 
-            elif entity_type == 'Point':
+            elif entity_type == "Point":
                 # Convert point to SVG
-                if hasattr(entity, 'x') and hasattr(entity, 'y'):
+                if hasattr(entity, "x") and hasattr(entity, "y"):
                     px = (entity.x - offset_x) * scale + svg_width * 0.1
                     py = svg_height - ((entity.y - offset_y) * scale + svg_height * 0.1)  # Flip Y
-                elif hasattr(entity, 'coordinates'):
+                elif hasattr(entity, "coordinates"):
                     px = (entity.coordinates[0] - offset_x) * scale + svg_width * 0.1
                     py = svg_height - ((entity.coordinates[1] - offset_y) * scale + svg_height * 0.1)  # Flip Y
                 else:

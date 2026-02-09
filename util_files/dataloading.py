@@ -22,9 +22,7 @@ def make_combined_loaders(
     # prepare datasets
     _handcrafted_datasets = [
         PreprocessedDataset(data_dir)
-        for data_dir in glob(
-            os.path.join(data_root, "preprocessed/synthetic_handcrafted/*")
-        )
+        for data_dir in glob(os.path.join(data_root, "preprocessed/synthetic_handcrafted/*"))
     ]
     handcrafted_train = []
     handcrafted_val = []
@@ -52,12 +50,7 @@ def make_combined_loaders(
     # prepare mini validation set
     if mini_val_batches_n_per_subset is not None:
         mini_valset_size = val_batch_size * mini_val_batches_n_per_subset
-        dataset_val_mini = ConcatDataset(
-            [
-                dataset.slice(0, mini_valset_size)
-                for dataset in handcrafted_val
-            ]
-        )
+        dataset_val_mini = ConcatDataset([dataset.slice(0, mini_valset_size) for dataset in handcrafted_val])
 
         val_mini_loader = DataLoader(dataset_val_mini, batch_size=val_batch_size)
         if prefetch:
@@ -80,25 +73,17 @@ def make_handcrafted_loaders(
     handcrafted_train_paths=None,
     handcrafted_val_paths=None,
 ):
-    assert not (
-        None is handcrafted_val_part
-        and None is handcrafted_train_paths
-        and None is handcrafted_val_paths
-    )
+    assert not (None is handcrafted_val_part and None is handcrafted_train_paths and None is handcrafted_val_paths)
 
     # prepare datasets
     if None is not handcrafted_train_paths and None is not handcrafted_val_paths:
         # ignore handcrafted_val_part and use separate training and validation datasets
         handcrafted_train = [
-            PreprocessedDataset(
-                os.path.join(data_root, "preprocessed/synthetic_handcrafted", path)
-            )
+            PreprocessedDataset(os.path.join(data_root, "preprocessed/synthetic_handcrafted", path))
             for path in handcrafted_train_paths
         ]
         handcrafted_val = [
-            PreprocessedDataset(
-                os.path.join(data_root, "preprocessed/synthetic_handcrafted", path)
-            )
+            PreprocessedDataset(os.path.join(data_root, "preprocessed/synthetic_handcrafted", path))
             for path in handcrafted_val_paths
         ]
     else:
@@ -106,15 +91,11 @@ def make_handcrafted_loaders(
         if None is handcrafted_train_paths:
             _handcrafted_datasets = [
                 PreprocessedDataset(data_dir)
-                for data_dir in glob(
-                    os.path.join(data_root, "preprocessed/synthetic_handcrafted/*")
-                )
+                for data_dir in glob(os.path.join(data_root, "preprocessed/synthetic_handcrafted/*"))
             ]
         else:
             _handcrafted_datasets = [
-                PreprocessedDataset(
-                    os.path.join(data_root, "preprocessed/synthetic_handcrafted", path)
-                )
+                PreprocessedDataset(os.path.join(data_root, "preprocessed/synthetic_handcrafted", path))
                 for path in handcrafted_train_paths
             ]
 
@@ -144,9 +125,7 @@ def make_handcrafted_loaders(
     # prepare mini validation set
     if mini_val_batches_n_per_subset is not None:
         mini_valset_size = val_batch_size * mini_val_batches_n_per_subset
-        dataset_val_mini = ConcatDataset(
-            [dataset.slice(0, mini_valset_size) for dataset in handcrafted_val]
-        )
+        dataset_val_mini = ConcatDataset([dataset.slice(0, mini_valset_size) for dataset in handcrafted_val])
         val_mini_loader = DataLoader(dataset_val_mini, batch_size=val_batch_size)
         if prefetch:
             val_mini_loader = CudaPrefetcher(val_mini_loader, device)
@@ -166,12 +145,8 @@ def make_bezier_loaders(
     mini_val_batches_n_per_subset=None,
 ):
     # prepare datasets
-    bezier_train = PreprocessedDataset(
-        os.path.join(data_root, "quadratic_bezier_only/train")
-    )
-    bezier_val = PreprocessedDataset(
-        os.path.join(data_root, "quadratic_bezier_only/val")
-    )
+    bezier_train = PreprocessedDataset(os.path.join(data_root, "quadratic_bezier_only/train"))
+    bezier_val = PreprocessedDataset(os.path.join(data_root, "quadratic_bezier_only/val"))
 
     #     bezier = PreprocessedDataset(
     #         os.path.join(data_root, 'precision-floorplan.beziers.mini')
@@ -182,10 +157,8 @@ def make_bezier_loaders(
 
     # prepare loaders
     loader_kwargs = {
-        "batch_size":
-            train_batch_size,
-        "memory_constraint":
-            memory_constraint,
+        "batch_size": train_batch_size,
+        "memory_constraint": memory_constraint,
         "shuffle": shuffle_train,
     }
     train_loader = ChunkedDatasetLoader(bezier_train, **loader_kwargs)

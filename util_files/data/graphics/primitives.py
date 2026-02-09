@@ -7,6 +7,7 @@ from scipy.optimize import minimize
 # Try to import svgpathtools, but make it optional for compatibility
 try:
     import svgpathtools
+
     HAS_SVGPATHTOOLS = True
 except ImportError:
     svgpathtools = None

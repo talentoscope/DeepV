@@ -8,7 +8,11 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from refinement.our_refinement.optimization_classes import BatchProcessor, OptimizationLoop
+from analysis.tracing import Tracer
+from refinement.our_refinement.optimization_classes import (
+    BatchProcessor,
+    OptimizationLoop,
+)
 from refinement.our_refinement.utils.lines_refinement_functions import (
     NonanAdam,
     collapse_redundant_lines,
@@ -24,15 +28,14 @@ from refinement.our_refinement.utils.lines_refinement_functions import (
     snap_lines,
     w,
 )
-from util_files.structured_logging import get_pipeline_logger
 from util_files.metrics.iou import calc_iou__vect_image
 from util_files.structured_logging import get_pipeline_logger
-from analysis.tracing import Tracer
 
 # Load refinement config
 try:
     from omegaconf import OmegaConf
-    refinement_config = OmegaConf.load(os.path.join(os.path.dirname(__file__), '../../config/refinement/default.yaml'))
+
+    refinement_config = OmegaConf.load(os.path.join(os.path.dirname(__file__), "../../config/refinement/default.yaml"))
 except:
     # Fallback
     class FallbackConfig:
@@ -49,6 +52,7 @@ except:
         reinit_interval = 20
         logging_interval = 20
         snap_interval = 20
+
     refinement_config = FallbackConfig()
 
 
@@ -66,11 +70,7 @@ def register_sigint_flag(flag_list: List[bool]) -> None:
 
 
 def render_optimization_hard(
-    patches_rgb: np.ndarray,
-    patches_vector: torch.Tensor,
-    device: torch.device,
-    options: Any,
-    name: str
+    patches_rgb: np.ndarray, patches_vector: torch.Tensor, device: torch.device, options: Any, name: str
 ) -> torch.Tensor:
     """
     Perform differentiable optimization to refine vector primitives for better raster matching.
@@ -109,12 +109,16 @@ def render_optimization_hard(
         y_pred_rend = torch.zeros((patches_vector.shape[0], patches_vector.shape[1], patches_vector.shape[2] - 1))
         patches_rgb = 1 - torch.tensor(patches_rgb).squeeze(3).unsqueeze(1) / 255.0
 
-        logger.info(f"Starting refinement optimization for dataset '{name}'",
-                   extra={"dataset": name, "num_patches": patches_vector.shape[0],
-                         "primitives_per_patch": patches_vector.shape[1]})
+        logger.info(
+            f"Starting refinement optimization for dataset '{name}'",
+            extra={
+                "dataset": name,
+                "num_patches": patches_vector.shape[0],
+                "primitives_per_patch": patches_vector.shape[1],
+            },
+        )
 
-        logger.info(f"Random initialization: {options.init_random}",
-                   extra={"init_random": options.init_random})
+        logger.info(f"Random initialization: {options.init_random}", extra={"init_random": options.init_random})
 
         if options.init_random:
             logger.info("Initializing with random vectors")
@@ -130,8 +134,10 @@ def render_optimization_hard(
         mass_for_iou = None
         total_batches = (patches_vector.shape[0] + refinement_config.batch_size - 1) // refinement_config.batch_size
 
-        logger.info(f"Processing {total_batches} batches of size {refinement_config.batch_size}",
-                   extra={"total_batches": total_batches, "batch_size": refinement_config.batch_size})
+        logger.info(
+            f"Processing {total_batches} batches of size {refinement_config.batch_size}",
+            extra={"total_batches": total_batches, "batch_size": refinement_config.batch_size},
+        )
 
         for batch_idx, batch_start in enumerate(range(0, patches_vector.shape[0], refinement_config.batch_size)):
             batch_end = min(batch_start + refinement_config.batch_size, patches_vector.shape[0])
@@ -162,10 +168,16 @@ def render_optimization_hard(
             initial_vector = initial_vector[..., :5].numpy()
 
             # Initialize tracer for this batch/image if enabled
-            tracer = Tracer(enabled=getattr(options, "trace", False), base_dir=getattr(options, "trace_dir", "output/traces"), image_id=name)
+            tracer = Tracer(
+                enabled=getattr(options, "trace", False),
+                base_dir=getattr(options, "trace_dir", "output/traces"),
+                image_id=name,
+            )
 
             # Initialize optimization loop
-            opt_loop = OptimizationLoop(rasters_batch, initial_vector, device, options.rendering_type, batch_logger, tracer=tracer)
+            opt_loop = OptimizationLoop(
+                rasters_batch, initial_vector, device, options.rendering_type, batch_logger, tracer=tracer
+            )
 
             # Register signal handler for graceful interruption
             its_time_to_stop = [False]
@@ -187,16 +199,16 @@ def render_optimization_hard(
                     opt_loop.log_progress(i, patches_rgb_im, batch_indices, iou_mass, mass_for_iou_one)
 
                     # Check for early stopping based on IOU convergence
-                    if (i >= min_iterations and 
-                        (i + 1) % refinement_config.logging_interval == 0 and 
-                        len(iou_mass) >= 3):
+                    if i >= min_iterations and (i + 1) % refinement_config.logging_interval == 0 and len(iou_mass) >= 3:
                         # Check if IOU improvement over last 3 measurements is minimal
                         recent_iou = iou_mass[-3:]
-                        improvements = [recent_iou[j+1] - recent_iou[j] for j in range(len(recent_iou)-1)]
+                        improvements = [recent_iou[j + 1] - recent_iou[j] for j in range(len(recent_iou) - 1)]
                         avg_improvement = sum(improvements) / len(improvements) if improvements else 0
-                        
+
                         if avg_improvement < early_stop_threshold:
-                            batch_logger.info(f"Early stopping at iteration {i+1}: IOU improvement {avg_improvement:.6f} < {early_stop_threshold}")
+                            batch_logger.info(
+                                f"Early stopping at iteration {i+1}: IOU improvement {avg_improvement:.6f} < {early_stop_threshold}"
+                            )
                             break
 
             # Store results
@@ -205,7 +217,7 @@ def render_optimization_hard(
 
             # Save per-primitive history if tracer enabled
             try:
-                if tracer is not None and getattr(tracer, 'enabled', False):
+                if tracer is not None and getattr(tracer, "enabled", False):
                     hist = opt_loop.get_history()
                     if hist is not None:
                         tracer.save_primitive_history(hist)
@@ -246,18 +258,21 @@ def render_optimization_hard(
                 metrics_dict["final_iou_max"] = float(np.max(iou_all))
                 metrics_dict["final_iou_min"] = float(np.min(iou_all))
                 metrics_dict["refinement_iterations"] = int(options.diff_render_it)
-            if tracer is not None and getattr(tracer, 'enabled', False):
+            if tracer is not None and getattr(tracer, "enabled", False):
                 tracer.save_metrics(metrics_dict)
         except Exception:
             pass
 
         logger.log_pipeline_step("refinement", "completed", module="lines", dataset=name)
-        logger.log_performance("refinement", {
-            "total_patches": patches_vector.shape[0],
-            "primitives_per_patch": patches_vector.shape[1],
-            "iterations_per_patch": options.diff_render_it,
-            "final_iou_mean": float(np.mean(iou_all)) if iou_all is not None else None
-        })
+        logger.log_performance(
+            "refinement",
+            {
+                "total_patches": patches_vector.shape[0],
+                "primitives_per_patch": patches_vector.shape[1],
+                "iterations_per_patch": options.diff_render_it,
+                "final_iou_mean": float(np.mean(iou_all)) if iou_all is not None else None,
+            },
+        )
 
     return y_pred_rend
 

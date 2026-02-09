@@ -5,18 +5,20 @@ Generate an HTML report from trace artifacts.
 Reads output/traces/<image_id>/ and produces an interactive HTML report
 with metrics, thumbnails, and links to detailed outputs.
 """
+
 import json
 import os
+import sys
 from pathlib import Path
+
 import numpy as np
 from PIL import Image
-import sys
 
 # ensure scripts/ is on sys.path so we can import local helpers
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
-from report_utils import select_patch_ids, make_patch_composite
+from report_utils import make_patch_composite, select_patch_ids
 
 
 def load_json_safe(path):
@@ -33,13 +35,13 @@ def get_patch_thumbnails(trace_dir, max_count=4):
     patches_dir = trace_dir / "patches"
     if not patches_dir.exists():
         return []
-    
+
     thumbnails = []
     for patch_dir in sorted(patches_dir.iterdir())[:max_count]:
         patch_file = patch_dir / "patch.png"
         if patch_file.exists():
             # Return relative path for embedding relative to the trace_dir
-            rel_path = str(patch_file.relative_to(trace_dir)).replace('\\','/')
+            rel_path = str(patch_file.relative_to(trace_dir)).replace("\\", "/")
             thumbnails.append((patch_dir.name, rel_path))
     return thumbnails
 
@@ -49,30 +51,30 @@ def get_iteration_thumbnails(trace_dir, max_count=3):
     iters_dir = trace_dir / "iterations"
     if not iters_dir.exists():
         return []
-    
+
     renders = []
     for render_file in sorted(iters_dir.glob("render_*.png"))[:max_count]:
-        rel_path = str(render_file.relative_to(trace_dir)).replace('\\','/')
+        rel_path = str(render_file.relative_to(trace_dir)).replace("\\", "/")
         renders.append((render_file.stem, rel_path))
     return renders
 
 
 def generate_html_report(trace_dir, output_file=None):
     """Generate HTML report from trace directory.
-    
+
     Args:
         trace_dir: Path to trace directory (e.g., output/traces/image_001)
         output_file: Where to write HTML (default: trace_dir/report.html)
-    
+
     Returns:
         HTML string
     """
     trace_dir = Path(trace_dir)
     image_id = trace_dir.name
-    
+
     if output_file is None:
         output_file = trace_dir / "report.html"
-    
+
     # Load all metadata
     determinism = load_json_safe(trace_dir / "determinism.json")
     metrics = load_json_safe(trace_dir / "metrics.json")
@@ -80,15 +82,15 @@ def generate_html_report(trace_dir, output_file=None):
     post_refinement = load_json_safe(trace_dir / "post_refinement.json")
     merge_trace = load_json_safe(trace_dir / "merge_trace.json")
     provenance = load_json_safe(trace_dir / "provenance.json")
-    
+
     # Collect artifacts
     patch_thumbs = get_patch_thumbnails(trace_dir)
     iter_thumbs = get_iteration_thumbnails(trace_dir)
-    
+
     # Count iterations
     iters_dir = trace_dir / "iterations"
     num_iterations = len(list(iters_dir.glob("meta_*.json"))) if iters_dir.exists() else 0
-    
+
     # Check for history
     has_history = (trace_dir / "primitive_history.npz").exists()
 
@@ -116,9 +118,9 @@ def generate_html_report(trace_dir, output_file=None):
             rel = out_img.relative_to(trace_dir)
         except Exception:
             rel = out_img
-        rel = str(rel).replace('\\','/')
+        rel = str(rel).replace("\\", "/")
         patch_metrics.append((pid, rel, metrics_p))
-    
+
     # Build HTML (header and metadata)
     html = f"""
     <html>
@@ -152,13 +154,13 @@ def generate_html_report(trace_dir, output_file=None):
                 <th>Value</th>
             </tr>
     """
-    
+
     for key, value in sorted(metrics.items()):
         if isinstance(value, float):
             html += f"<tr><td>{key}</td><td>{value:.6f}</td></tr>\n"
         else:
             html += f"<tr><td>{key}</td><td>{value}</td></tr>\n"
-    
+
     html += """
         </table>
         
@@ -167,7 +169,7 @@ def generate_html_report(trace_dir, output_file=None):
     """
     html += f"<strong>Total Iterations:</strong> {num_iterations}<br>\n"
     html += f"<strong>Primitive History Saved:</strong> {'Yes' if has_history else 'No'}<br>\n"
-    
+
     html += """
         </div>
         
@@ -176,7 +178,7 @@ def generate_html_report(trace_dir, output_file=None):
     """
     html += f"<strong>Pre-Merge Lines:</strong> {provenance.get('pre_merge_count', 'N/A')}<br>\n"
     html += f"<strong>Post-Merge Lines:</strong> {provenance.get('post_merge_count', 'N/A')}<br>\n"
-    
+
     html += """
         </div>
         
@@ -185,11 +187,11 @@ def generate_html_report(trace_dir, output_file=None):
         <div>
     """
     for pid, rel_path, metrics_p in patch_metrics:
-        rel_str = str(rel_path).replace('\\','/')
+        rel_str = str(rel_path).replace("\\", "/")
         html += f'<div style="display:inline-block; margin:8px;">'
         html += f'<img src="{rel_str}" class="thumbnail" alt="patch_{pid}" title="patch_{pid}">'
         html += f'<div style="font-size:12px;">Patch {pid}: IOU model={metrics_p["iou_model"]:.3f}, IOU final={metrics_p["iou_final"]:.3f}</div>'
-        html += '</div>\n'
+        html += "</div>\n"
 
     html += """
         </div>
@@ -199,7 +201,7 @@ def generate_html_report(trace_dir, output_file=None):
     """
     for patch_id, rel_path in patch_thumbs:
         html += f'<img src="{rel_path}" class="thumbnail" alt="Patch {patch_id}" title="Patch {patch_id}">\n'
-    
+
     html += """
         </div>
         
@@ -208,18 +210,18 @@ def generate_html_report(trace_dir, output_file=None):
     """
     for iter_name, rel_path in iter_thumbs:
         html += f'<img src="{rel_path}" class="thumbnail" alt="{iter_name}" title="{iter_name}">\n'
-    
+
     html += """
         </div>
         
         <h2>Trace Files</h2>
         <ul>
     """
-    
+
     # List all JSON files in trace
     for json_file in sorted(trace_dir.glob("*.json")):
-        html += f"<li><a href=\"{json_file.name}\">{json_file.name}</a></li>\n"
-    
+        html += f'<li><a href="{json_file.name}">{json_file.name}</a></li>\n'
+
     html += """
         </ul>
         
@@ -228,11 +230,11 @@ def generate_html_report(trace_dir, output_file=None):
     </body>
     </html>
     """.format(trace_dir)
-    
+
     # Write report
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(html)
-    
+
     print(f"Report written to {output_file}")
     return html
 
@@ -240,11 +242,11 @@ def generate_html_report(trace_dir, output_file=None):
 def main():
     """Generate reports for all trace directories."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Generate HTML trace reports")
     parser.add_argument("--trace_dir", type=str, default="output/traces", help="Base traces directory")
     args = parser.parse_args()
-    
+
     trace_base = Path(args.trace_dir)
     if not trace_base.exists():
         print(f"Trace directory {trace_base} does not exist")

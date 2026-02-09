@@ -1,8 +1,10 @@
+from typing import Any, Tuple
+
 import numpy as np
 import torch
-from typing import Tuple, Any
 from rtree import index
 
+from analysis.tracing import Tracer
 from merging.utils.merging_functions import (
     lines_matching,
     maximiz_final_iou,
@@ -11,7 +13,6 @@ from merging.utils.merging_functions import (
     save_svg,
     tensor_vector_graph_numpy,
 )
-from analysis.tracing import Tracer
 
 
 def postprocess(
@@ -20,7 +21,7 @@ def postprocess(
     input_rgb: np.ndarray,
     cleaned_image: np.ndarray,
     it: int,
-    options: Any
+    options: Any,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Postprocess refined vector predictions by merging overlapping lines and optimizing final output.
@@ -47,7 +48,11 @@ def postprocess(
     nump = tensor_vector_graph_numpy(y_pred_render, patches_offsets, options)
 
     # Initialize tracer for merging if enabled
-    tracer = Tracer(enabled=getattr(options, "trace", False), base_dir=getattr(options, "trace_dir", "output/traces"), image_id=options.image_name[it])
+    tracer = Tracer(
+        enabled=getattr(options, "trace", False),
+        base_dir=getattr(options, "trace_dir", "output/traces"),
+        image_id=options.image_name[it],
+    )
 
     lines = nump.copy()
     lines = np.array(lines)
@@ -84,7 +89,7 @@ def postprocess(
             metrics_dict = {
                 "pre_merge_lines": int(len(nump)),
                 "post_merge_lines": int(len(result_tuning)),
-                "merge_compression_ratio": float(len(result_tuning) / max(len(nump), 1))
+                "merge_compression_ratio": float(len(result_tuning) / max(len(nump), 1)),
             }
             tracer.save_metrics(metrics_dict)
     except Exception:

@@ -21,11 +21,13 @@ class TestRefinementIntegration(unittest.TestCase):
         """Test that all refactored classes can be imported."""
         try:
             from refinement.our_refinement.optimization_classes import (
-                LineOptimizationState,
                 BatchProcessor,
+                LineOptimizationState,
                 OptimizationLoop,
             )
-            from refinement.our_refinement.refinement_for_lines import render_optimization_hard
+            from refinement.our_refinement.refinement_for_lines import (
+                render_optimization_hard,
+            )
         except ImportError as e:
             self.fail(f"Import failed: {e}")
 
@@ -40,11 +42,11 @@ class TestRefinementIntegration(unittest.TestCase):
         opt_state = LineOptimizationState(lines_batch, device)
 
         # Check basic attributes exist
-        self.assertTrue(hasattr(opt_state, 'cx'))
-        self.assertTrue(hasattr(opt_state, 'cy'))
-        self.assertTrue(hasattr(opt_state, 'theta'))
-        self.assertTrue(hasattr(opt_state, 'length'))
-        self.assertTrue(hasattr(opt_state, 'width'))
+        self.assertTrue(hasattr(opt_state, "cx"))
+        self.assertTrue(hasattr(opt_state, "cy"))
+        self.assertTrue(hasattr(opt_state, "theta"))
+        self.assertTrue(hasattr(opt_state, "length"))
+        self.assertTrue(hasattr(opt_state, "width"))
 
         # Test conversion back
         reconstructed = opt_state.get_lines_batch()
@@ -65,7 +67,9 @@ class TestRefinementIntegration(unittest.TestCase):
 
     def test_render_optimization_hard_exists(self):
         """Test that render_optimization_hard function exists."""
-        from refinement.our_refinement.refinement_for_lines import render_optimization_hard
+        from refinement.our_refinement.refinement_for_lines import (
+            render_optimization_hard,
+        )
 
         self.assertTrue(callable(render_optimization_hard))
 
@@ -75,11 +79,11 @@ class TestRefinementIntegration(unittest.TestCase):
 
         # Test compilation
         try:
-            py_compile.compile('refinement/our_refinement/optimization_classes.py', doraise=True)
-            py_compile.compile('refinement/our_refinement/refinement_for_lines.py', doraise=True)
+            py_compile.compile("refinement/our_refinement/optimization_classes.py", doraise=True)
+            py_compile.compile("refinement/our_refinement/refinement_for_lines.py", doraise=True)
         except py_compile.PyCompileError as e:
             self.fail(f"Compilation failed: {e}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

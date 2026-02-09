@@ -314,9 +314,18 @@ def variable_vectran_loss(y_pred, y_true, mask=None, l2_weight=0.5, bce_weight=0
         raise ValueError(f"Unknown reduction: {reduction}")
 
 
-def non_autoregressive_vectran_loss(y_pred, count_pred, y_true, count_true, mask=None, 
-                                   l2_weight=0.5, bce_weight=0.5, count_weight=0.1, 
-                                   reduction="mean", **kwargs):
+def non_autoregressive_vectran_loss(
+    y_pred,
+    count_pred,
+    y_true,
+    count_true,
+    mask=None,
+    l2_weight=0.5,
+    bce_weight=0.5,
+    count_weight=0.1,
+    reduction="mean",
+    **kwargs,
+):
     """
     Loss function for non-autoregressive transformer decoder with count prediction.
 
@@ -336,7 +345,7 @@ def non_autoregressive_vectran_loss(y_pred, count_pred, y_true, count_true, mask
         batch_size, max_primitives = y_true.shape[:2]
         mask = torch.zeros(batch_size, max_primitives, device=y_true.device)
         for b in range(batch_size):
-            mask[b, :count_true[b]] = 1
+            mask[b, : count_true[b]] = 1
 
     # Primitive prediction loss (same as variable_vectran_loss)
     l1 = torch.nn.L1Loss(reduction="none")

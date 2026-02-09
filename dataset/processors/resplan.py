@@ -2,7 +2,7 @@
 
 import pickle
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 from .base import Processor
 
@@ -53,12 +53,13 @@ class ResPlanProcessor(Processor):
                         # Render PNG from SVG
                         try:
                             import cairosvg
+
                             png_path = raster_dir / f"{plan_id}.png"
                             cairosvg.svg2png(
-                                bytestring=svg_content.encode('utf-8'),
+                                bytestring=svg_content.encode("utf-8"),
                                 write_to=str(png_path),
                                 output_width=1000,
-                                output_height=1000
+                                output_height=1000,
                             )
                             png_count += 1
                         except Exception as e:
@@ -81,7 +82,7 @@ class ResPlanProcessor(Processor):
     def _create_svg_from_resplan(self, plan: Dict, plan_id: str) -> str:
         """Create SVG from ResPlan Shapely geometry data."""
         try:
-            from shapely.geometry import Polygon, MultiPolygon
+            from shapely.geometry import MultiPolygon, Polygon
 
             svg_elements = []
             width, height = 1000, 800

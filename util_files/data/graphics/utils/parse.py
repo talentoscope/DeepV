@@ -5,9 +5,7 @@ from util_files.data.graphics import units
 
 
 def throw_transparency_warning(attributes=""):
-    warnings.warn(
-        "Transparency is ignored. {}".format(attributes), warnings.UndefinedWarning
-    )
+    warnings.warn("Transparency is ignored. {}".format(attributes), warnings.UndefinedWarning)
 
 
 def fill(attributes):

@@ -2,7 +2,8 @@
 
 import pickle
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
 from tqdm import tqdm
 
 from .base import Processor
@@ -33,12 +34,14 @@ class MSDProcessor(Processor):
             pickle_files = list(graph_out_dir.glob("*.pickle"))
             print(f"Found {len(pickle_files)} graph_out pickle files")
 
-            for pickle_file in tqdm(pickle_files[:10] if dry_run else pickle_files[:10000], desc="Processing MSD graphs"):  # Limit to 10,000
+            for pickle_file in tqdm(
+                pickle_files[:10] if dry_run else pickle_files[:10000], desc="Processing MSD graphs"
+            ):  # Limit to 10,000
                 plan_id = pickle_file.stem  # e.g., "0", "1", etc.
 
                 try:
                     # Load NetworkX graph with room geometries
-                    with open(pickle_file, 'rb') as f:
+                    with open(pickle_file, "rb") as f:
                         graph = pickle.load(f)
 
                     # Create SVG from graph geometries
@@ -46,7 +49,7 @@ class MSDProcessor(Processor):
 
                     if svg_content and not dry_run:
                         svg_path = vector_dir / f"{plan_id}.svg"
-                        with open(svg_path, 'w') as f:
+                        with open(svg_path, "w") as f:
                             f.write(svg_content)
                         svg_count += 1
 
@@ -71,7 +74,7 @@ class MSDProcessor(Processor):
 
                     if png_content and not dry_run:
                         png_path = raster_dir / f"{plan_id}.png"
-                        with open(png_path, 'wb') as f:
+                        with open(png_path, "wb") as f:
                             f.write(png_content)
                         png_count += 1
 
@@ -99,33 +102,33 @@ class MSDProcessor(Processor):
 
             # Room type colors
             room_colors = {
-                'Bedroom': '#FF6B6B',
-                'Livingroom': '#4ECDC4',
-                'Kitchen': '#45B7D1',
-                'Dining': '#FFA07A',
-                'Corridor': '#98D8C8',
-                'Stairs': '#F7DC6F',
-                'Storeroom': '#BB8FCE',
-                'Bathroom': '#85C1E9',
-                'Balcony': '#F8C471',
-                'Structure': '#34495E',
+                "Bedroom": "#FF6B6B",
+                "Livingroom": "#4ECDC4",
+                "Kitchen": "#45B7D1",
+                "Dining": "#FFA07A",
+                "Corridor": "#98D8C8",
+                "Stairs": "#F7DC6F",
+                "Storeroom": "#BB8FCE",
+                "Bathroom": "#85C1E9",
+                "Balcony": "#F8C471",
+                "Structure": "#34495E",
             }
 
-            bounds_min_x, bounds_min_y = float('inf'), float('inf')
-            bounds_max_x, bounds_max_y = float('-inf'), float('-inf')
+            bounds_min_x, bounds_min_y = float("inf"), float("inf")
+            bounds_max_x, bounds_max_y = float("-inf"), float("-inf")
 
             # First pass: collect all bounds
             for node_id, node_data in graph.nodes(data=True):
-                if 'geometry' in node_data:
-                    geom = node_data['geometry']
-                    if hasattr(geom, 'bounds'):
+                if "geometry" in node_data:
+                    geom = node_data["geometry"]
+                    if hasattr(geom, "bounds"):
                         minx, miny, maxx, maxy = geom.bounds
                         bounds_min_x = min(bounds_min_x, minx)
                         bounds_min_y = min(bounds_min_y, miny)
                         bounds_max_x = max(bounds_max_x, maxx)
                         bounds_max_y = max(bounds_max_y, maxy)
 
-            if bounds_min_x == float('inf'):
+            if bounds_min_x == float("inf"):
                 return None  # No valid geometries
 
             # Calculate scaling
@@ -135,13 +138,13 @@ class MSDProcessor(Processor):
 
             # Second pass: create SVG elements
             for node_id, node_data in graph.nodes(data=True):
-                if 'geometry' in node_data and 'roomtype' in node_data:
-                    geom = node_data['geometry']
-                    room_type = node_data['roomtype']
+                if "geometry" in node_data and "roomtype" in node_data:
+                    geom = node_data["geometry"]
+                    room_type = node_data["roomtype"]
 
-                    color = room_colors.get(room_type, '#95A5A6')  # Default gray
+                    color = room_colors.get(room_type, "#95A5A6")  # Default gray
 
-                    if hasattr(geom, 'exterior'):
+                    if hasattr(geom, "exterior"):
                         # It's a Polygon
                         exterior = geom.exterior
                         coords = list(exterior.coords)
@@ -155,9 +158,7 @@ class MSDProcessor(Processor):
 
                         if scaled_coords:
                             path_data = (
-                                f"M {scaled_coords[0]} " +
-                                " ".join(f"L {coord}" for coord in scaled_coords[1:]) +
-                                " Z"
+                                f"M {scaled_coords[0]} " + " ".join(f"L {coord}" for coord in scaled_coords[1:]) + " Z"
                             )
                             svg_elements.append(
                                 f'<path d="{path_data}" fill="{color}" '
@@ -182,7 +183,7 @@ class MSDProcessor(Processor):
                 '  <rect width="100%" height="100%" fill="white"/>\n'
                 f'  {"".join(svg_elements)}\n'
                 f'  <text x="10" y="20" font-size="12" fill="black">MSD Plan {plan_id}</text>\n'
-                '</svg>'
+                "</svg>"
             )
 
             return svg_content
@@ -211,8 +212,9 @@ class MSDProcessor(Processor):
             # Create PIL Image and save to bytes
             img = Image.fromarray(rgb_image)
             from io import BytesIO
+
             buffer = BytesIO()
-            img.save(buffer, format='PNG')
+            img.save(buffer, format="PNG")
             return buffer.getvalue()
 
         except Exception as e:

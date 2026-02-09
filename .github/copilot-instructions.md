@@ -25,7 +25,6 @@ Short, actionable guidance to get an AI coding agent productive quickly in this 
 
 ## Where to start (quick links)
 - Full pipeline runner: [run_pipeline.py](run_pipeline.py) (argparse) or [run_pipeline_hydra.py](run_pipeline_hydra.py) (Hydra config)
- - Full pipeline runner: [run_pipeline.py](run_pipeline.py) (argparse) or [run_pipeline_hydra.py](run_pipeline_hydra.py) (Hydra config)
 - Unified pipeline: [pipeline_unified.py](pipeline_unified.py)
 - Cleaning entrypoint: [cleaning/scripts/main_cleaning.py](cleaning/scripts/main_cleaning.py)
 - Web demo: [run_web_ui_demo.py](run_web_ui_demo.py) and [web_ui/](web_ui/) (⚠️ has deployment issues with Gradio/conda)

@@ -9,15 +9,16 @@ import argparse
 import json
 import os
 import sys
-from pathlib import Path
-from typing import Dict, List, Any, Tuple
 import time
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from evaluation_suite import BenchmarkEvaluator
+
 from util_files.file_utils import ensure_dir
 
 
@@ -27,9 +28,7 @@ class DatasetLoader:
     def __init__(self, data_root: str):
         self.data_root = Path(data_root)
 
-    def load_dataset(
-        self, dataset_name: str, split: str = "test"
-    ) -> List[Tuple[str, Dict]]:
+    def load_dataset(self, dataset_name: str, split: str = "test") -> List[Tuple[str, Dict]]:
         """
         Load dataset samples from a generic dataset directory.
 
@@ -122,25 +121,16 @@ class BenchmarkRunner:
                 if model_path and os.path.exists(model_path):
                     models[model_name] = self.model_loader.load_deepv_model(model_path)
                 else:
-                    print(
-                        f"Warning: No DeepV model path provided or model not found, "
-                        f"skipping {model_name}"
-                    )
+                    print(f"Warning: No DeepV model path provided or model not found, " f"skipping {model_name}")
             else:
                 try:
                     model = self.model_loader.load_baseline_model(model_name)
                     if model is not None:
                         models[model_name] = model
                     else:
-                        print(
-                            f"Warning: Could not load baseline model {model_name}, "
-                            f"skipping"
-                        )
+                        print(f"Warning: Could not load baseline model {model_name}, " f"skipping")
                 except Exception as e:
-                    print(
-                        f"Warning: Failed to load baseline model {model_name}: {e}, "
-                        f"skipping"
-                    )
+                    print(f"Warning: Failed to load baseline model {model_name}: {e}, " f"skipping")
 
         # If no models loaded, provide mock prediction function for testing
         if not models:
@@ -190,9 +180,7 @@ class BenchmarkRunner:
         results = benchmark_evaluator.benchmark_models(
             models=models,
             datasets=datasets,
-            prediction_func=self._mock_prediction_func
-            if not any(models.values())
-            else None,
+            prediction_func=self._mock_prediction_func if not any(models.values()) else None,
         )
 
         # Save results
@@ -292,8 +280,17 @@ class BenchmarkRunner:
                         # Highlight DeepV results
                         if model_name == "deepv_current":
                             f.write(
-                                "| **" + model_name + "** | **" + f1 + "** | **" + iou +
-                                "** | **" + hd + "** | **" + cd + "** |\n"
+                                "| **"
+                                + model_name
+                                + "** | **"
+                                + f1
+                                + "** | **"
+                                + iou
+                                + "** | **"
+                                + hd
+                                + "** | **"
+                                + cd
+                                + "** |\n"
                             )
                         else:
                             f.write(f"| {model_name} | {f1} | {iou} | {hd} | {cd} |\n")
@@ -307,10 +304,7 @@ class BenchmarkRunner:
             f.write(f"- Datasets: {', '.join(self.benchmark_config['datasets'])}\n")
             f.write(f"- Models: {', '.join(self.benchmark_config['models'])}\n")
             f.write(f"- Metrics: {', '.join(self.benchmark_config['metrics'])}\n")
-            f.write(
-                "- Raster Resolution: " +
-                f"{self.benchmark_config.get('raster_resolution', [256, 256])}\n"
-            )
+            f.write("- Raster Resolution: " + f"{self.benchmark_config.get('raster_resolution', [256, 256])}\n")
 
         print(f"Summary report generated: {report_file}")
 
@@ -361,9 +355,7 @@ def create_synthetic_dataset_generator():
                     ensure_dir(subset_dir)
 
                     # Generate samples for this subset
-                    subset_samples = n_samples // (
-                        len(complexity_levels) * len(primitive_types)
-                    )
+                    subset_samples = n_samples // (len(complexity_levels) * len(primitive_types))
 
                     for i in range(subset_samples):
                         # TODO: Generate actual SVG content
@@ -379,8 +371,7 @@ def create_synthetic_dataset_generator():
         def _generate_svg_sample(self, complexity: str, primitive_type: str) -> str:
             """Generate a single SVG sample."""
             # TODO: Implement actual SVG generation
-            return f"<svg><text>Synthetic {complexity} {primitive_type} " \
-                   f"sample</text></svg>"
+            return f"<svg><text>Synthetic {complexity} {primitive_type} " f"sample</text></svg>"
 
     return SyntheticDatasetGenerator()
 
@@ -388,9 +379,7 @@ def create_synthetic_dataset_generator():
 def main():
     """Main benchmarking script."""
     parser = argparse.ArgumentParser(description="DeepV Benchmarking Pipeline")
-    parser.add_argument(
-        "--data-root", required=True, help="Root directory containing datasets"
-    )
+    parser.add_argument("--data-root", required=True, help="Root directory containing datasets")
     parser.add_argument("--deepv-model-path", help="Path to trained DeepV model")
     parser.add_argument(
         "--output-dir",
@@ -404,9 +393,7 @@ def main():
         choices=["synthetic"],
         help="Datasets to benchmark on",
     )
-    parser.add_argument(
-        "--models", nargs="+", default=["deepv_current"], help="Models to benchmark"
-    )
+    parser.add_argument("--models", nargs="+", default=["deepv_current"], help="Models to benchmark")
     parser.add_argument(
         "--generate-synthetic",
         action="store_true",
@@ -434,9 +421,7 @@ def main():
     if args.generate_synthetic:
         print("Generating synthetic dataset...")
         synthetic_generator = create_synthetic_dataset_generator()
-        synthetic_path = synthetic_generator.generate_dataset(
-            n_samples=args.synthetic_samples
-        )
+        synthetic_path = synthetic_generator.generate_dataset(n_samples=args.synthetic_samples)
         print(f"Synthetic dataset generated: {synthetic_path}")
 
     # Run benchmark

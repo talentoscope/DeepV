@@ -67,9 +67,7 @@ def split_to_patches(rgb, patch_size, overlap=0):
     height, width, channels = rgb.shape
 
     assert patch_size > 0 and 0 <= overlap < patch_size
-    patches = patchify(
-        rgb, patch_size=(patch_size, patch_size, channels), step=patch_size - overlap
-    )
+    patches = patchify(rgb, patch_size=(patch_size, patch_size, channels), step=patch_size - overlap)
     patches = patches.reshape((-1, patch_size, patch_size, channels))
     height_offsets = np.arange(0, height - patch_size, step=patch_size - overlap)
     width_offsets = np.arange(0, width - patch_size, step=patch_size - overlap)

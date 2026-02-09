@@ -5,17 +5,19 @@ Test script to demonstrate vector-to-raster conversion using the DeepV rendering
 
 import os
 import sys
-import numpy as np
-from pathlib import Path
 import xml.etree.ElementTree as ET
+from pathlib import Path
+
+import numpy as np
 import svgpathtools
 from PIL import Image
 
 # Add the project root to the path
 sys.path.append(str(Path(__file__).parent))
 
+from util_files.data.graphics_primitives import PT_CBEZIER, PT_LINE, PT_QBEZIER
 from util_files.rendering.cairo import render
-from util_files.data.graphics_primitives import PT_LINE, PT_CBEZIER, PT_QBEZIER
+
 
 def parse_svg_to_primitives(svg_path):
     """Parse SVG file and extract geometric primitives."""

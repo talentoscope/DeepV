@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append(".")  # Add current directory to path for local imports
 
 import argparse
@@ -10,13 +11,13 @@ import torch
 from PIL import Image
 from torchvision import transforms
 
+from analysis.tracing import Tracer
 from merging.merging_for_curves import main as curve_merging
 from merging.merging_for_lines import postprocess
 from refinement.our_refinement.refinement_for_curves import main as curve_refinement
 from refinement.our_refinement.refinement_for_lines import render_optimization_hard
 from util_files.patchify import patchify
 from vectorization import load_model
-from analysis.tracing import Tracer
 
 
 def serialize(checkpoint):
@@ -134,10 +135,10 @@ def vector_estimation(patches_rgb, model, device, it, options):
             it_batches = patch_images.shape[0]
         with torch.no_grad():
             # Check if model supports variable length output
-            if hasattr(model.hidden, 'max_primitives'):
+            if hasattr(model.hidden, "max_primitives"):
                 # Variable length model - no need for model_output_count
                 model_output = model(patch_images[it_start:it_batches].to(device).float())
-                
+
                 # Handle different model output formats
                 if isinstance(model_output, tuple):
                     # Non-autoregressive model returns (predictions, counts)
@@ -148,10 +149,12 @@ def vector_estimation(patches_rgb, model, device, it, options):
                     batch_output = model_output.detach().cpu().numpy()
             else:
                 # Fixed length model - use model_output_count
-                batch_output = model(
-                    patch_images[it_start:it_batches].to(device).float(),
-                    options.model_output_count
-                ).detach().cpu().numpy()
+                batch_output = (
+                    model(patch_images[it_start:it_batches].to(device).float(), options.model_output_count)
+                    .detach()
+                    .cpu()
+                    .numpy()
+                )
 
             if it_start == 0:
                 patches_vector = batch_output
@@ -227,7 +230,7 @@ class PipelineRunner:
             base_dir=getattr(self.options, "trace_dir", "output/traces"),
             image_id=self.options.image_name[image_index],
             seed=seed if trace_enabled else None,
-            device=str(self.device)
+            device=str(self.device),
         )
 
         # Save per-patch images for inspection
@@ -244,7 +247,11 @@ class PipelineRunner:
 
         # Save raw model outputs per-patch (compact)
         try:
-            patches_vector_np = patches_vector.detach().cpu().numpy() if hasattr(patches_vector, 'detach') else np.asarray(patches_vector)
+            patches_vector_np = (
+                patches_vector.detach().cpu().numpy()
+                if hasattr(patches_vector, "detach")
+                else np.asarray(patches_vector)
+            )
         except Exception:
             patches_vector_np = np.asarray(patches_vector)
         if tracer.enabled:
@@ -302,7 +309,11 @@ class PipelineRunner:
         try:
             if tracer.enabled:
                 try:
-                    va_np = vector_after_opt.detach().cpu().numpy() if hasattr(vector_after_opt, 'detach') else np.asarray(vector_after_opt)
+                    va_np = (
+                        vector_after_opt.detach().cpu().numpy()
+                        if hasattr(vector_after_opt, "detach")
+                        else np.asarray(vector_after_opt)
+                    )
                 except Exception:
                     va_np = np.asarray(vector_after_opt)
                 postlist = [{"primitive_idx": int(i), "vector": va_np[i].tolist()} for i in range(va_np.shape[0])]
@@ -384,7 +395,12 @@ def parse_args():
         dest="init_random",
         help="init model with random [default: False].",
     )
-    parser.add_argument("--rendering_type", type=str, default="bezier_splatting", help="hard - analytical rendering, bezier_splatting - fast differentiable rendering")
+    parser.add_argument(
+        "--rendering_type",
+        type=str,
+        default="bezier_splatting",
+        help="hard - analytical rendering, bezier_splatting - fast differentiable rendering",
+    )
     parser.add_argument("--data_dir", type=str, default="/data/synthetic/", help="dir to folder for input")
     parser.add_argument(
         "--image_name",
@@ -396,7 +412,9 @@ def parse_args():
     parser.add_argument("--model_output_count", type=int, default=10, help="max_model_output")
     parser.add_argument("--max_angle_to_connect", type=int, default=10, help="max_angle_to_connect in pixel")
     parser.add_argument("--max_distance_to_connect", type=int, default=3, help="max_distance_to_connect in pixel")
-    parser.add_argument("--trace", action="store_true", default=False, help="Enable per-step tracing outputs for analysis")
+    parser.add_argument(
+        "--trace", action="store_true", default=False, help="Enable per-step tracing outputs for analysis"
+    )
     parser.add_argument("--trace_dir", type=str, default="output/traces", help="Directory to write trace artifacts")
     parser.add_argument(
         "--model_path",
@@ -407,8 +425,10 @@ def parse_args():
     parser.add_argument(
         "--json_path",
         type=str,
-        default=("vectorization/models/specs/"
-                 "resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json"),
+        default=(
+            "vectorization/models/specs/"
+            "resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json"
+        ),
         help="Path to JSON model specification file",
     )
     options = parser.parse_args()

@@ -11,6 +11,7 @@ Usage (example):
 This script shells out to `run_pipeline.py` to keep runtime behaviour identical
 to the CLI entrypoint and avoid deep imports.
 """
+
 import argparse
 import json
 import random
@@ -24,11 +25,17 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--data_dir", required=True, help="Directory with input images")
     p.add_argument("--images_file", help="File with newline-separated image filenames (optional)")
-    p.add_argument("--random_count", type=int, default=10, help="Number of random images to sample if images_file not provided")
+    p.add_argument(
+        "--random_count", type=int, default=10, help="Number of random images to sample if images_file not provided"
+    )
     p.add_argument("--output_root", default="logs/outputs/batch_run", help="Root output directory")
     p.add_argument("--model_path", default="models/model_lines.weights", help="Path to model checkpoint")
-    p.add_argument("--json_path", default="vectorization/models/specs/resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json", help="Model json spec path")
-    p.add_argument("--primitive_type", default="line", choices=("line","curve"))
+    p.add_argument(
+        "--json_path",
+        default="vectorization/models/specs/resnet18_blocks3_bn_256__c2h__trans_heads4_feat256_blocks4_ffmaps512__h2o__out512.json",
+        help="Model json spec path",
+    )
+    p.add_argument("--primitive_type", default="line", choices=("line", "curve"))
     p.add_argument("--model_output_count", type=int, default=10)
     p.add_argument("--enforce_gpu", action="store_true", help="Require CUDA GPU and exit if unavailable")
     return p.parse_args()
@@ -67,14 +74,24 @@ def run_for_image(repo_root: Path, data_dir: Path, img_name: str, output_root: P
     output_dir.mkdir(parents=True, exist_ok=True)
     log_path = output_dir / "run_pipeline.log"
 
-    cmd = [sys.executable, str(repo_root / "run_pipeline.py"),
-           "--data_dir", str(data_dir),
-           "--image_name", img_name,
-           "--output_dir", str(output_dir),
-           "--primitive_type", args.primitive_type,
-           "--model_path", args.model_path,
-           "--json_path", args.json_path,
-           "--model_output_count", str(args.model_output_count)]
+    cmd = [
+        sys.executable,
+        str(repo_root / "run_pipeline.py"),
+        "--data_dir",
+        str(data_dir),
+        "--image_name",
+        img_name,
+        "--output_dir",
+        str(output_dir),
+        "--primitive_type",
+        args.primitive_type,
+        "--model_path",
+        args.model_path,
+        "--json_path",
+        args.json_path,
+        "--model_output_count",
+        str(args.model_output_count),
+    ]
 
     print(f"Running pipeline for {img_name} -> {output_dir}")
     start = time.time()
@@ -91,10 +108,16 @@ def run_analysis(repo_root: Path, output_dir: Path, original_path: Path, metrics
     metrics_dir.mkdir(parents=True, exist_ok=True)
     base = output_dir.name
     out_json = metrics_dir / f"{base}_summary.json"
-    cmd = [sys.executable, str(repo_root / "scripts" / "analyze_outputs.py"),
-           "--output_dir", str(output_dir),
-           "--original", str(original_path),
-           "--out", str(out_json)]
+    cmd = [
+        sys.executable,
+        str(repo_root / "scripts" / "analyze_outputs.py"),
+        "--output_dir",
+        str(output_dir),
+        "--original",
+        str(original_path),
+        "--out",
+        str(out_json),
+    ]
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     # write analyzer stdout into the output_dir for reference
     with open(output_dir / "analyze_outputs.log", "w", encoding="utf-8") as f:
@@ -123,7 +146,15 @@ def main():
             print(f"Analysis failed for {img}: {e}")
             a_code = -1
             a_json = None
-        results.append({"image": img, "exit_code": code, "duration_s": dur, "analysis_exit": a_code, "analysis_json": str(a_json) if a_json else None})
+        results.append(
+            {
+                "image": img,
+                "exit_code": code,
+                "duration_s": dur,
+                "analysis_exit": a_code,
+                "analysis_json": str(a_json) if a_json else None,
+            }
+        )
 
     summary_path = output_root / "batch_run_summary.json"
     with open(summary_path, "w", encoding="utf-8") as f:
@@ -132,5 +163,5 @@ def main():
     print(f"Batch run complete. Summary: {summary_path}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

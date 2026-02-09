@@ -4,9 +4,11 @@
 This helper constructs the options namespace expected by `run_pipeline.PipelineRunner`
 and runs the pipeline. It is intended for quick single-image checks.
 """
+
 import argparse
-import sys
 import os
+import sys
+
 import torch
 
 sys.path.append(".")

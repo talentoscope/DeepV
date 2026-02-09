@@ -19,7 +19,9 @@ try:
 except ImportError:
     export_to_dxf = None
     export_to_svg = None
-from refinement.our_refinement.utils.lines_refinement_functions import render_primitives_with_type
+from refinement.our_refinement.utils.lines_refinement_functions import (
+    render_primitives_with_type,
+)
 
 
 def demo_vectorize_image(input_image, rendering_type="bezier_splatting", primitive_type="line"):

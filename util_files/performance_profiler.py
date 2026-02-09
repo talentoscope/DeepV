@@ -46,9 +46,7 @@ def profile_function(func: Callable, *args, **kwargs) -> Dict[str, Any]:
 
 def torch_profile_function(func: Callable, *args, **kwargs) -> Dict[str, Any]:
     """Profile a function using PyTorch profiler."""
-    with profile(
-        activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True
-    ) as prof:
+    with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
         with record_function("model_inference"):
             result = func(*args, **kwargs)
 
@@ -58,9 +56,7 @@ def torch_profile_function(func: Callable, *args, **kwargs) -> Dict[str, Any]:
     return {"result": result, "profiler": prof}
 
 
-def benchmark_function(
-    func: Callable, *args, num_runs: int = 10, warmup_runs: int = 2, **kwargs
-) -> Dict[str, float]:
+def benchmark_function(func: Callable, *args, num_runs: int = 10, warmup_runs: int = 2, **kwargs) -> Dict[str, float]:
     """Benchmark a function's performance over multiple runs."""
     # Warmup runs
     for _ in range(warmup_runs):
@@ -119,9 +115,7 @@ class PerformanceProfiler:
     def __init__(self):
         self.results = {}
 
-    def profile_refinement(
-        self, refinement_func: Callable, test_data: Any
-    ) -> Dict[str, Any]:
+    def profile_refinement(self, refinement_func: Callable, test_data: Any) -> Dict[str, Any]:
         """Profile refinement function performance."""
         print("=== Profiling Refinement Function ===")
 
@@ -151,9 +145,7 @@ class PerformanceProfiler:
         self.results["refinement"] = combined_result
         return combined_result
 
-    def profile_rendering(
-        self, render_func: Callable, test_primitives: Any
-    ) -> Dict[str, Any]:
+    def profile_rendering(self, render_func: Callable, test_primitives: Any) -> Dict[str, Any]:
         """Profile rendering function performance."""
         print("=== Profiling Rendering Function ===")
 

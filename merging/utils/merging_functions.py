@@ -3,7 +3,7 @@ from __future__ import division
 
 import os
 import sys
-from typing import Tuple, List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 sys.path.append("..")
 sys.path.append(os.path.join(os.getcwd(), ".."))
@@ -27,10 +27,10 @@ from util_files.rendering.cairo import render, render_with_skeleton
 
 def ordered(line: np.ndarray) -> np.ndarray:
     """Reorder line coordinates to ensure min_x, min_y, max_x, max_y order for spatial indexing.
-    
+
     Args:
         line: Array of [x1, y1, x2, y2, width, opacity]
-        
+
     Returns:
         Array of [min_x, min_y, max_x, max_y] for bounding box
     """
@@ -44,11 +44,11 @@ def ordered(line: np.ndarray) -> np.ndarray:
 
 def clip_to_box(y_pred: np.ndarray, box_size: Tuple[int, int] = (64, 64)) -> np.ndarray:
     """Clip line coordinates to fit within the specified box using Liang-Barsky algorithm.
-    
+
     Args:
         y_pred: Array of [x1, y1, x2, y2, width, opacity]
         box_size: Tuple of (width, height) for the box
-        
+
     Returns:
         Clipped line array or NaN array if clipping fails
     """
@@ -114,11 +114,11 @@ def tensor_vector_graph_numpy(y_pred_render, patches_offsets, options):
 
 def merge_close_lines(lines: np.ndarray, threshold: float = 0.5) -> np.ndarray:
     """Merge collinear lines that are close together using RANSAC regression.
-    
+
     Args:
         lines: Array of shape (n_lines, 6) with [x1, y1, x2, y2, width, opacity]
         threshold: Slope threshold to distinguish vertical lines
-        
+
     Returns:
         Merged line array of [x1, y1, x2, y2]
     """
@@ -173,11 +173,11 @@ def merge_close_lines(lines: np.ndarray, threshold: float = 0.5) -> np.ndarray:
 
 def point_to_line_distance(point: Tuple[float, float], line: Tuple[float, float, float, float]) -> float:
     """Calculate the perpendicular distance from a point to an infinite line.
-    
+
     Args:
         point: Tuple (px, py)
         line: Tuple (x1, y1, x2, y2)
-        
+
     Returns:
         Distance from point to line
     """
@@ -192,11 +192,11 @@ def point_to_line_distance(point: Tuple[float, float], line: Tuple[float, float,
 
 def point_segment_distance(point, line):
     """Calculate the minimum distance from a point to a line segment.
-    
+
     Args:
         point: Tuple (px, py)
         line: Tuple (x1, y1, x2, y2)
-        
+
     Returns:
         Minimum distance to the segment
     """
@@ -229,10 +229,10 @@ def point_segment_distance(point, line):
 
 def dist(line0: np.ndarray, line1: np.ndarray) -> float:
     """Calculate the minimum distance between two lines, or 9999 if too far apart.
-    
+
     Args:
         line0, line1: Arrays of [x1, y1, x2, y2, width, opacity]
-        
+
     Returns:
         Minimum distance between endpoints and segments, or 9999 if lines are too far apart
     """
@@ -258,11 +258,11 @@ def dist(line0: np.ndarray, line1: np.ndarray) -> float:
 
 def dfs(graph, start):
     """Perform depth-first search on a graph.
-    
+
     Args:
         graph: Dictionary representing adjacency list
         start: Starting node
-        
+
     Returns:
         Set of visited nodes
     """
@@ -277,10 +277,10 @@ def dfs(graph, start):
 
 def line_length(line):
     """Calculate the length of a line segment.
-    
+
     Args:
         line: Array of [x1, y1, x2, y2, ...]
-        
+
     Returns:
         Euclidean distance between endpoints
     """
@@ -289,10 +289,10 @@ def line_length(line):
 
 def intersect(line0, line1):
     """Find intersection points of two line segments.
-    
+
     Args:
         line0, line1: Arrays of [x1, y1, x2, y2, ...]
-        
+
     Returns:
         List of intersection points as (t1, t2) parameters, or empty list
     """
@@ -317,10 +317,10 @@ def intersect(line0, line1):
 
 def angle_radians(pt1, pt2):
     """Calculate the angle in radians between two vectors.
-    
+
     Args:
         pt1, pt2: Tuples (x, y) representing vectors
-        
+
     Returns:
         Angle in radians
     """
@@ -334,10 +334,10 @@ def angle_radians(pt1, pt2):
 
 def normalize(x):
     """Normalize a vector to unit length.
-    
+
     Args:
         x: Numpy array
-        
+
     Returns:
         Normalized vector
     """
@@ -360,7 +360,16 @@ def compute_angle(line0, line1):
     return angle
 
 
-def merge_close(lines: np.ndarray, idx, widths: np.ndarray, tol: float = 1e-3, max_dist: float = 5, max_angle: float = 15, window_width: int = 100, tracer=None) -> List[np.ndarray]:
+def merge_close(
+    lines: np.ndarray,
+    idx,
+    widths: np.ndarray,
+    tol: float = 1e-3,
+    max_dist: float = 5,
+    max_angle: float = 15,
+    window_width: int = 100,
+    tracer=None,
+) -> List[np.ndarray]:
     """
     Merge lines that are close, intersecting, or nearly parallel using spatial indexing.
 
@@ -431,7 +440,7 @@ def merge_close(lines: np.ndarray, idx, widths: np.ndarray, tol: float = 1e-3, m
 
     # Save merge trace if tracer provided
     try:
-        if tracer is not None and getattr(tracer, 'enabled', False):
+        if tracer is not None and getattr(tracer, "enabled", False):
             tracer.save_merge_trace({"clusters": merge_trace})
     except Exception:
         pass
@@ -496,7 +505,11 @@ def maximiz_final_iou(nump: np.ndarray, input_rgb: np.ndarray, tracer=None) -> L
     # Limit to top 50 candidates to avoid excessive computation
     if len(candidates) > 50:
         # Sort by combined score (shorter + lower opacity + thinner = higher priority)
-        scores = line_lengths[candidates] + np.array([lines[i][5] for i in candidates]) + np.array([lines[i][4] for i in candidates])
+        scores = (
+            line_lengths[candidates]
+            + np.array([lines[i][5] for i in candidates])
+            + np.array([lines[i][4] for i in candidates])
+        )
         candidates = candidates[np.argsort(scores)][:50]
 
     # Test removal of candidate lines
@@ -512,7 +525,9 @@ def maximiz_final_iou(nump: np.ndarray, input_rgb: np.ndarray, tracer=None) -> L
         trace_entry = {"candidate_idx": int(idx), "line": poped_line.tolist()}
 
         # Re-render with line removed
-        tmp_scr = (draw_with_skeleton(np.array(lines), max_x=input_rgb.shape[1], max_y=input_rgb.shape[0]) / 255.0)[..., 0]
+        tmp_scr = (draw_with_skeleton(np.array(lines), max_x=input_rgb.shape[1], max_y=input_rgb.shape[0]) / 255.0)[
+            ..., 0
+        ]
         tmp_mse = ((np.array(tmp_scr) - np.array(k)) ** 2).mean()
 
         if tmp_mse > mse_ref:
@@ -530,8 +545,16 @@ def maximiz_final_iou(nump: np.ndarray, input_rgb: np.ndarray, tracer=None) -> L
     print(f"IOU optimization: tested {len(candidates)} lines, removed {removed_count} redundant lines")
     # Save removal trace if tracer provided
     try:
-        if tracer is not None and getattr(tracer, 'enabled', False):
-            tracer.save_merge_trace({"iou_optimization": {"tested": int(len(candidates)), "removed_count": int(removed_count), "removals": removal_trace}})
+        if tracer is not None and getattr(tracer, "enabled", False):
+            tracer.save_merge_trace(
+                {
+                    "iou_optimization": {
+                        "tested": int(len(candidates)),
+                        "removed_count": int(removed_count),
+                        "removals": removal_trace,
+                    }
+                }
+            )
     except Exception:
         pass
 

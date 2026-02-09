@@ -23,6 +23,7 @@ from util_files.geometric import liang_barsky_screen
 
 class PrimitiveType(Enum):
     """Enumeration of supported vector primitive types."""
+
     PT_LINE = auto()
     PT_CBEZIER = auto()
     PT_ARC = auto()

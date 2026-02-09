@@ -1,13 +1,13 @@
 ﻿"""Processor for CubiCasa5K Dataset."""
 
-from pathlib import Path
-from typing import Dict, Any
-import shutil
 import base64
-import numpy as np
-import cv2
-from PIL import Image
+import shutil
+from pathlib import Path
+from typing import Any, Dict
 
+import cv2
+import numpy as np
+from PIL import Image
 
 from .base import Processor
 

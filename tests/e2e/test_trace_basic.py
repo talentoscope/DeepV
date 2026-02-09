@@ -1,6 +1,8 @@
 import os
-import numpy as np
 from pathlib import Path
+
+import numpy as np
+
 from analysis.tracing import Tracer
 
 
