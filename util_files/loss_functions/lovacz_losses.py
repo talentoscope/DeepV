@@ -252,7 +252,7 @@ def mean(values, ignore_nan=False, empty=0):
         acc = next(values)
     except StopIteration:
         if empty == "raise":
-            raise ValueError("Empty mean")
+            raise ValueError("Cannot compute mean of empty sequence")
         return empty
     for n, v in enumerate(values, 2):
         acc += v

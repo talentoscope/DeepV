@@ -23,7 +23,7 @@ def _maybe_vector_to_raster(image, raster_res, data_representation="vahe"):
     elif isinstance(image, np.ndarray):
         raster = image
     else:
-        raise TypeError("parameter image of unknown type")
+        raise TypeError(f"Parameter 'image' must be a Dict, List, or np.ndarray, got {type(image).__name__}")
     return raster
 
 
@@ -115,7 +115,7 @@ def _vector_to_numpy(image, primitive_type=PT_QBEZIER):
     elif isinstance(image, np.ndarray):
         image_array = image
     else:
-        raise TypeError("parameter image of unknown type")
+        raise TypeError(f"Parameter 'image' must be a Dict, List, or np.ndarray, got {type(image).__name__}")
     return image_array
 
 
