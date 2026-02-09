@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Raster Embedded Graphics Module
+
+Handles raster images embedded within vector graphics.
+Provides RasterEmbedded class for managing bitmap content in SVG documents.
+
+Features:
+- RasterEmbedded class for embedded images
+- SVG code generation for raster content
+- Position and size management
+- Z-order layering support
+
+Used by vector graphics processing for mixed raster/vector content.
+"""
+
 from copy import deepcopy
 from math import ceil
 

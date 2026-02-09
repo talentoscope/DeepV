@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Curve Simplification Module
+
+Curve simplification utilities for vector graphics.
+Provides algorithms for approximating curves with fewer control points.
+
+Features:
+- Bézier curve step calculation
+- Curve flattening algorithms
+- Adaptive sampling based on curvature
+
+Used by vector graphics processing for optimization.
+"""
+
 import numpy as np
 import svgpathtools
 

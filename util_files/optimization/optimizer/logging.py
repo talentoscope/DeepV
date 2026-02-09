@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Optimization Logging Module
+
+Logging utilities for optimization and refinement processes.
+Provides structured logging for tracking optimization progress and debugging.
+
+Features:
+- Custom Logger class with stream handling
+- Log level management
+- File and console output
+- Optimization progress tracking
+
+Used by optimization algorithms for monitoring and debugging.
+"""
+
 import io
 import logging
 

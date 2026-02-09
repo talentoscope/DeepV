@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Quadratic Bézier Energy with Quadratures Module
+
+Energy calculation for quadratic Bézier curves using numerical quadrature.
+Provides accurate energy computation using integration techniques.
+
+Features:
+- Quadrature-based energy integration
+- Stencil-based calculations
+- High-precision energy evaluation
+
+Used by quadratic Bézier optimization for accurate energy minimization.
+"""
+
 import torch
 
 from ...parameters import division_epsilon

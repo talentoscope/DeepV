@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Quadratic Bézier Canonical Coordinates with Cardano Module
+
+Canonical coordinate calculation for quadratic Bézier curves using Cardano's method.
+Provides distance and parameter calculations for Bézier curve optimization.
+
+Features:
+- Cardano's method for cubic equation solving
+- Canonical coordinate computation
+- Distance to curve calculation
+- Parameter optimization for closest points
+
+Used by quadratic Bézier tensor optimization.
+"""
+
 import numpy as np
 import torch
 

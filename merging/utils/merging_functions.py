@@ -1,4 +1,19 @@
 #!/usr/bin/env python3
+"""
+Merging Functions Module
+
+Core merging algorithms for consolidating vector primitives.
+Provides functions for merging overlapping and nearby primitives into clean vector output.
+
+Features:
+- Primitive merging based on proximity and similarity
+- Line and curve merging algorithms
+- Tolerance-based consolidation
+- Spatial indexing for efficient merging
+
+Used by merging pipelines for primitive consolidation.
+"""
+
 from __future__ import division
 
 import os

@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Polyline Simplification Module
+
+Polyline simplification algorithms for vector graphics.
+Provides methods for reducing the number of points in polylines while preserving shape.
+
+Features:
+- Longest flat segment detection
+- Douglas-Peucker algorithm variants
+- Convex hull-based simplification
+- Threshold-based point reduction
+
+Used by vector graphics processing for data reduction.
+"""
+
 import numpy as np
 from scipy.spatial import ConvexHull
 

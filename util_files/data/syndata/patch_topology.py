@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Patch Topology Module
+
+Defines topological structures and patterns for synthetic patch generation.
+Provides predefined topologies for creating structured synthetic line drawings.
+
+Features:
+- Predefined topology patterns and templates
+- Beam and outer snapping configurations
+- Edge type and orientation definitions
+- Structured patch generation utilities
+
+Used by synthetic data generation for creating realistic technical drawing patterns.
+"""
+
 from collections import defaultdict
 from copy import deepcopy
 

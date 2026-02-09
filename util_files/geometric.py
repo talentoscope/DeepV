@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Geometric Utilities Module
+
+Geometric computation utilities for vector graphics processing.
+Provides functions for coordinate transformations, clipping, and geometric operations.
+
+Features:
+- Coordinate system transformations (Y-flipping)
+- Liang-Barsky line clipping algorithm
+- Bounding box operations
+- Geometric utility functions
+
+Used by graphics processing and rendering pipelines.
+"""
+
 import numpy as np
 
 

@@ -1,3 +1,20 @@
+#!/usr/bin/env python3
+"""
+Primitive Tensor Module
+
+Base class for tensor representations of vector primitives.
+Provides PyTorch tensor operations for primitive optimization and rendering.
+
+Features:
+- Primitive tensor base class
+- Cairo rendering integration
+- Parameter optimization utilities
+- Device and dtype management
+- Reinitialization strategies
+
+Used by optimization algorithms for differentiable primitive manipulation.
+"""
+
 import cairocffi as cairo
 import numpy as np
 import torch

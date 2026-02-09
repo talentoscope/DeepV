@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Graphics Units Module
+
+Unit conversion and management for vector graphics.
+Provides classes for handling different measurement units (pixels, points, etc.) in graphics processing.
+
+Features:
+- GraphicUnits base class for unit conversions
+- Pixels, Points, and other unit implementations
+- Arithmetic operations with unit conversion
+- SVG attribute parsing and formatting
+
+Used by graphics processing for coordinate system management.
+"""
+
 import numbers
 import re
 

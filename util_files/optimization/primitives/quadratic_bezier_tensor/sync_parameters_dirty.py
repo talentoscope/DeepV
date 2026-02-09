@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Quadratic Bézier Parameter Synchronization Module
+
+Parameter synchronization utilities for quadratic Bézier curves.
+Maintains consistency between main and auxiliary curve parameters during optimization.
+
+Features:
+- Parameter synchronization after updates
+- Auxiliary parameter recalculation
+- Curve validity maintenance
+
+Used by quadratic Bézier optimization to keep parameters consistent.
+"""
+
 import torch
 
 

@@ -1,3 +1,20 @@
+#!/usr/bin/env python3
+"""
+Memory-Efficient Chunked Dataset Loading
+
+Chunked dataset loaders for handling large datasets that don't fit in memory.
+Splits datasets into manageable chunks with memory constraints and efficient iteration.
+
+Features:
+- Memory-aware chunking based on available RAM
+- Parallel processing support
+- Efficient batch iteration
+- Automatic chunk size calculation
+- Support for shuffling and custom batch sizes
+
+Used for training on large datasets without memory issues.
+"""
+
 import numpy as np
 import torch
 from torch.multiprocessing import Process

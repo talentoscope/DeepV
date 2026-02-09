@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Synthetic Data Generation Module
+
+Generates synthetic line drawings and vector graphics for training data.
+Creates artificial technical drawings with configurable complexity and topology.
+
+Features:
+- Synthetic dataset generation with various topologies
+- Junction and primitive type control
+- Configurable complexity and noise parameters
+- Integration with graphics primitives
+
+Used by data augmentation pipelines for synthetic training data.
+"""
+
 from collections import OrderedDict, defaultdict
 from enum import Enum, auto
 

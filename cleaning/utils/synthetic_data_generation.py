@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Synthetic Data Generation Module
+
+Synthetic data generation for image cleaning training.
+Creates artificial degraded images with corresponding clean targets for supervised learning.
+
+Features:
+- Synthetic image generation with degradation
+- Cairo-based rendering for clean targets
+- Configurable canvas sizes and degradation types
+- Border and layout management
+
+Used by cleaning model training for synthetic data creation.
+"""
+
 import math
 import os
 from glob import glob

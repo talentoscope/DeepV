@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Cleaning DataLoader Module
+
+Data loading utilities for image cleaning and preprocessing.
+Provides PyTorch Dataset classes for loading and transforming image pairs.
+
+Features:
+- Image pair loading (input/target)
+- Transform pipelines for data augmentation
+- Dataset classes for training and validation
+- File discovery and sorting utilities
+
+Used by cleaning model training pipelines.
+"""
+
 import os
 
 import numpy as np

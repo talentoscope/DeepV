@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Line Drawings Dataset Module
+
+Base PyTorch Dataset class for line drawing data.
+Provides common functionality for loading and preprocessing line drawing datasets.
+
+Features:
+- Configurable patch sizes and primitive limits
+- Raster and vector transformations
+- Primitive type filtering
+- Cairo-based rendering integration
+
+Used as base class for specific line drawing datasets.
+"""
+
 from typing import Dict
 
 import numpy as np

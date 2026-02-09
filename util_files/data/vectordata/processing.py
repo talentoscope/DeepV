@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Vector Data Processing Module
+
+Image and coordinate processing utilities for vector data.
+Provides functions for converting images to coordinate representations and ordering primitives.
+
+Features:
+- Image coordinate transformation
+- Primitive ordering utilities
+- Coordinate system conversions
+
+Used by vector data preprocessing pipelines.
+"""
+
 import numpy as np
 
 

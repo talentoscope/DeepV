@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Prepatched Vector Data Module
+
+Utilities for handling pre-patched SVG vector data.
+Provides functions for generating patch file paths and managing preprocessed patches.
+
+Features:
+- Patch path pattern generation
+- Prepatched dataset utilities
+- File path management for cached patches
+
+Used by vector data processing for efficient patch access.
+"""
+
 import os
 from glob import iglob
 

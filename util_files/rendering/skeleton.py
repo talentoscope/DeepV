@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Skeleton Rendering Module
+
+Skeleton visualization for vector graphics primitives.
+Provides node and edge rendering for debugging and visualization of vector structures.
+
+Features:
+- Skeleton generation for primitives
+- Node and edge visualization
+- Control point rendering
+- Vahe-style skeleton rendering
+
+Used by debugging and visualization tools.
+"""
+
 import numpy as np
 
 from util_files.data.graphics_primitives import (

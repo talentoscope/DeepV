@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Evaluation Utilities Module
+
+Utilities for evaluating and post-processing vectorization results.
+Provides functions for converting patches to full vector images and result validation.
+
+Features:
+- Patch-to-image reconstruction
+- Vector image assembly from primitives
+- Confidence and quality filtering
+- Scale and coordinate transformations
+
+Used by evaluation and post-processing pipelines.
+"""
+
 import torch
 
 from util_files.data.graphics.graphics import Path, VectorImage

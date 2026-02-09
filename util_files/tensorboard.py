@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+TensorBoard Utilities Module
+
+TensorBoard integration utilities for experiment tracking.
+Provides enhanced SummaryWriter with additional logging capabilities.
+
+Features:
+- Extended SummaryWriter class
+- Image logging utilities
+- Custom summary operations
+- Experiment tracking integration
+
+Used by training pipelines for visualization and monitoring.
+"""
+
 import tensorboardX.summary
 from tensorboardX import SummaryWriter as OriginalSummaryWriter
 from tensorboardX.proto.summary_pb2 import Summary

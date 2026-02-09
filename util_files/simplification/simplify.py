@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Curve Simplification Module
+
+Main simplification algorithms for Bézier curves and vector graphics.
+Provides high-level interfaces for curve simplification operations.
+
+Features:
+- Bézier curve simplification
+- Polyline approximation
+- Adaptive segmentation
+- Threshold-based optimization
+
+Used by vector processing pipelines for data compression.
+"""
+
 import numpy as np
 import svgpathtools
 

@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Logging Utilities Module
+
+Enhanced logging utilities for DeepV operations.
+Provides timing context managers and structured logging for debugging and monitoring.
+
+Features:
+- Duration timing for operations
+- Scalar logging utilities
+- Custom Logger class with timing features
+- Context managers for performance monitoring
+
+Used by training and evaluation pipelines for logging.
+"""
+
 import logging
 import time
 from contextlib import contextmanager

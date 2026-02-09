@@ -1,3 +1,20 @@
+#!/usr/bin/env python3
+"""
+Primitive Aligner Module
+
+Base class for primitive alignment and optimization.
+Provides framework for aligning vector primitives to raster targets through optimization.
+
+Features:
+- Primitive tensor optimization
+- Raster target alignment
+- Neighborhood weighting
+- Reinitialization strategies
+- Logging integration
+
+Used by refinement algorithms for primitive optimization.
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch

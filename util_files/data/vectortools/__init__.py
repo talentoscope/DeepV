@@ -2,8 +2,6 @@ import svgpathtools
 from svgpathtools import Arc, CubicBezier, Line, Path, QuadraticBezier
 from svgpathtools.path import polygon
 
-from . import transforms
-
 
 def adjust_path_ppi(path, attributes, new_ppi_to_old_ppi, scale_width=1):
     if new_ppi_to_old_ppi != 1:

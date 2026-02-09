@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Cairo Rendering Module
+
+Vector graphics rendering using Cairo graphics library.
+Provides high-quality rasterization of vector primitives for evaluation and visualization.
+
+Features:
+- Cairo-based rendering engine
+- Support for lines, Bézier curves, arcs
+- High-quality anti-aliased rendering
+- Integration with graphics primitives
+
+Used by evaluation and visualization pipelines.
+"""
+
 from sys import byteorder
 
 import cairocffi as cairo

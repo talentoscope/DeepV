@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Path Processing Module
+
+Handles SVG path parsing, transformation, and manipulation.
+Provides Path class for working with vector paths and their attributes.
+
+Features:
+- Path class for SVG path elements
+- Transform flattening and pixel conversion
+- Path splitting and cropping utilities
+- Integration with graphics primitives
+
+Used by vector graphics processing pipelines.
+"""
+
 from copy import copy, deepcopy
 
 import svgpathtools

@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Adam Optimizer Module
+
+Adam optimization implementation for vector graphics refinement.
+Provides adaptive optimization for primitive parameter refinement.
+
+Features:
+- Adam optimizer for primitive tensors
+- Learning rate scheduling
+- Primitive alignment and refinement
+- Logging integration
+
+Used by refinement algorithms for differentiable optimization.
+"""
+
 import torch
 
 from .primitive_aligner import PrimitiveAligner

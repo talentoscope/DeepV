@@ -1,0 +1,18 @@
+{
+  "dataset": "floorplancad",
+  "metadata": {
+    "name": "FloorPlanCAD",
+    "size": "15,663 CAD drawings",
+    "formats": [
+      "SVG",
+      "PNG",
+      "COCO"
+    ],
+    "source": "https://floorplancad.github.io/",
+    "license": "CC BY-NC 4.0",
+    "download_date": "1770472895.225237",
+    "test_mode": false
+  },
+  "kept_count": 46989,
+  "overflow_count": 36989
+}

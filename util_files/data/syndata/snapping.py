@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Snapping Utilities Module
+
+Geometric snapping functions for synthetic data generation.
+Provides utilities for aligning and connecting line segments in synthetic drawings.
+
+Features:
+- Beam and outer snapping algorithms
+- Endpoint type handling
+- Coordinate transformation utilities
+- Junction type management
+
+Used by synthetic topology generation for creating connected line drawings.
+"""
+
 from copy import deepcopy
 from warnings import warn
 

@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Chamfer Distance Module
+
+PyTorch implementation of Chamfer distance for point cloud comparison.
+Provides GPU-accelerated Chamfer distance computation using CUDA.
+
+Features:
+- Chamfer distance calculation between point sets
+- GPU acceleration with CUDA kernels
+- Bidirectional distance computation
+- PyTorch autograd integration
+
+Used by evaluation pipelines for geometric distance metrics.
+"""
+
 # https://github.com/krrish94/chamferdist/blob/97051583f6fe72d5d4a855696dbfda0ea9b73a6a/chamferdist/ChamferDistance.py
 import chamferdistcuda as chamfer
 import torch

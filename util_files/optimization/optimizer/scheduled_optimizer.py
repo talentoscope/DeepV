@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Scheduled Optimizer Module
+
+Learning rate scheduling wrapper for optimizers.
+Provides warmup and decay scheduling for training optimization.
+
+Features:
+- Learning rate warmup scheduling
+- Transformer-style learning rate decay
+- Optimizer step management
+- Model dimension-based initialization
+
+Used by training pipelines for scheduled optimization.
+"""
+
 """A wrapper class for optimizer"""
 
 import numpy as np

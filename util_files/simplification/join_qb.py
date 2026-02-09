@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Quadratic Bézier Joining Module
+
+Quadratic Bézier curve joining and merging utilities.
+Provides algorithms for connecting and simplifying sequences of Bézier curves.
+
+Features:
+- Bézier curve joining with tolerance
+- Curve fitting and optimization
+- Width consistency checking
+- Sequence merging algorithms
+
+Used by simplification pipelines for curve optimization.
+"""
+
 import numpy as np
 import torch
 

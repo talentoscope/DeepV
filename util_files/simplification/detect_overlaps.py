@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Overlap Detection Module
+
+Overlap detection utilities for vector graphics primitives.
+Identifies overlapping primitives that may cause rendering artifacts.
+
+Features:
+- Overlap detection algorithms
+- Rendering-based overlap checking
+- Primitive grouping and analysis
+
+Used by simplification pipelines to identify redundant elements.
+"""
+
 from itertools import groupby
 
 import numpy as np

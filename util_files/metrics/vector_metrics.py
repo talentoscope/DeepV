@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Vector Metrics Module
+
+Metrics for evaluating vector graphics quality and comparison.
+Provides functions for computing similarity between predicted and reference vector primitives.
+
+Features:
+- Vector-to-vector distance computation
+- Primitive matching and assignment
+- Parameter-wise comparison
+- Raster conversion utilities
+
+Used by evaluation pipelines for vector quality assessment.
+"""
+
 from typing import Dict, List
 
 import numpy as np

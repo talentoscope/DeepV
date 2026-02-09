@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Quadratic Bézier Energy with Polyline Module
+
+Energy calculation for quadratic Bézier curves using polyline approximation.
+Provides energy functions for optimization using piecewise linear approximation.
+
+Features:
+- Polyline-based energy computation
+- Unit energy calculations
+- Canonical coordinate integration
+
+Used by quadratic Bézier optimization for energy minimization.
+"""
+
 import torch
 
 from ...parameters import division_epsilon

@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Preprocessed Dataset Classes
+
+PyTorch Dataset classes for preprocessed vector data.
+Handles loading and preprocessing of cached vector datasets for training.
+
+Features:
+- Support for SVG and synthetic handcrafted data
+- Configurable patch sizes and primitive limits
+- Memory-efficient data loading
+- Integration with preprocessing utilities
+
+Used by training pipelines for efficient data access.
+"""
+
 import os
 import pickle
 

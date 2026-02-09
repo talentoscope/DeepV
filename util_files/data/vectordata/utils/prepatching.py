@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Prepatching Utilities Module
+
+Utilities for preprocessing and patching vector data.
+Provides functions for creating patches from vector images with various augmentations.
+
+Features:
+- Patch generation from vector images
+- Augmentation with rotations, translations, mirroring
+- Width and orientation variations
+- Distinguishability filtering
+
+Used by data preprocessing pipelines for patch creation.
+"""
+
 import os
 from copy import deepcopy
 from glob import glob

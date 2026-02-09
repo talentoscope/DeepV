@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Simplification Utilities Module
+
+Utility functions for vector graphics simplification.
+Provides common operations used across simplification algorithms.
+
+Features:
+- Point indistinguishability checking
+- Squared length calculations
+- Unique point extraction
+- Geometric utility functions
+
+Used by simplification algorithms for common operations.
+"""
+
 import numpy as np
 
 

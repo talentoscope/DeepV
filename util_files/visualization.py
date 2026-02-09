@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Visualization Utilities Module
+
+Visualization and rendering utilities for vector graphics.
+Provides functions for visualizing primitives, patches, and comparison images.
+
+Features:
+- Primitive visualization and rendering
+- Patch visualization utilities
+- Comparison image generation
+- Skeleton and overlay rendering
+
+Used by debugging, evaluation, and demo applications.
+"""
+
 from numbers import Number
 from typing import Callable, Iterable, Tuple
 

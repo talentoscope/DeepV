@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Image Patchification Utilities
+
+Utilities for dividing images into patches and reconstructing them.
+Used for processing large images in smaller chunks during vectorization.
+
+Functions:
+- patchify: Split image into overlapping patches
+- unpatchify: Reconstruct image from patches
+
+Based on patchify.py library, adapted for DeepV's image processing pipeline.
+Supports configurable patch sizes and overlap for seamless reconstruction.
+"""
+
 # Taken from https://github.com/dovahcrow/patchify.py/blob/master/patchify.py
 
 from itertools import product

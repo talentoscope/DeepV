@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Cleaning Loss Functions Module
+
+Loss functions for image cleaning and denoising models.
+Provides evaluation metrics and loss functions for image-to-image tasks.
+
+Features:
+- IoU (Intersection over Union) calculation
+- Dice coefficient computation
+- PSNR (Peak Signal-to-Noise Ratio)
+- Custom loss functions for image cleaning
+
+Used by cleaning model training and evaluation.
+"""
+
 import numpy as np
 import torch
 import torch.nn as nn

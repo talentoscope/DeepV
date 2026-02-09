@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Graphics Parsing Utilities
+
+SVG and CSS parsing utilities for graphics processing.
+Handles attribute parsing, color conversion, and style processing.
+
+Features:
+- SVG attribute parsing and validation
+- CSS color and style processing
+- Fill and stroke property handling
+- Transparency and opacity management
+
+Used by SVG import and processing pipelines.
+"""
+
 import css_parser as cssutils
 
 from util_files import warnings

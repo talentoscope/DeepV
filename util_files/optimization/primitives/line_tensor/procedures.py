@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Line Tensor Procedures Module
+
+Utility procedures for line tensor operations.
+Provides coordinate transformations and calculations for line primitives.
+
+Features:
+- Canonical coordinate calculation
+- Pixel coordinate transformations
+- Line parameter utilities
+
+Used by line tensor optimization for coordinate handling.
+"""
+
 def calculate_canonical_coordinates(pixel_coords, p1, dir):
     r"""
 

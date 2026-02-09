@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+IoU Metrics Module
+
+Intersection over Union (IoU) metrics for vector graphics evaluation.
+Provides IoU calculation for comparing predicted and reference vector images.
+
+Features:
+- Vector-to-vector IoU computation
+- Raster-based IoU calculation
+- Binarization and width handling
+- Rendering integration for comparison
+
+Used by evaluation pipelines for geometric accuracy assessment.
+"""
+
 import numpy as np
 
 import util_files.metrics.vector_metrics as vmetrics

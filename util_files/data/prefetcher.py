@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+CUDA Data Prefetching Utilities
+
+GPU data prefetching for improved training performance.
+Overlaps data transfer to GPU with computation using CUDA streams.
+
+Features:
+- Asynchronous GPU data transfer
+- CUDA stream-based prefetching
+- Memory-efficient data loading
+- Reduced training time through pipelining
+
+Based on NVIDIA Apex implementation, adapted for DeepV data loading.
+"""
+
 import torch
 
 

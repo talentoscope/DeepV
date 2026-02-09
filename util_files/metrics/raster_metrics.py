@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Raster Metrics Module
+
+Metrics for evaluating raster image quality and comparison.
+Provides functions for computing similarity metrics between raster images.
+
+Features:
+- IoU and Dice coefficient calculation
+- Hausdorff distance computation
+- SSIM and PSNR metrics
+- Binary image processing utilities
+
+Used by evaluation pipelines for visual quality assessment.
+"""
+
 import numpy as np
 from scipy.ndimage import binary_dilation
 from scipy.spatial.distance import directed_hausdorff

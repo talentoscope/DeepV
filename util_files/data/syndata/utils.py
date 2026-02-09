@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Synthetic Data Utilities Module
+
+Utility functions for synthetic data generation and processing.
+Provides probability-based selection and normalization functions.
+
+Features:
+- Probabilistic value selection
+- Probability renormalization utilities
+- Random sampling helpers
+
+Used by synthetic data generation for configurable random processes.
+"""
+
 import numpy as np
 
 

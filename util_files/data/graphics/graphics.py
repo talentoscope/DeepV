@@ -1,3 +1,20 @@
+#!/usr/bin/env python3
+"""
+Vector Graphics Processing Module
+
+Core graphics utilities for vector image processing and SVG manipulation.
+Provides classes and functions for handling vector paths, primitives, and raster-embedded content.
+
+Features:
+- VectorImage class for SVG-based vector graphics
+- Path manipulation and transformation utilities
+- Support for Bézier curves, lines, and other primitives
+- SVG parsing and export functionality
+- Coordinate system management with units
+
+Used by data preprocessing pipelines for vector graphics processing.
+"""
+
 import itertools
 import random
 import re

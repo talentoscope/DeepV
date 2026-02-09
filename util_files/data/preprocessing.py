@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Data Preprocessing Utilities
+
+Image and primitive preprocessing for DeepV training and inference.
+Normalizes images and primitives to standard formats for neural network processing.
+
+Features:
+- Image preprocessing: background inversion, coordinate normalization
+- Primitive preprocessing: coordinate scaling and normalization
+- Patch-based processing with configurable sizes
+- Coordinate system standardization
+
+Used by dataset loaders to prepare data for model input.
+"""
+
 import numpy as np
 
 import util_files.data.graphics_primitives as graphics_primitives

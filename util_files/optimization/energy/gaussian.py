@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Gaussian Energy Module
+
+Energy functions for optimization using Gaussian potentials.
+Provides point-to-point and point-to-line energy calculations for refinement.
+
+Features:
+- Gaussian potential functions
+- Point-to-point and point-to-line interactions
+- Configurable range and weight parameters
+- PyTorch tensor operations
+
+Used by optimization algorithms for energy minimization.
+"""
+
 import numpy as np
 import torch
 

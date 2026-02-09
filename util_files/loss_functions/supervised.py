@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Supervised Loss Functions Module
+
+Loss functions for supervised vectorization training.
+Provides various loss functions for training neural networks to predict vector primitives.
+
+Features:
+- Convex combination of losses
+- Pseudo-Laplacian regularization
+- Lovasz hinge loss integration
+- Custom loss functions for vector prediction
+
+Used by training pipelines for supervised learning objectives.
+"""
+
 import torch.nn
 
 from .lovacz_losses import lovasz_hinge

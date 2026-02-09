@@ -1,3 +1,20 @@
+#!/usr/bin/env python3
+"""
+Graphics Primitives Module
+
+Abstract base classes and implementations for vector graphics primitives.
+Provides Line, Bezier, and other geometric primitive classes with rendering and manipulation methods.
+
+Features:
+- Primitive base class with abstract interface
+- Line and Bézier curve implementations
+- Geometric operations (translation, scaling, rotation)
+- Rendering utilities for rasterization
+- Simplification and optimization methods
+
+Used by vector graphics processing and rendering pipelines.
+"""
+
 from abc import ABC, abstractmethod
 from copy import copy, deepcopy
 

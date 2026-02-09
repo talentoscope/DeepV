@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Synthetic Data Types Module
+
+Type definitions and enumerations for synthetic data generation.
+Defines endpoint types, snapping types, and other constants used in synthetic drawing generation.
+
+Features:
+- EndpointType enumeration for connection points
+- SnappingType definitions for alignment methods
+- Orientation and dot type constants
+- Edge type classifications
+
+Used by synthetic data generation for type-safe configuration.
+"""
+
 from enum import Enum, auto
 
 

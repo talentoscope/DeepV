@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Graphics Splitting Utilities
+
+Path and primitive splitting utilities for graphics processing.
+Provides functions for dividing paths and primitives based on geometric criteria.
+
+Features:
+- Path splitting by lines and boundaries
+- Primitive cropping to bounding boxes
+- Patch-based segmentation utilities
+
+Used by graphics processing for spatial operations.
+"""
+
 import numpy as np
 
 from util_files.data.graphics.primitives import CBezier, Line, QBezier

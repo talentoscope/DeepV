@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Skeleton Metrics Module
+
+Metrics for evaluating vector graphics using skeleton/sampling approaches.
+Provides point sampling and Chamfer distance computation for vector comparison.
+
+Features:
+- Point sampling from vector paths
+- Chamfer distance calculation
+- Arc length parameterization
+- Vector-to-vector distance metrics
+
+Used by evaluation pipelines for geometric comparison.
+"""
+
 import numpy as np
 import svgpathtools
 import torch

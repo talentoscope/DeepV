@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Quadratic Bézier Canonical Coordinates with Probes Module
+
+Canonical coordinate calculation for quadratic Bézier curves using probe sampling.
+Provides distance and parameter calculations using sampling-based approach.
+
+Features:
+- Probe-based distance sampling
+- Canonical coordinate computation
+- Parameter optimization for closest points
+
+Used by quadratic Bézier tensor optimization as alternative to Cardano's method.
+"""
+
 import numpy as np
 import torch
 

@@ -1,3 +1,21 @@
+#!/usr/bin/env python3
+"""
+DeepV Data Loading Utilities
+
+High-level data loading utilities for training and evaluation.
+Combines multiple datasets, handles memory constraints, and provides
+optimized data loading with prefetching and chunking.
+
+Features:
+- Combined dataset loading from multiple sources
+- Memory-aware batching and chunking
+- GPU prefetching for performance
+- Train/validation split handling
+- Support for synthetic and real datasets
+
+Used by training scripts to efficiently load and preprocess data.
+"""
+
 import os
 from glob import glob
 

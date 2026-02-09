@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+"""
+Optimization Parameters Module
+
+Global parameters and thresholds for vector graphics optimization.
+Defines constants used in refinement and optimization algorithms.
+
+Features:
+- Rendering parameters for line caps and joins
+- Geometric thresholds for collinearity and constraints
+- Size and width limits for primitives
+- Neighborhood and padding parameters
+
+Used by optimization and refinement algorithms.
+"""
+
 import numpy as np
 
 # rendering parameters

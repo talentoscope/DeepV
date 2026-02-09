@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Rendering Utilities Module
+
+Utility functions for graphics rendering and conversion.
+Provides conversions between different Bézier curve representations.
+
+Features:
+- Quadratic to cubic Bézier conversion
+- Rendering helper functions
+- Coordinate transformations
+
+Used by rendering pipelines for format conversions.
+"""
+
 import numpy as np
 
 

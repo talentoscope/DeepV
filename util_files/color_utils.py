@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Color Utilities Module
+
+Color conversion and image processing utilities.
+Provides functions for converting between different color spaces and image formats.
+
+Features:
+- RGB to grayscale conversion
+- 8-bit to float image conversion
+- Image format validation and normalization
+
+Used by image processing pipelines throughout the codebase.
+"""
+
 import numpy as np
 from skimage.color import rgb2gray
 

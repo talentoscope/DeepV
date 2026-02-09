@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+Job Tuples for Result Calculation
+
+Predefined job tuples for evaluation and result calculation.
+Contains test case definitions for various datasets and evaluation scenarios.
+
+Features:
+- Precision Floor Plan test cases
+- Job tuple definitions for batch processing
+- Dataset and result path configurations
+
+Used by evaluation scripts for automated result calculation.
+"""
+
 job_tuples = dict()
 
 job_tuples["Precision Floor Plan"] = [
