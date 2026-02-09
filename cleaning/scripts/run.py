@@ -117,7 +117,7 @@ def main(options):
             #    if options.vector_patch_path:
             #        patch_output_filename = \
             #            os.path.join(options.vector_patch_path,
-            #                         'patch_{0:02d}.svg'.format(patch_idx))
+            #                         f'patch_{patch_idx:02d}.svg')
             #        save_output(patch_vector, patch_output_filename)
 
             #    patches_vector.append(patch_vector)
