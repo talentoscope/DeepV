@@ -282,7 +282,59 @@ Focus on architectural drawings and technical diagrams with emphasis on geometri
 
 ### Recommended Immediate Next Steps (Priority Order) - Updated February 2026
 
-#### 🔴 HIGHEST PRIORITY: Close Synthetic→Real Performance Gap
+#### 🔴 HIGHEST PRIORITY: Data Pipeline Setup (BLOCKING TRAINING)
+
+**Goal**: Establish complete data processing pipeline before attempting any training
+
+**Phase 1: Dataset Standardization (1-2 weeks)**
+1. **Complete Dataset Processors**:
+   - ✅ FloorPlanCAD: 699 SVG/PNG pairs processed (but splits need fixing)
+   - [ ] Implement missing processors for all raw datasets (CubiCasa5K, ResPlan, SketchGraphs, etc.)
+   - [ ] Standardize all datasets to SVG/PNG pairs in `data/vector/` and `data/raster/`
+   - [ ] Add data validation and integrity checks
+2. **Fix Dataset Splitting**:
+   - ✅ FloorPlanCAD split files exist but incorrectly reference same test directory
+   - [ ] Create proper train/val/test directory structure
+   - [ ] Implement stratified sampling where appropriate
+   - [ ] Generate correct split files in `data/splits/`
+
+**Phase 2: Augmentation Pipeline (2-3 weeks)**
+1. **Geometric Augmentations**:
+   - Implement rotation, scaling, flipping for technical drawings
+   - Ensure SVG transformations maintain geometric validity
+2. **Degradation Augmentations**:
+   - Add realistic scanning artifacts (blur, noise, fading, skew)
+   - Implement domain-specific degradation patterns
+3. **Vector Augmentations**:
+   - Create SVG transformation pipeline
+   - Maintain geometric constraints during augmentation
+
+**Phase 3: Model Architecture Decision (1-2 weeks)**
+1. **Architecture Evaluation**:
+   - Compare ResNet vs EfficientNet vs Vision Transformer backbones
+   - Evaluate different patch sizes (64x64 vs 128x128 vs variable)
+   - Determine optimal primitive count limits per dataset
+2. **Patch Processing Setup**:
+   - Implement dataset-specific patch sizes
+   - Create adaptive patchification for variable image sizes
+   - Optimize batch processing and memory management
+
+**Phase 4: Training Infrastructure (1-2 weeks)**
+1. **Data Loading Pipeline**:
+   - Create PyTorch Dataset/DataLoader with augmentation
+   - Implement efficient batching and preprocessing
+2. **Training Setup**:
+   - Set up validation metrics and monitoring
+   - Implement checkpointing and resuming
+   - Configure multi-GPU support
+
+**Success Criteria**:
+- All datasets processed and validated
+- Augmentation pipeline functional with geometric preservation
+- Model architecture selected with justified patch sizes
+- Training infrastructure ready for immediate use
+
+#### 🟡 MEDIUM PRIORITY: Close Synthetic→Real Performance Gap
 
 **Goal**: Improve real-world FloorPlanCAD performance from IoU 0.010 to >0.5 (50x improvement needed)
 
@@ -353,7 +405,7 @@ Focus on architectural drawings and technical diagrams with emphasis on geometri
 
 ---
 
-**Bottom Line**: Don't work on advanced features or optimizations until real-world data performance is acceptable. The synthetic→real gap is the blocking issue preventing production deployment.
+**Bottom Line**: Don't attempt training until the complete data pipeline is established. The data processing, augmentation, and model architecture decisions are prerequisites that must be completed before any training can begin. Focus on infrastructure first, then tackle the synthetic→real performance gap.
 
 ## Future Enhancements (Nice-to-Haves)
 

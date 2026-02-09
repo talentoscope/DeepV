@@ -43,6 +43,47 @@ Model trained on synthetic data (not currently available); lacks robustness to r
 ### Impact
 Pipeline is NOT production-ready for scanned floor plans, patents, or degraded technical drawings.
 
+### Prerequisites for Training (CRITICAL - Must Complete First)
+
+**🚨 TRAINING IS BLOCKED** until these data pipeline components are implemented:
+
+#### 1. **Dataset Standardization & Processing**
+- [x] **FloorPlanCAD partially processed**: 699 SVG/PNG pairs in test/ directory
+- [ ] **Complete dataset processors** for all available datasets (CubiCasa5K, ResPlan, SketchGraphs, etc.)
+- [ ] **Vector format conversion** from raw downloads to standardized SVG/PNG pairs
+- [ ] **Data validation** and integrity checks for all processed datasets
+- [ ] **Fix FloorPlanCAD splits**: Currently all splits point to same test/ directory
+
+#### 2. **Dataset Splitting**
+- [x] **FloorPlanCAD split files exist** but incorrectly reference same test directory
+- [ ] **Create proper train/val/test splits** for each dataset
+- [ ] **Implement stratified sampling** where appropriate
+- [ ] **Generate correct split files** in `data/splits/`
+
+#### 2. **Augmentation Pipeline**
+- [ ] **Geometric augmentations**: rotation, scaling, flipping for technical drawings
+- [ ] **Degradation augmentations**: blur, noise, fading, scanning artifacts
+- [ ] **Domain-specific augmentations**: architectural priors (parallelism, perpendicularity)
+- [ ] **Vector augmentation**: SVG transformations that maintain geometric validity
+
+#### 3. **Patch Processing & Batching**
+- [ ] **Dataset-specific patch sizes**: different optimal sizes for each dataset type
+- [ ] **Adaptive patchification**: handle variable image sizes and aspect ratios
+- [ ] **Batch optimization**: efficient loading and preprocessing for training
+- [ ] **Memory management**: streaming and caching for large datasets
+
+#### 4. **Model Architecture Decision**
+- [ ] **Architecture evaluation**: compare ResNet vs EfficientNet vs Vision Transformer backbones
+- [ ] **Block size optimization**: determine optimal patch sizes (64x64 vs 128x128 vs variable)
+- [ ] **Primitive count limits**: optimal max primitives per patch for each dataset
+- [ ] **Loss function selection**: geometric vs perceptual vs hybrid objectives
+
+#### 5. **Training Infrastructure**
+- [ ] **Data loading pipeline**: PyTorch Dataset/DataLoader with augmentation
+- [ ] **Validation metrics**: comprehensive evaluation during training
+- [ ] **Checkpointing & resuming**: robust training state management
+- [ ] **Multi-GPU support**: distributed training setup
+
 ### Solution Approach
 
 #### 1. Architecture Improvement (HIGH PRIORITY)
