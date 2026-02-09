@@ -20,9 +20,7 @@ class Logger(logging.Logger):
 
     def info_trainable_params(self, torch_model):
         self.info(
-            "Total number of trainable parameters for {model}: {params}".format(
-                model=torch_model.__class__, params=sum(p.numel() for p in torch_model.parameters() if p.requires_grad)
-            )
+            f"Total number of trainable parameters for {torch_model.__class__}: {sum(p.numel() for p in torch_model.parameters() if p.requires_grad)}"
         )
 
 
