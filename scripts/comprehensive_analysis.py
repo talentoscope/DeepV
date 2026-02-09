@@ -49,8 +49,8 @@ except ImportError:
     HAS_SKIMAGE = False
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+from util_files.structured_logging import get_pipeline_logger
+logger = get_pipeline_logger("analysis.comprehensive")
 
 
 class ComprehensiveQualityAnalyzer:

@@ -25,7 +25,7 @@ import util_files.metrics.vector_metrics as vmetrics
 from util_files.data.graphics_primitives import PT_QBEZIER
 from util_files.early_stopping import create_early_stopping_for_vectorization
 from util_files.file_utils import require_empty
-from util_files.logging import create_logger
+from util_files.structured_logging import create_structured_logger
 from util_files.mixed_precision import MixedPrecisionTrainer
 from util_files.optimization.optimizer.scheduled_optimizer import ScheduledOptimizer
 from util_files.tensorboard import SummaryWriter
@@ -127,7 +127,11 @@ def main(options):
 
     # all these parameters stay unchanged for all models
     #####################################################
-    logger = create_logger(options)
+    logger = create_structured_logger(
+        name="train.vectorization",
+        level="DEBUG" if options.verbose else "INFO",
+        log_file=options.logging_filename if hasattr(options, 'logging_filename') and options.logging_filename else None
+    )
     writer = SummaryWriter(logdir=options.tboard_dir)
 
     logger.info(f"Called with parameters: {options.__dict__}")

@@ -97,6 +97,31 @@ class StructuredLogger(logging.Logger):
 
         self.info(message, extra=payload)
 
+    @contextmanager
+    def print_duration(self, duration_of_what, print_start=False):
+        """Context manager for timing operations (compatibility with existing Logger class)."""
+        if print_start:
+            self.debug(duration_of_what)
+        start = time.time()
+        yield
+        duration = time.time() - start
+        self.debug(f"{duration_of_what} complete in {duration:.3f} seconds")
+
+    def info_scalars(self, s, scalars_dict, **kwargs):
+        """Log scalar values with template formatting (compatibility with existing Logger class)."""
+        for key, value in scalars_dict.items():
+            log_s = s.format(key=key, value=value, **kwargs)  # Keep as-is for template flexibility
+            self.info(log_s)
+
+    def info_trainable_params(self, torch_model):
+        """Log the number of trainable parameters in a model."""
+        try:
+            import torch
+            param_count = sum(p.numel() for p in torch_model.parameters() if p.requires_grad)
+            self.info(f"Total number of trainable parameters for {torch_model.__class__.__name__}: {param_count}")
+        except ImportError:
+            self.warning("Could not log trainable parameters: PyTorch not available")
+
 
 class JSONFormatter(logging.Formatter):
     """JSON formatter for structured logging."""

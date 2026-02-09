@@ -15,8 +15,8 @@ from pathlib import Path
 
 import torch
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+from util_files.structured_logging import get_pipeline_logger
+logger = get_pipeline_logger("analysis.outputs")
 
 
 def main():
@@ -152,9 +152,9 @@ except ImportError as e:
     print("Make sure you're running from the project root and all dependencies are installed")
     sys.exit(1)
 
-# Set up logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+# Set up logging (already done above)
+# logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# logger = logging.getLogger(__name__)
 
 
 class QualityAnalyzer:
