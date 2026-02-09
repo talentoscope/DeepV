@@ -79,7 +79,9 @@ python scripts/validate_env.py
 
 **Why the gap?** Model trained primarily on synthetic data; lacks robustness to real-world scanning artifacts, noise, fading, and domain shift. This is the #1 priority issue being actively researched.
 
-See [PLAN.md](PLAN.md) for improvement strategies and current work on closing this gap.
+⚠️ **For complete analysis and improvement roadmap**, see:
+- [DEVELOPMENT.md - Critical Priority Section](DEVELOPMENT.md#-critical-priority-floorplancad-performance-gap) - Detailed metrics, architecture changes, and timeline
+- [PLAN.md](PLAN.md) - Strategic research directions
 
 ### <b>Why do my scanned drawings produce poor results?</b>
 

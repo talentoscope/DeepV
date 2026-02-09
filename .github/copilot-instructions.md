@@ -12,7 +12,7 @@ Short, actionable guidance to get an AI coding agent productive quickly in this 
 - Unified pipeline interface in `pipeline_unified.py` consolidates line/curve processing.
 
 ## Critical context (READ FIRST)
-**MAJOR PERFORMANCE ISSUE**: FloorPlanCAD dataset shows poor performance (IoU: 0.010, Overall: 0.043/1.000) with high over-segmentation (~5120 primitives per image). This is the #1 priority issue. Focus on architecture improvements and training optimization. See [PLAN.md](PLAN.md) for baseline metrics and [TODO.md](TODO.md) for improvement strategies.
+**MAJOR PERFORMANCE ISSUE**: FloorPlanCAD dataset shows poor performance (IoU: 0.010, Overall: 0.043/1.000) with high over-segmentation (~5120 primitives per image). This is the #1 priority issue. Focus on architecture improvements and training optimization. See [PLAN.md](PLAN.md) for strategic roadmap and [DEVELOPMENT.md](DEVELOPMENT.md) for implementation status and action items.
 
 **Recent wins** (celebrate these!):
 - 90% speedup in greedy merging algorithm (53s → 5s)

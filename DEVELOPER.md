@@ -21,6 +21,7 @@
    - Current performance: IoU 0.010, high over-segmentation (~5120 primitives)
    - Primary focus: Architecture improvements (Non-Autoregressive Transformer), training on FloorPlanCAD data
    - Target: 20-40% primitive reduction, 50x IoU improvement
+   - **For complete roadmap & metrics**, see [DEVELOPMENT.md - Critical Priority Section](DEVELOPMENT.md#-critical-priority-floorplancad-performance-gap)
 
 2. **Documentation & Type Safety**: 
    - ~70% of functions missing docstrings (especially refinement/merging)
@@ -220,9 +221,9 @@ DeepV processes images through four main stages:
 
 **Key Insight**: The pipeline needs improvement on FloorPlanCAD data. When developing:
 - Test on FloorPlanCAD dataset to validate improvements
-- Monitor IoU, Dice coefficient, SSIM, and CAD compliance metrics
+- Monitor IoU, Dice coefficient, SSIM, and CAD compliance metrics (see [DEVELOPMENT.md](DEVELOPMENT.md) for baseline metrics)
 - Use `scripts/comprehensive_analysis.py` for full quality assessment
-- Focus on reducing over-segmentation (current: ~5120 primitives)
+- Focus on reducing over-segmentation (current: ~5120 primitives - target: 3000-4000)
 
 ### Performance Characteristics
 

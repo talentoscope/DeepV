@@ -234,7 +234,7 @@ docker run --rm -it --shm-size 128G \
 ```
 
 Pushing and PRs
-- Push your branch and open a PR against `main` / `master`. Use a concise title and paste the contents of `PR_DESCRIPTION.md` as the PR body when applicable.
+- Push your branch and open a PR against `main` / `master`. Use a concise title and the PR template will automatically populate with the standard format.
 
 Maintenance notes
 - Upgrading `torch` requires selecting a wheel matching your CUDA runtime. Use the official PyTorch install selector (https://pytorch.org/get-started/locally/).

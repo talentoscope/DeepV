@@ -45,7 +45,7 @@ The Deep Vectorization project converts raster technical drawings (floor plans, 
 
 ### Critical Challenge: Current Performance on FloorPlanCAD Dataset
 
-**THE #1 PRIORITY ISSUE**: Model performance on FloorPlanCAD (the primary available dataset) is poor and needs significant improvement:
+**THE #1 PRIORITY ISSUE**: Model performance on FloorPlanCAD (the primary available dataset) is poor and needs significant improvement. For detailed implementation roadmap, see [DEVELOPMENT.md - Critical Priority Section](DEVELOPMENT.md#-critical-priority-floorplancad-performance-gap).
 
 | Metric | Current FloorPlanCAD Performance | Target Improvement |
 |--------|----------------------------------|-------------------|
@@ -357,4 +357,4 @@ Focus on architectural drawings and technical diagrams with emphasis on geometri
 
 ## Future Enhancements (Nice-to-Haves)
 
-Detailed proposals for advanced improvements inspired by recent research (e.g., ViTs, diffusion models, GNNs) have been moved to [FUTURE_ENHANCEMENTS.md](FUTURE_ENHANCEMENTS.md) for reference. These include modernizing the architecture for potential 10-20% accuracy gains but are deferred until current roadmap priorities are met.
+Detailed proposals for advanced improvements inspired by recent research (e.g., ViTs, diffusion models, GNNs) have been moved to [docs/archive/FUTURE_ENHANCEMENTS.md](docs/archive/FUTURE_ENHANCEMENTS.md) for reference. These include modernizing the architecture for potential 10-20% accuracy gains but are deferred until current roadmap priorities are met.

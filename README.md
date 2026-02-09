@@ -62,11 +62,11 @@ Many valuable technical drawings exist only in raster form: scanned pages from o
 **Development Phase**: Phase 4 (Production-Ready & Robustness) - ~70% complete
 
 **Performance Overview**:
-- ✅ **FloorPlanCAD Dataset**: Current baseline (IoU: 0.010, Dice: 0.020) with room for improvement
 - ⚡ **Speed**: 70% overall pipeline speedup achieved (77s → 23s per image)
 - 🎯 **Focus**: Improving FloorPlanCAD performance through architecture changes and training
+- ⚠️ **Known Gap**: FloorPlanCAD performance needs improvement (see [DEVELOPMENT.md](DEVELOPMENT.md#-critical-priority-floorplancad-performance-gap) for details)
 
-See [PLAN.md](PLAN.md) for detailed metrics and improvement roadmap.
+See [PLAN.md](PLAN.md) for strategic roadmap and [DEVELOPMENT.md](DEVELOPMENT.md) for active development status.
 
 ## Repository Structure
 
@@ -328,7 +328,7 @@ See `requirements.txt` for complete list.
 
 ### Current Limitations
 
-1. **FloorPlanCAD Performance**: Model shows poor performance on FloorPlanCAD dataset (IoU: 0.010). Architecture improvements and training are active priorities.
+1. **FloorPlanCAD Performance**: ⚠️ **Critical Priority** - Model shows poor performance on FloorPlanCAD dataset. See [DEVELOPMENT.md - Critical Priority Section](DEVELOPMENT.md#-critical-priority-floorplancad-performance-gap) for detailed analysis, metrics (IoU: 0.010 → target 0.5+), and solution roadmap.
 2. **Degradation Handling**: Heavy noise, severe skew, or extreme blur may require preprocessing or cleaning module improvements.
 3. **Complex Layouts**: Very dense or overlapping primitives may cause merging issues.
 4. **Color Drawings**: Current implementation converts to grayscale; color information is not preserved.
@@ -341,7 +341,7 @@ See `requirements.txt` for complete list.
 - Architectural priors (e.g., walls at right angles, repeated patterns)
 - Improved loss functions (perceptual, geometric, CAD-specific)
 
-See [TODO.md](TODO.md) and [PLAN.md](PLAN.md) for detailed improvement roadmap.
+See [DEVELOPMENT.md](DEVELOPMENT.md) for active development status and [PLAN.md](PLAN.md) for strategic roadmap.
 
 ## Troubleshooting
 

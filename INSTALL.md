@@ -11,8 +11,9 @@
 - ✅ Interactive Gradio demo for visualization
 
 **Known Limitations**:
-- ⚠️ **FloorPlanCAD performance**: Model shows poor performance on FloorPlanCAD dataset (IoU: 0.010, high over-segmentation)
-- ⚠️ Degraded/noisy scanned images may produce poor results (active improvement priority)
+- ⚠️ **FloorPlanCAD Performance** (**#1 Priority**): Model shows poor performance on FloorPlanCAD dataset (IoU: 0.010, high over-segmentation)
+  - See [DEVELOPMENT.md - Critical Priority](DEVELOPMENT.md#-critical-priority-floorplancad-performance-gap) for detailed analysis and improvement plan
+- ⚠️ Degraded/noisy scanned images may produce poor results (active improvement area - see DEVELOPMENT.md)
 - ⚠️ Web UI has deployment issues with some Gradio/conda combinations
 - ⚠️ Color drawings are converted to grayscale
 
