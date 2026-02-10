@@ -1,5 +1,4 @@
 import json
-import os
 from datetime import datetime
 from pathlib import Path
 
@@ -17,7 +16,14 @@ class Tracer:
         tracer.save_pre_refinement(primitives_list)
     """
 
-    def __init__(self, enabled: bool, base_dir: str = "output/traces", image_id: str = "unknown", seed: int = None, device: str = "cpu"):
+    def __init__(
+        self,
+        enabled: bool,
+        base_dir: str = "output/traces",
+        image_id: str = "unknown",
+        seed: int = None,
+        device: str = "cpu",
+    ):
         self.enabled = enabled
         self.base_dir = Path(base_dir)
         self.image_id = str(image_id)
@@ -40,11 +46,7 @@ class Tracer:
         """Save determinism metadata for reproducibility."""
         if not self._enabled():
             return
-        meta = {
-            "seed": self.seed,
-            "device": self.device,
-            "timestamp": self.timestamp
-        }
+        meta = {"seed": self.seed, "device": self.device, "timestamp": self.timestamp}
         with open(self.image_dir / "determinism.json", "w", encoding="utf-8") as f:
             json.dump(meta, f)
 
@@ -57,7 +59,7 @@ class Tracer:
         try:
             img = Image.fromarray(patch_array)
             img.save(pdir / "patch.png")
-        except (ValueError, TypeError, OSError) as e:
+        except (ValueError, TypeError, OSError):
             # fallback: save as npz if PIL fails
             try:
                 np.savez_compressed(pdir / "patch.npz", patch=patch_array)
@@ -131,7 +133,7 @@ class Tracer:
             try:
                 for i in range(min(renderings.shape[0], 8)):
                     arr = renderings[i]
-                    if arr.dtype != 'uint8':
+                    if arr.dtype != "uint8":
                         # normalize to 0-255
                         arrn = (255 * (arr - arr.min()) / (arr.max() - arr.min() + 1e-8)).astype(np.uint8)
                     else:

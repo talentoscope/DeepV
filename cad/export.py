@@ -6,7 +6,7 @@ like DXF (Drawing Exchange Format) for use in CAD software.
 """
 
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 try:
     import numpy as np
@@ -14,7 +14,7 @@ except ImportError:
     np = None
 
 
-def export_to_dxf(primitives, filename: str, width: int = 256, height: int = 256) -> bool:
+def export_to_dxf(primitives: Union[Dict[str, Any], Any], filename: str, width: int = 256, height: int = 256) -> bool:
     """
     Export primitives to DXF format.
 
@@ -48,10 +48,10 @@ def export_to_dxf(primitives, filename: str, width: int = 256, height: int = 256
     msp = doc.modelspace()
 
     # Export different primitive types
-    _export_lines_to_dxf(msp, primitives)
-    _export_curves_to_dxf(msp, primitives)
-    _export_cubic_curves_to_dxf(msp, primitives)
-    _export_arcs_to_dxf(msp, primitives)
+    _export_lines_to_dxf(msp, primitives, height)
+    _export_curves_to_dxf(msp, primitives, height)
+    _export_cubic_curves_to_dxf(msp, primitives, height)
+    _export_arcs_to_dxf(msp, primitives, height)
 
     # Save the DXF file
     try:
@@ -63,7 +63,7 @@ def export_to_dxf(primitives, filename: str, width: int = 256, height: int = 256
         return False
 
 
-def _export_lines_to_dxf(msp, primitives) -> None:
+def _export_lines_to_dxf(msp, primitives, height: int) -> None:
     """Export line primitives to DXF modelspace."""
     if "lines" not in primitives or len(primitives["lines"]) == 0:
         return
@@ -78,7 +78,7 @@ def _export_lines_to_dxf(msp, primitives) -> None:
         msp.add_line((dxf_x1, dxf_y1), (dxf_x2, dxf_y2))
 
 
-def _export_curves_to_dxf(msp, primitives) -> None:
+def _export_curves_to_dxf(msp, primitives, height: int) -> None:
     """Export quadratic Bézier curves to DXF modelspace."""
     if "curves" not in primitives or len(primitives["curves"]) == 0:
         return
@@ -93,7 +93,7 @@ def _export_curves_to_dxf(msp, primitives) -> None:
             msp.add_spline(points, degree=2)
 
 
-def _export_cubic_curves_to_dxf(msp, primitives) -> None:
+def _export_cubic_curves_to_dxf(msp, primitives, height: int) -> None:
     """Export cubic Bézier curves to DXF modelspace."""
     if "cubic_curves" not in primitives or len(primitives["cubic_curves"]) == 0:
         return
@@ -113,7 +113,7 @@ def _export_cubic_curves_to_dxf(msp, primitives) -> None:
             msp.add_spline(points, degree=3)
 
 
-def _export_arcs_to_dxf(msp, primitives) -> None:
+def _export_arcs_to_dxf(msp, primitives, height: int) -> None:
     """Export arc primitives to DXF modelspace."""
     if "arcs" not in primitives or len(primitives["arcs"]) == 0:
         return
@@ -131,7 +131,7 @@ def _export_arcs_to_dxf(msp, primitives) -> None:
             msp.add_arc((dxf_cx, dxf_cy), float(radius), start_angle, end_angle)
 
 
-def export_to_svg(primitives, filename: str, width: int = 256, height: int = 256) -> bool:
+def export_to_svg(primitives: Union[Dict[str, Any], Any], filename: str, width: int = 256, height: int = 256) -> bool:
     """
     Export primitives to SVG format.
 
@@ -201,8 +201,13 @@ def export_to_svg(primitives, filename: str, width: int = 256, height: int = 256
                 # Calculate end point
                 end_x = cx + radius * np.cos(np.radians(end_angle))
                 end_y = cy + radius * np.sin(np.radians(end_angle))
+                # Calculate start point
+                start_x = cx + radius * np.cos(np.radians(start_angle))
+                start_y = cy + radius * np.sin(np.radians(start_angle))
                 # SVG arc: A rx ry x-axis-rotation large-arc-flag sweep-flag x y
-                path_data = f"M {cx + radius * np.cos(np.radians(start_angle))} {cy + radius * np.sin(np.radians(start_angle))} A {radius} {radius} 0 {large_arc} {sweep} {end_x} {end_y}"
+                path_data = (
+                    f"M {start_x} {start_y} A {radius} {radius} 0 {large_arc} {sweep} {end_x} {end_y}"
+                )
                 svg_elements.append(f'<path d="{path_data}" stroke="black" stroke-width="{width}" fill="none"/>')
 
     svg_content = f"""<?xml version="1.0" encoding="UTF-8"?>

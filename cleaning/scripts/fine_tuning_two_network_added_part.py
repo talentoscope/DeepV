@@ -7,12 +7,10 @@ enhances the output of a pre-trained cleaning UNet for improved restoration.
 
 import argparse
 import os
-from time import gmtime, strftime
 from typing import Dict, Tuple
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 import torchvision
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
@@ -22,7 +20,7 @@ from tqdm import tqdm
 from cleaning.models.SmallUnet.unet import SmallUnet
 from cleaning.models.Unet.unet_model import UNet
 from cleaning.utils.dataloader import MakeDataSynt
-from cleaning.utils.loss import IOU, CleaningLoss
+from cleaning.utils.loss import CleaningLoss
 from util_files.metrics.raster_metrics import iou_score
 
 MODEL_LOSS: Dict[str, Dict[str, torch.nn.Module]] = {
@@ -45,10 +43,12 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fine-tune two-network cleaning models")
 
     parser.add_argument(
-        "--model", type=str, required=True,
+        "--model",
+        type=str,
+        required=True,
         help='Model type: one of ["UNET", "UNET_MSE", "SmallUnet"]',
         choices=["UNET", "UNET_MSE", "SmallUnet"],
-        default="UNET"
+        default="UNET",
     )
     parser.add_argument("--n_epochs", type=int, help="Number of epochs for training", default=10)
     parser.add_argument("--datadir", type=str, required=True, help="Path to training dataset")
@@ -82,8 +82,14 @@ def get_dataloaders(args: argparse.Namespace) -> Tuple[DataLoader, DataLoader]:
     return train_loader, val_loader
 
 
-def validate(tb: SummaryWriter, val_loader: DataLoader, unet: torch.nn.Module,
-            gen: torch.nn.Module, loss_func: torch.nn.Module, global_step: int) -> None:
+def validate(
+    tb: SummaryWriter,
+    val_loader: DataLoader,
+    unet: torch.nn.Module,
+    gen: torch.nn.Module,
+    loss_func: torch.nn.Module,
+    global_step: int,
+) -> None:
     """Run validation and log metrics to TensorBoard."""
     val_iou_extract = []
     val_loss_epoch = []
@@ -95,7 +101,7 @@ def validate(tb: SummaryWriter, val_loader: DataLoader, unet: torch.nn.Module,
             x_input = torch.FloatTensor(x_input).cuda()
 
             # Cleaning prediction
-            logits_restor, logits_extract = None, unet(x_input)
+            logits_extract = unet(x_input)
             # 1 - Cleaning prediction
             logits_extract = 1 - logits_extract.unsqueeze(1)
 
@@ -180,7 +186,6 @@ def main(args: argparse.Namespace) -> None:
     tb.add_text(tag="unet", text_string=repr(unet))
 
     gen_opt = torch.optim.Adamax(gen.parameters(), lr=0.00005)
-    unet_opt = torch.optim.Adamax(unet.parameters(), lr=0.00002)
 
     global_step = 0
 
@@ -196,7 +201,7 @@ def main(args: argparse.Namespace) -> None:
 
             unet.eval()
             with torch.no_grad():
-                logits_restor, logits_extract = None, unet(x_input)
+                logits_extract = unet(x_input)
                 logits_extract = 1 - logits_extract.unsqueeze(1)
 
             logits_restore = gen.forward(logits_extract).unsqueeze(1)  # restoration + extraction

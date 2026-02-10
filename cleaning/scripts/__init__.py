@@ -11,4 +11,4 @@ Example:
 """
 
 # Scripts are meant to be run as modules, not imported
-__all__ = []
+__all__: list[str] = []

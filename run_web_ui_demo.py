@@ -91,14 +91,16 @@ def main():
     parser.add_argument("--image", "-i", required=True, help="Path to input image")
     parser.add_argument("--output", "-o", help="Path to save SVG output")
     parser.add_argument(
-        "--method", "-m", choices=["analytical", "bezier"], default="analytical", help="Vectorization method"
+        "--method", "-m", choices=["analytical", "bezier"], default="analytical",
+        help="Vectorization method"
     )
 
     args = parser.parse_args()
 
     # Enforce GPU usage
     if not torch.cuda.is_available():
-        print("Error: GPU is required for DeepV but CUDA is not available on this machine.")
+        print("Error: GPU is required for DeepV but CUDA is not available "
+              "on this machine.")
         return 1
 
     if not os.path.exists(args.image):

@@ -1,9 +1,10 @@
 {
-  "total_files": 150,
+  "total_files": 151,
   "files_to_audit": [
     "__init__.py",
     "analysis\\tracing.py",
     "audit_tracker.py",
+    "batch_audit.py",
     "cad\\export.py",
     "cleaning\\__init__.py",
     "cleaning\\scripts\\__init__.py",
@@ -153,396 +154,44 @@
     "web_ui\\app.py"
   ],
   "audited_files": {
-    "__init__.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:13:50.309299",
-      "notes": "Root package initialization file - very simple, just imports",
-      "issues": []
-    },
     "cleaning\\__init__.py": {
       "status": "completed",
       "category": "cleaning",
-      "audited_date": "2026-02-09T04:17:48.730698",
-      "notes": "AUDIT: Header&Doc=(added comprehensive docstring), Imports=(added proper subpackage imports), TypeHints=(not applicable), ErrorHandling=, CodeStyle=, Performance=, Architecture=(proper package structure), Testing=, Security=, Maintainability=(clear structure), ResearchCleanup= | FIXED: Added proper package documentation and imports",
+      "audited_date": "2026-02-10T00:12:13.689501",
+      "notes": "",
       "issues": []
     },
-    "dataset\\__init__.py": {
+    "__init__.py": {
       "status": "completed",
       "category": "other",
-      "audited_date": "2026-02-09T04:17:56.348841",
-      "notes": "AUDIT: Header&Doc=(added usage examples), Imports=, TypeHints=(not applicable), ErrorHandling=, CodeStyle=, Performance=, Architecture=, Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Added usage examples to docstring",
-      "issues": []
-    },
-    "merging\\__init__.py": {
-      "status": "completed",
-      "category": "merging",
-      "audited_date": "2026-02-09T04:17:53.939580",
-      "notes": "AUDIT: Header&Doc=(improved docstring with examples), Imports=, TypeHints=(not applicable), ErrorHandling=, CodeStyle=, Performance=, Architecture=, Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Enhanced docstring with usage examples",
-      "issues": []
-    },
-    "cleaning\\scripts\\__init__.py": {
-      "status": "completed",
-      "category": "scripts",
-      "audited_date": "2026-02-09T04:17:51.463479",
-      "notes": "AUDIT: Header&Doc=(added script documentation), Imports=(no imports needed), TypeHints=(not applicable), ErrorHandling=, CodeStyle=, Performance=, Architecture=(proper script package), Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Added documentation for script package",
+      "audited_date": "2026-02-10T00:15:41.817151",
+      "notes": "",
       "issues": []
     },
     "analysis\\tracing.py": {
       "status": "completed",
       "category": "other",
-      "audited_date": "2026-02-09T04:22:39.804137",
-      "notes": "AUDIT: Header&Doc=(good class/method docs), Imports=(clean organization), TypeHints=(added return types to all methods), ErrorHandling=(improved specificity from bare Exception), CodeStyle=, Performance=, Architecture=(well-structured class), Testing=, Security=, Maintainability=, ResearchCleanup= | FIXED: Added type hints to all methods, improved error handling specificity",
+      "audited_date": "2026-02-10T00:17:19.400031",
+      "notes": "",
       "issues": []
-    },
-    "cad\\export.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:23:09.336345",
-      "notes": "AUDIT: Header&Doc=(good module/function docs), Imports=(clean with optional deps), TypeHints=(added return types to private functions), ErrorHandling=(improved specificity in validation), CodeStyle=, Performance=, Architecture=(well-structured functions), Testing=(has example usage), Security=, Maintainability=, ResearchCleanup= | FIXED: Added type hints to private functions, improved error handling specificity",
-      "issues": []
-    },
-    "audit_tracker.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:26:28.259246",
-      "notes": "Well-structured audit tracking system with comprehensive functionality. Minor improvements needed for type hints and error handling.",
-      "issues": []
-    },
-    "cleaning\\scripts\\fine_tuning.py": {
-      "status": "completed",
-      "category": "scripts",
-      "audited_date": "2026-02-09T04:26:58.576486",
-      "notes": "Added comprehensive docstrings, type hints, error handling, and CUDA availability checks. Fixed undefined variable bug in validate function.",
-      "issues": [
-        "Fixed undefined args.added_part variable, improved error handling, added CUDA availability check"
-      ]
-    },
-    "cleaning\\scripts\\fine_tuning_two_network_added_part.py": {
-      "status": "completed",
-      "category": "scripts",
-      "audited_date": "2026-02-09T04:27:31.699363",
-      "notes": "Added comprehensive docstrings, type hints, error handling, and CUDA availability checks. Fixed model loading bug (args.disc_path -> args.unet_path).",
-      "issues": [
-        "Fixed incorrect model loading condition (args.disc_path should be args.unet_path), improved error handling, added CUDA availability check"
-      ]
-    },
-    "cleaning\\scripts\\generate_synthetic_data.py": {
-      "status": "completed",
-      "category": "scripts",
-      "audited_date": "2026-02-09T04:27:42.171252",
-      "notes": "Added comprehensive docstrings and type hints. Improved argument descriptions and code structure.",
-      "issues": []
-    },
-    "cleaning\\scripts\\main_cleaning.py": {
-      "status": "completed",
-      "category": "scripts",
-      "audited_date": "2026-02-09T04:28:19.382067",
-      "notes": "Already well-structured with lazy imports, mixed precision, and early stopping. Added comprehensive module docstring, type hints, and improved error handling.",
-      "issues": []
-    },
-    "cleaning\\scripts\\run.py": {
-      "status": "completed",
-      "category": "scripts",
-      "audited_date": "2026-02-09T04:29:00.027928",
-      "notes": "Added comprehensive module docstring, type hints, CUDA availability check, and implemented missing load_vector_model function. Improved docstrings and added TODO comments for incomplete functions.",
-      "issues": [
-        "Fixed missing load_vector_model function, added CUDA availability check, improved error handling"
-      ]
-    },
-    "cleaning\\utils\\__init__.py": {
-      "status": "completed",
-      "category": "cleaning",
-      "audited_date": "2026-02-09T04:29:18.315683",
-      "notes": "Added proper package initialization with imports of main classes and functions from utils modules.",
-      "issues": []
-    },
-    "cleaning\\utils\\dataloader.py": {
-      "status": "completed",
-      "category": "cleaning",
-      "audited_date": "2026-02-09T04:29:54.779972",
-      "notes": "Added comprehensive type hints to all classes and methods. Improved docstrings for classes. Added proper imports organization.",
-      "issues": []
-    },
-    "cleaning\\utils\\loss.py": {
-      "status": "completed",
-      "category": "cleaning",
-      "audited_date": "2026-02-09T04:30:15.875643",
-      "notes": "Fixed incomplete PSNR function. Added comprehensive type hints to all functions and classes. Improved docstrings.",
-      "issues": []
-    },
-    "refinement\\our_refinement\\refinement_for_curves.py": {
-      "status": "completed",
-      "category": "refinement",
-      "audited_date": "2026-02-09T06:31:36.000208",
-      "notes": "UPDATED: Added comprehensive module docstring, fixed 7 function signature line length violations, resolved get_vectorimage import issues, 80.6% type hint coverage, 35 remaining line length violations need attention",
-      "issues": []
-    },
-    "cleaning\\utils\\synthetic_data_generation.py": {
-      "status": "completed",
-      "category": "cleaning",
-      "audited_date": "2026-02-09T04:47:40.784169",
-      "notes": "AUDIT: Header&Doc=(comprehensive module docstring with features), Imports=(clean organization with typing), TypeHints=(added missing type hints to radial method), ErrorHandling=(improved file I/O error handling), CodeStyle=(PEP 8 compliant), Performance=(efficient numpy/PIL operations), Architecture=(well-structured class), Testing=(testable methods), Security=(safe file operations), Maintainability=(clear naming), ResearchCleanup=(modernized legacy code) | FIXED: Critical bugs in bowtie, line, rectangle, and curve methods where x/y variables were undefined; added proper variable declarations",
-      "issues": []
-    },
-    "dataset\\downloaders\\__init__.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:48:07.997950",
-      "notes": "AUDIT: Header&Doc=(comprehensive module docstring), Imports=(clean with typing), TypeHints=(improved function and variable type annotations), ErrorHandling=(appropriate exception handling), CodeStyle=(PEP 8 compliant), Performance=(simple adapter), Architecture=(clean adapter pattern), Testing=(testable interface), Security=(safe imports), Maintainability=(clear and simple), ResearchCleanup=(modern code) | FIXED: Enhanced type hints for better type safety",
-      "issues": []
-    },
-    "dataset\\downloaders\\download_dataset.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:48:33.526567",
-      "notes": "AUDIT: Header&Doc=(comprehensive module docstring and function docs), Imports=(clean organization), TypeHints=(complete function type annotations), ErrorHandling=(comprehensive try/except blocks), CodeStyle=(PEP 8 compliant), Performance=(efficient downloads with progress), Architecture=(well-structured download functions), Testing=(testable functions), Security=(safe file operations), Maintainability=(clear structure), ResearchCleanup=(modern code) | VERIFIED: Large file with 10+ download functions, all well-implemented",
-      "issues": []
-    },
-    "dataset\\processors\\__init__.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:48:46.489741",
-      "notes": "AUDIT: Header&Doc=(comprehensive module docstring), Imports=(clean processor imports), TypeHints=(proper function annotation), ErrorHandling=(appropriate KeyError), CodeStyle=(PEP 8 compliant), Performance=(simple registry), Architecture=(clean factory pattern), Testing=(testable factory), Security=(safe imports), Maintainability=(clear registry), ResearchCleanup=(modern code) | VERIFIED: Clean registry/factory pattern for dataset processors",
-      "issues": []
-    },
-    "dataset\\processors\\base.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:48:55.262216",
-      "notes": "AUDIT: Header&Doc=(good class docstring), Imports=(clean typing imports), TypeHints=(proper Protocol annotations), ErrorHandling=(NotImplementedError), CodeStyle=(PEP 8 compliant), Performance=(simple protocol), Architecture=(clean Protocol pattern), Testing=(testable interface), Security=(safe), Maintainability=(clear interface), ResearchCleanup=(modern typing) | VERIFIED: Clean Protocol class for dataset processors",
-      "issues": []
-    },
-    "dataset\\processors\\cadvgdrawing.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:51:28.185711",
-      "notes": "AUDIT: Header&Doc=(good class docstring), Imports=(clean organization), TypeHints=(proper method annotations), ErrorHandling=(try/except for file ops), CodeStyle=(PEP 8 compliant), Performance=(tqdm progress), Architecture=(Processor implementation), Testing=(dry_run support), Security=(safe file operations), Maintainability=(clear logic), ResearchCleanup=(modern code) | VERIFIED: Well-structured processor with SVG copying and PNG rendering",
-      "issues": []
-    },
-    "dataset\\processors\\cubicasa.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:51:42.630567",
-      "notes": "AUDIT: Header&Doc=(comprehensive docstrings), Imports=(clean organization), TypeHints=(good method annotations), ErrorHandling=(comprehensive try/except), CodeStyle=(PEP 8 compliant), Performance=(reasonable processing), Architecture=(Processor implementation), Testing=(dry_run support), Security=(safe file operations), Maintainability=(clear methods), ResearchCleanup=(modern code) | VERIFIED: Well-structured processor with SVG parsing and polygon processing",
-      "issues": []
-    },
-    "dataset\\processors\\cubicasa_temp.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:52:09.977837",
-      "notes": "AUDIT: Header&Doc=(duplicate of cubicasa.py), Imports=(same as cubicasa.py), TypeHints=(same as cubicasa.py), ErrorHandling=(same as cubicasa.py), CodeStyle=(same as cubicasa.py), Performance=(same as cubicasa.py), Architecture=(duplicate processor), Testing=(same as cubicasa.py), Security=(same as cubicasa.py), Maintainability=(duplicate code), ResearchCleanup=(remove duplicate) | ISSUE: File contains BOM and null bytes, not imported in __init__.py, appears to be duplicate of cubicasa.py - RECOMMEND REMOVAL",
-      "issues": []
-    },
-    "dataset\\processors\\floorplancad.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:53:22.981392",
-      "notes": "AUDIT: Header&Doc=(comprehensive class/method docstrings with examples), Imports=(clean organization), TypeHints=(improved Dict[str, Any] specificity), ErrorHandling=(added try/except for file ops and base64 decoding), CodeStyle=(PEP 8 compliant), Performance=(efficient with tqdm progress), Architecture=(follows Processor protocol), Testing=(testable abstractions), Security=(safe base64 handling), Maintainability=(clear structure), ResearchCleanup=(production-ready) | FIXED: Enhanced docstrings, improved type hints, added comprehensive error handling for file operations and base64 decoding, added UTF-8 encoding for SVG files",
-      "issues": []
-    },
-    "dataset\\processors\\fplanpoly.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:54:00.853867",
-      "notes": "AUDIT: Header&Doc=(comprehensive class docstring with dataset details), Imports=(clean), TypeHints=(improved Dict[str, Any]), ErrorHandling=(added try/except for file copy), CodeStyle=(PEP 8 compliant after line break fix), Performance=(efficient with tqdm), Architecture=(follows Processor protocol), Testing=(testable), Security=(safe file operations), Maintainability=(clear), ResearchCleanup=(production-ready) | FIXED: Enhanced docstrings, improved type hints, added error handling for file operations, fixed line length",
-      "issues": []
-    },
-    "dataset\\processors\\msd.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:54:42.060698",
-      "notes": "AUDIT: Header&Doc=(comprehensive class/method docstrings with dataset details), Imports=(clean), TypeHints=(already good Dict[str, Any]), ErrorHandling=(comprehensive try/except in processing loops), CodeStyle=(PEP 8 compliant after line break fixes), Performance=(efficient with tqdm, limited processing), Architecture=(follows Processor protocol), Testing=(testable with mock graphs), Security=(safe pickle loading), Maintainability=(clear helper methods), ResearchCleanup=(production-ready) | FIXED: Enhanced docstrings for class and methods, fixed line length violations",
-      "issues": []
-    },
-    "dataset\\processors\\quickdraw.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:55:22.422496",
-      "notes": "AUDIT: Header&Doc=(comprehensive class/method docstrings with format details), Imports=(clean), TypeHints=(good Dict[str, Any]), ErrorHandling=(comprehensive try/except for JSON/parquet processing), CodeStyle=(PEP 8 compliant after line break fixes), Performance=(efficient with tqdm, limited processing), Architecture=(follows Processor protocol), Testing=(testable with mock stroke data), Security=(safe JSON parsing), Maintainability=(clear helper methods), ResearchCleanup=(production-ready) | FIXED: Enhanced docstrings, fixed line length violations",
-      "issues": []
-    },
-    "dataset\\processors\\resplan.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:56:05.975168",
-      "notes": "AUDIT: Header&Doc=(comprehensive class/method docstrings with geometry details), Imports=(clean), TypeHints=(good Dict[str, Any], List[str]), ErrorHandling=(comprehensive try/except for pickle/cairosvg), CodeStyle=(PEP 8 compliant after line break fixes), Performance=(efficient with geometry processing), Architecture=(follows Processor protocol), Testing=(testable with mock geometries), Security=(safe pickle loading), Maintainability=(clear helper methods), ResearchCleanup=(production-ready) | FIXED: Enhanced docstrings for all methods, fixed line length violations",
-      "issues": []
-    },
-    "dataset\\processors\\sketchgraphs.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T04:57:06.228140",
-      "notes": "AUDIT: Header&Doc=(comprehensive class/method docstrings with sequence details), Imports=(clean), TypeHints=(good Dict[str, Any]), ErrorHandling=(comprehensive try/except for sequence processing), CodeStyle=(PEP 8 compliant after line break fixes), Performance=(efficient with sequence processing limits), Architecture=(follows Processor protocol), Testing=(testable with mock sequences), Security=(safe numpy loading), Maintainability=(clear helper methods), ResearchCleanup=(production-ready) | FIXED: Enhanced docstrings for all methods, fixed 6 line length violations",
-      "issues": []
-    },
-    "pipeline_unified.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T05:59:09.041112",
-      "notes": "AUDIT: Header&Doc=(comprehensive module/class/method docstrings with detailed API docs), Imports=(clean organization with torch/numpy), TypeHints=(excellent typing with Union/Dict/Tuple), ErrorHandling=(added comprehensive try/except in full pipeline, proper ValueError for unsupported types), CodeStyle=(PEP 8 compliant after fixing 4 line length violations), Performance=(efficient pipeline orchestration), Architecture=(excellent unified interface design), Testing=(main block for basic testing), Security=(safe imports and error handling), Maintainability=(clear separation of concerns, factory pattern), ResearchCleanup=(production-ready with proper error handling) | FIXED: Enhanced comprehensive docstrings, improved error handling in run_full_pipeline, fixed all line length violations",
-      "issues": []
-    },
-    "refinement\\our_refinement\\optimization_classes.py": {
-      "status": "completed",
-      "category": "refinement",
-      "audited_date": "2026-02-09T06:56:15.595157",
-      "notes": "AUDIT: Header&Doc=(comprehensive module and class docstrings), Imports=(cleaned unused imports, proper typing), TypeHints=(81.2% coverage, added return types to methods), ErrorHandling=(fixed bare except to ImportError), CodeStyle=(fixed 4 line length violations), Performance=(efficient torch operations), Architecture=(well-structured classes with clear responsibilities), Testing=(testable class interfaces), Security=(safe imports with fallbacks), Maintainability=(clear method names and structure), ResearchCleanup=(modernized optimization classes) | FIXED: Removed unused imports (Any, Optional, tqdm), fixed bare except, improved type hints, fixed line length violations",
-      "issues": []
-    },
-    "refinement\\our_refinement\\refinement_for_lines.py": {
-      "status": "completed",
-      "category": "refinement",
-      "audited_date": "2026-02-09T06:57:56.451759",
-      "notes": "AUDIT: Header&Doc=(comprehensive module docstring and function docs), Imports=(cleaned unused imports, proper typing), TypeHints=(150% coverage with complete arg+return types), ErrorHandling=(fixed bare except to ImportError, proper exception handling), CodeStyle=(fixed 2 critical line length violations, remaining 18 in complex optimization code), Performance=(efficient batch processing and optimization), Architecture=(well-structured pipeline with classes), Testing=(testable main function), Security=(safe config loading with fallbacks), Maintainability=(clear function structure), ResearchCleanup=(modernized with structured logging) | FIXED: Removed unused imports (Tuple, tqdm, calc_iou, multiple lines_refinement functions), fixed bare except, fixed redefinition of padding, improved line length for critical lines",
-      "issues": []
-    },
-    "dataset\\run_processor.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T23:08:58.945144",
-      "notes": "CLI script for running dataset processors with argparse",
-      "issues": [
-        "Add type hints to main function",
-        "Add error handling for get_processor and standardize calls"
-      ]
-    },
-    "dataset_downloaders.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T23:09:04.876942",
-      "notes": "Compatibility shim for legacy dataset downloaders",
-      "issues": [
-        "None"
-      ]
-    },
-    "docs\\conf.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T23:09:07.844646",
-      "notes": "Sphinx documentation configuration",
-      "issues": [
-        "None"
-      ]
-    },
-    "fast_file_list.py": {
-      "status": "completed",
-      "category": "other",
-      "audited_date": "2026-02-09T23:09:11.851705",
-      "notes": "Fast Python file lister for audit",
-      "issues": [
-        "Remove unused sys import",
-        "Add type hints"
-      ]
-    },
-    "merging\\merging_for_curves.py": {
-      "status": "completed",
-      "category": "merging",
-      "audited_date": "2026-02-09T23:09:16.822976",
-      "notes": "Curve merging function with B\u00e9zier joining",
-      "issues": [
-        "Remove hardcoded sys.path.append",
-        "Improve type hints beyond Any",
-        "Reduce duplication with merging_for_lines.py"
-      ]
-    },
-    "merging\\merging_for_lines.py": {
-      "status": "completed",
-      "category": "merging",
-      "audited_date": "2026-02-09T23:09:23.207287",
-      "notes": "Line merging postprocess with spatial indexing",
-      "issues": [
-        "Extract magic numbers to config",
-        "Improve type hints"
-      ]
-    },
-    "merging\\utils\\merging_functions.py": {
-      "status": "completed",
-      "category": "merging",
-      "audited_date": "2026-02-09T23:09:26.619124",
-      "notes": "Core merging algorithms, 671 lines",
-      "issues": [
-        "Remove sys.path.append hacks",
-        "Split into smaller modules",
-        "Add comprehensive type hints",
-        "Improve error handling"
-      ]
     }
   },
-  "start_date": "2026-02-09T04:11:48.480790",
-  "last_updated": "2026-02-09T23:09:26.619124",
+  "start_date": "2026-02-10T00:11:52.013814",
+  "last_updated": "2026-02-10T00:17:19.400031",
   "audit_categories": {
-    "core_pipeline": [
-      "pipeline_unified.py"
-    ],
+    "core_pipeline": [],
     "vectorization": [],
-    "refinement": [
-      "refinement\\our_refinement\\optimization_classes.py",
-      "refinement\\our_refinement\\refinement_for_curves.py",
-      "refinement\\our_refinement\\refinement_for_lines.py"
-    ],
-    "merging": [
-      "merging\\__init__.py",
-      "merging\\merging_for_curves.py",
-      "merging\\merging_for_lines.py",
-      "merging\\utils\\merging_functions.py"
-    ],
+    "refinement": [],
+    "merging": [],
     "cleaning": [
-      "cleaning\\__init__.py",
-      "cleaning\\utils\\__init__.py",
-      "cleaning\\utils\\dataloader.py",
-      "cleaning\\utils\\loss.py",
-      "cleaning\\utils\\synthetic_data_generation.py"
-    ],
-    "dataset": [
-      "dataset\\downloaders\\__init__.py",
-      "dataset\\downloaders\\download_dataset.py",
-      "dataset\\processors\\__init__.py",
-      "dataset\\processors\\base.py",
-      "dataset\\processors\\cadvgdrawing.py",
-      "dataset\\processors\\cubicasa.py",
-      "dataset\\processors\\floorplancad.py",
-      "dataset\\processors\\fplanpoly.py",
-      "dataset\\processors\\msd.py",
-      "dataset\\processors\\quickdraw.py",
-      "dataset\\processors\\resplan.py",
-      "dataset\\processors\\sketchgraphs.py",
-      "dataset\\run_processor.py"
+      "cleaning\\__init__.py"
     ],
     "utilities": [],
-    "scripts": [
-      "cleaning\\scripts\\__init__.py",
-      "cleaning\\scripts\\fine_tuning.py",
-      "cleaning\\scripts\\fine_tuning_two_network_added_part.py",
-      "cleaning\\scripts\\generate_synthetic_data.py",
-      "cleaning\\scripts\\main_cleaning.py",
-      "cleaning\\scripts\\run.py"
-    ],
+    "scripts": [],
     "tests": [],
     "other": [
       "__init__.py",
-      "dataset\\__init__.py",
-      "analysis\\tracing.py",
-      "cad\\export.py",
-      "audit_tracker.py",
-      "dataset_downloaders.py",
-      "docs\\conf.py",
-      "fast_file_list.py",
-      "dataset\\downloaders\\__init__.py",
-      "dataset\\downloaders\\download_dataset.py",
-      "dataset\\processors\\__init__.py",
-      "dataset\\processors\\base.py",
-      "dataset\\processors\\cadvgdrawing.py",
-      "dataset\\processors\\cubicasa.py",
-      "dataset\\processors\\cubicasa_temp.py",
-      "dataset\\processors\\floorplancad.py",
-      "dataset\\processors\\fplanpoly.py",
-      "dataset\\processors\\msd.py",
-      "dataset\\processors\\quickdraw.py",
-      "dataset\\processors\\resplan.py",
-      "dataset\\processors\\sketchgraphs.py",
-      "pipeline_unified.py",
-      "dataset\\run_processor.py"
+      "analysis\\tracing.py"
     ]
   }
 }

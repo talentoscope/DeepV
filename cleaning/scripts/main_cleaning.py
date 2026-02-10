@@ -7,13 +7,10 @@ Supports various architectures, mixed precision training, and early stopping.
 
 import argparse
 import os
-from typing import Any, Optional, Tuple, TYPE_CHECKING
+from typing import Any, Optional, Tuple
 
 import numpy as np
 import torchvision
-
-if TYPE_CHECKING:
-    import torch
 
 
 def parse_args(args: Optional[list] = None) -> argparse.Namespace:

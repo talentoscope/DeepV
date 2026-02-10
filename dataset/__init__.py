@@ -20,4 +20,4 @@ Example:
 
 from . import downloaders, processors
 
-__all__ = ["downloaders", "processors"]
+__all__: list[str] = ["downloaders", "processors"]

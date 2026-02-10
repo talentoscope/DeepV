@@ -14,4 +14,4 @@ Example:
 
 from . import scripts, utils
 
-__all__ = ["scripts", "utils"]
+__all__: list[str] = ["scripts", "utils"]

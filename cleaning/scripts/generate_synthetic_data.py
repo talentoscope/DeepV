@@ -7,12 +7,11 @@ using the Synthetic data generation utility.
 
 import argparse
 import sys
-from typing import NoReturn
 
 sys.path.append("../../")
-from tqdm import tqdm
+from tqdm import tqdm  # noqa: E402
 
-from cleaning.utils.synthetic_data_generation import Synthetic
+from cleaning.utils.synthetic_data_generation import Synthetic  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
@@ -20,13 +19,10 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate synthetic data for cleaning models")
 
     parser.add_argument(
-        "--img_path", type=str, default="../../dataset/Cleaning/Synthetic/train",
-        help="Path to save generated data"
+        "--img_path", type=str, default="../../dataset/Cleaning/Synthetic/train", help="Path to save generated data"
     )
-    parser.add_argument("--data_count", type=int, default=7,
-                       help="Total number of data samples to generate")
-    parser.add_argument("--data_count_start", type=int, default=0,
-                       help="Starting index for data generation")
+    parser.add_argument("--data_count", type=int, default=7, help="Total number of data samples to generate")
+    parser.add_argument("--data_count_start", type=int, default=0, help="Starting index for data generation")
 
     args = parser.parse_args()
     return args

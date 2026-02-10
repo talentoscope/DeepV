@@ -7,12 +7,10 @@ using synthetic data with optional pre-trained model loading.
 
 import argparse
 import os
-from time import gmtime, strftime
 from typing import Dict, Tuple
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 import torchvision
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
@@ -22,7 +20,7 @@ from tqdm import tqdm
 from cleaning.models.SmallUnet.unet import SmallUnet
 from cleaning.models.Unet.unet_model import UNet
 from cleaning.utils.dataloader import MakeDataSynt
-from cleaning.utils.loss import IOU, CleaningLoss
+from cleaning.utils.loss import CleaningLoss
 from util_files.metrics.raster_metrics import iou_score
 
 MODEL_LOSS: Dict[str, Dict[str, torch.nn.Module]] = {
@@ -52,8 +50,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--valdatadir", type=str, required=True, help="Path to validation dataset")
     parser.add_argument("--batch_size", type=int, default=8, help="Batch size for training")
     parser.add_argument("--name", type=str, required=True, help="Name of the experiment")
-    parser.add_argument("--added_part", type=str, default="No",
-                        choices=["Yes", "No"], help="Use added part training mode")
+    parser.add_argument(
+        "--added_part", type=str, default="No", choices=["Yes", "No"], help="Use added part training mode"
+    )
+    parser.add_argument("--model_path", type=str, default=None, help="Path to pre-trained model for loading")
+
+    return parser.parse_args()
 
 
 def get_dataloaders(args: argparse.Namespace) -> Tuple[DataLoader, DataLoader]:
@@ -74,8 +76,14 @@ def get_dataloaders(args: argparse.Namespace) -> Tuple[DataLoader, DataLoader]:
     return train_loader, val_loader
 
 
-def validate(tb: SummaryWriter, val_loader: DataLoader, model: torch.nn.Module,
-            loss_func: torch.nn.Module, global_step: int, added_part: bool = False) -> None:
+def validate(
+    tb: SummaryWriter,
+    val_loader: DataLoader,
+    model: torch.nn.Module,
+    loss_func: torch.nn.Module,
+    global_step: int,
+    added_part: bool = False,
+) -> None:
     """Run validation and log metrics to TensorBoard."""
     val_loss_epoch = []
     val_iou_extract = []

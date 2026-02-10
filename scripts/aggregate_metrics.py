@@ -15,7 +15,8 @@ Combines individual image metrics into dataset-level summaries for
 model evaluation and comparison.
 
 Usage:
-    python scripts/aggregate_metrics.py --metrics_dir logs/outputs/batch_run/metrics --out_csv logs/metrics/summary.csv
+    python scripts/aggregate_metrics.py --metrics_dir logs/outputs/batch_run/metrics \
+        --out_csv logs/metrics/summary.csv
 """
 
 import argparse
@@ -73,7 +74,8 @@ def print_stats(rows):
         mean = statistics.mean(vals)
         med = statistics.median(vals)
         stdev = statistics.pstdev(vals)
-        print(f" - {m}: mean={mean:.4f}, median={med:.4f}, stdev={stdev:.4f} (n={len(vals)})")
+        print(f" - {m}: mean={mean:.4f}, median={med:.4f}, stdev={stdev:.4f} "
+              f"(n={len(vals)})")
 
 
 def main():

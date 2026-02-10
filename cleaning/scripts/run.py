@@ -7,7 +7,6 @@ technical drawings using pre-trained models.
 """
 
 import argparse
-import os
 from itertools import product
 from typing import Any, Tuple
 
