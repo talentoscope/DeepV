@@ -74,6 +74,9 @@ class CleaningLoss(nn.Module):
         """
         super().__init__()
 
+        self.loss_extraction: nn.Module
+        self.loss_restoration: nn.Module
+
         if kind == "MSE":
             self.loss_extraction = nn.MSELoss()
             self.loss_restoration = nn.MSELoss()
@@ -84,8 +87,13 @@ class CleaningLoss(nn.Module):
         self.alpha = alpha
         self.with_restor = with_restore
 
-    def forward(self, y_pred_extract: torch.Tensor, y_pred_restore: torch.Tensor,
-                y_true_extract: torch.Tensor, y_true_restore: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        y_pred_extract: torch.Tensor,
+        y_pred_restore: torch.Tensor,
+        y_true_extract: torch.Tensor,
+        y_true_restore: torch.Tensor,
+    ) -> torch.Tensor:
         """Compute the cleaning loss.
 
         Args:
@@ -97,7 +105,7 @@ class CleaningLoss(nn.Module):
         Returns:
             Combined loss value
         """
-        loss = 0
+        loss = torch.tensor(0.0)
         y_true_extract = y_true_extract.unsqueeze(1)
         y_true_restore = y_true_restore.unsqueeze(1)
         if self.with_restor:
@@ -128,12 +136,15 @@ def MSE_loss(
     y_batch = y_batch.unsqueeze(1)
     logits, _ = model(X_batch)
     loss_fun = nn.MSELoss()
-    return loss_fun(logits, y_batch)
+    return loss_fun(logits, y_batch)  # type: ignore
 
 
 def MSE_synthetic_loss(
-    X_batch: torch.Tensor, y_batch_er: torch.Tensor, y_batch_e: torch.Tensor,
-    model: nn.Module = None, device: str = None
+    X_batch: torch.Tensor,
+    y_batch_er: torch.Tensor,
+    y_batch_e: torch.Tensor,
+    model: nn.Module = None,
+    device: str = None,
 ) -> torch.Tensor:
     """Calculate MSE loss for synthetic data with extraction and restoration.
 
@@ -159,7 +170,7 @@ def MSE_synthetic_loss(
     loss_first = nn.MSELoss()
     loss_second = nn.MSELoss()
 
-    return loss_first(logits_er, y_batch_er) + loss_second(logits_e, y_batch_e)
+    return loss_first(logits_er, y_batch_er) + loss_second(logits_e, y_batch_e)  # type: ignore
 
 
 def BCE_loss(
@@ -182,4 +193,4 @@ def BCE_loss(
     y_batch = y_batch.unsqueeze(1)
     logits = model(X_batch)
     loss_fun = nn.BCELoss()
-    return loss_fun(logits, y_batch)
+    return loss_fun(logits, y_batch)  # type: ignore

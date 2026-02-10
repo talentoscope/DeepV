@@ -24,22 +24,22 @@ import pickle
 import sys
 from argparse import ArgumentParser
 from time import time
-from typing import Optional, Tuple, List, Any
+from typing import Any, List, Optional, Tuple
 
+sys.path.append(".")
 import h5py
 import numpy as np
 import torch
 from tqdm import trange
 
-sys.path.append(".")
-from util_files.evaluation_utils import vector_image_from_patches
-from util_files.optimization.optimizer.adam import Adam
-from util_files.optimization.primitives.line_tensor import LineTensor
-from util_files.optimization.primitives.quadratic_bezier_tensor import (
+from util_files.evaluation_utils import vector_image_from_patches  # noqa: E402
+from util_files.optimization.optimizer.adam import Adam  # noqa: E402
+from util_files.optimization.primitives.line_tensor import LineTensor  # noqa: E402
+from util_files.optimization.primitives.quadratic_bezier_tensor import (  # noqa: E402
     QuadraticBezierTensor,
 )
-from util_files.simplification.join_qb import join_quad_beziers
-from util_files.structured_logging import get_pipeline_logger
+from util_files.simplification.join_qb import join_quad_beziers  # noqa: E402
+from util_files.structured_logging import get_pipeline_logger  # noqa: E402
 
 
 class DataLoader:
@@ -49,8 +49,7 @@ class DataLoader:
         self.options = options
         self.logger = logger
 
-    def load_data(self) -> Tuple[str, torch.Tensor, torch.Tensor, torch.Tensor,
-                          Optional[int], Optional[str]]:
+    def load_data(self) -> Tuple[str, torch.Tensor, torch.Tensor, torch.Tensor, Optional[int], Optional[str]]:
         """Load and preprocess the input data."""
         self.logger.info("1. Load data")
 
@@ -89,12 +88,13 @@ class DataLoader:
             primitive_type_from_model,
         )
 
-    def preprocess_data(self, raster_patches: torch.Tensor,
-                        patch_offsets: torch.Tensor,
-                        model_output: torch.Tensor,
-                        repatch_scale: Optional[int]) -> Tuple[torch.Tensor, torch.Tensor,
-                                                              torch.Tensor, List,
-                                                              Optional[List]]:
+    def preprocess_data(
+        self,
+        raster_patches: torch.Tensor,
+        patch_offsets: torch.Tensor,
+        model_output: torch.Tensor,
+        repatch_scale: Optional[int],
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, List, Optional[List]]:
         """Preprocess the loaded data."""
         self.logger.info("2. Preprocess data")
 
@@ -222,9 +222,14 @@ class MetricsLogger:
         )
         self.union_array = self.metrics_file.create_dataset("union", dtype="f", shape=[log_iters_n, self.patches_n])
 
-    def log_metrics(self, log_i: int, rasterization: torch.Tensor,
-                    binary_raster: torch.Tensor, first_patch_i: int,
-                    next_first_patch_i: int) -> None:
+    def log_metrics(
+        self,
+        log_i: int,
+        rasterization: torch.Tensor,
+        binary_raster: torch.Tensor,
+        first_patch_i: int,
+        next_first_patch_i: int,
+    ) -> None:
         """Log intersection and union metrics."""
         self.intersection_array[log_i, first_patch_i:next_first_patch_i] = (
             (rasterization & binary_raster).sum(dim=-1).sum(dim=-1)
@@ -262,8 +267,9 @@ class Optimizer:
             self.logger,
         )
 
-    def optimize_batch(self, batch_i: int, init_primitives: Any,
-                       metrics_logger: MetricsLogger, first_patch_i: int) -> Tuple[Any, int]:
+    def optimize_batch(
+        self, batch_i: int, init_primitives: Any, metrics_logger: MetricsLogger, first_patch_i: int
+    ) -> Tuple[Any, int]:
         """Optimize a single batch of patches."""
         self.logger.info("\tInitialize")
         prim_ten = init_primitives(batch_i)
@@ -358,8 +364,9 @@ class Optimizer:
         self.logger.info(f"\tOptimization took {time() - optimization_start_time} seconds")
         return self.options.primitives_after_optimization
 
-    def optimize_batch_legacy(self, batch_i: int, init_primitives: Any,
-                              metrics_logger: MetricsLogger, first_patch_i: int) -> Tuple[Any, int]:
+    def optimize_batch_legacy(
+        self, batch_i: int, init_primitives: Any, metrics_logger: MetricsLogger, first_patch_i: int
+    ) -> Tuple[Any, int]:
         """Optimize a single batch of patches in legacy mode."""
         self.logger.info("\tInitialize")
         prim_ten = init_primitives(batch_i)
@@ -432,13 +439,13 @@ class OutputGenerator:
         self.logger.info(f"9. Save optimization result to {optimization_output_path}")
         os.makedirs(os.path.dirname(optimization_output_path), exist_ok=True)
 
-        from util_files.data.graphics.graphics import VectorImage, Path
-        from util_files.data.graphics_primitives import PT_LINE, PT_QBEZIER
+        from util_files.data.graphics.graphics import Path, VectorImage
         from util_files.data.graphics.units import Pixels
+        from util_files.data.graphics_primitives import PT_LINE, PT_QBEZIER
 
         # Convert primitives tensor to list for processing
         primitives_list = primitives_after_optimization.detach().cpu().numpy()
-        
+
         paths = []
         for prim in primitives_list:
             params_n = len(prim)
@@ -450,7 +457,7 @@ class OutputGenerator:
                 continue  # Skip unknown primitive types
             if len(path) > 0:  # Only add non-empty paths
                 paths.append(path)
-        
+
         # Create VectorImage with default view size (will be set properly by save method)
         vector_image = VectorImage(paths, view_size=(Pixels(1000), Pixels(1000)))
         vector_image.save(optimization_output_path)
@@ -564,13 +571,13 @@ class RefinementPipeline:
         if hasattr(self.options, "intermediate_output") and self.options.intermediate_output is not None:
             self.options.output_dir = outp_dir
 
-        from util_files.data.graphics.graphics import VectorImage, Path
-        from util_files.data.graphics_primitives import PT_LINE, PT_QBEZIER
+        from util_files.data.graphics.graphics import Path, VectorImage
         from util_files.data.graphics.units import Pixels
+        from util_files.data.graphics_primitives import PT_LINE, PT_QBEZIER
 
         # Convert primitives tensor to list for processing
         primitives_list = primitives_after_optimization.detach().cpu().numpy()
-        
+
         paths = []
         for prim in primitives_list:
             params_n = len(prim)
@@ -582,7 +589,7 @@ class RefinementPipeline:
                 continue  # Skip unknown primitive types
             if len(path) > 0:  # Only add non-empty paths
                 paths.append(path)
-        
+
         # Create VectorImage with default view size
         vector_image = VectorImage(paths, view_size=(Pixels(1000), Pixels(1000)))
 
@@ -628,7 +635,7 @@ def main(
     options,
     intermediate_output=None,
     control_points_n: int = 3,
-    dtype = torch.float32,
+    dtype=torch.float32,
     device: str = "cuda",
     primitives_n: Optional[int] = None,
     primitive_type: Optional[str] = None,
@@ -663,36 +670,41 @@ def main(
             setattr(temp_options, k, v)
 
         # Override with function parameters
-        temp_options.intermediate_output = intermediate_output
-        temp_options.control_points_n = control_points_n
-        temp_options.dtype = dtype
-        temp_options.device = device
-        temp_options.primitives_n = primitives_n
-        temp_options.primitive_type = primitive_type
-        temp_options.merge_period = merge_period
-        temp_options.lr = lr
-        temp_options.the_width_percentile = the_width_percentile
-        temp_options.optimization_iters_n = optimization_iters_n
-        temp_options.batch_size = batch_size
-        temp_options.measure_period = measure_period
-        temp_options.reinit_period = reinit_period
-        temp_options.max_reinit_iter = max_reinit_iter
-        temp_options.min_width = min_width
-        temp_options.min_confidence = min_confidence
-        temp_options.min_length = min_length
-        temp_options.append_iters_to_outdir = append_iters_to_outdir
+        temp_options.intermediate_output = intermediate_output  # type: ignore[attr-defined]
+        temp_options.control_points_n = control_points_n  # type: ignore[attr-defined]
+        temp_options.dtype = dtype  # type: ignore[attr-defined]
+        temp_options.device = device  # type: ignore[attr-defined]
+        temp_options.primitives_n = primitives_n  # type: ignore[attr-defined]
+        temp_options.primitive_type = primitive_type  # type: ignore[attr-defined]
+        temp_options.merge_period = merge_period  # type: ignore[attr-defined]
+        temp_options.lr = lr  # type: ignore[attr-defined]
+        temp_options.the_width_percentile = the_width_percentile  # type: ignore[attr-defined]
+        temp_options.optimization_iters_n = optimization_iters_n  # type: ignore[attr-defined]
+        temp_options.batch_size = batch_size  # type: ignore[attr-defined]
+        temp_options.measure_period = measure_period  # type: ignore[attr-defined]
+        temp_options.reinit_period = reinit_period  # type: ignore[attr-defined]
+        temp_options.max_reinit_iter = max_reinit_iter  # type: ignore[attr-defined]
+        temp_options.min_width = min_width  # type: ignore[attr-defined]
+        temp_options.min_confidence = min_confidence  # type: ignore[attr-defined]
+        temp_options.min_length = min_length  # type: ignore[attr-defined]
+        temp_options.append_iters_to_outdir = append_iters_to_outdir  # type: ignore[attr-defined]
 
         pipeline = RefinementPipeline(temp_options)
         return pipeline.run()
     else:
-        raise ValueError("intermediate_output must be provided - job_tuples mode is not supported. Use RefinementPipeline instead.")
+        raise ValueError(
+            "intermediate_output must be provided - job_tuples mode is not supported. Use RefinementPipeline instead."
+        )
 
 
-def repatch(raster_patches: torch.Tensor, patch_offsets: torch.Tensor,
-           model_output: torch.Tensor, scale: Optional[int] = None,
-           h: Optional[int] = None, w: Optional[int] = None) -> Tuple[torch.Tensor,
-                                                                     torch.Tensor,
-                                                                     torch.Tensor]:
+def repatch(
+    raster_patches: torch.Tensor,
+    patch_offsets: torch.Tensor,
+    model_output: torch.Tensor,
+    scale: Optional[int] = None,
+    h: Optional[int] = None,
+    w: Optional[int] = None,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Repatch raster patches and model output to larger patch sizes.
 
     Args:
@@ -712,32 +724,32 @@ def repatch(raster_patches: torch.Tensor, patch_offsets: torch.Tensor,
         w = scale
 
     patches_n = len(patch_offsets)
-    patches_n_hor = (patch_offsets[:, 0] != 0).numpy().argmax()
+    patches_n_hor = int((patch_offsets[:, 0] != 0).numpy().argmax())
     assert patches_n % patches_n_hor == 0
-    patches_n_vert = len(patch_offsets) // patches_n_hor
+    patches_n_vert = int(len(patch_offsets) // patches_n_hor)
 
     if patches_n_vert % h == 0:
         pad_vert = 0
     else:
-        pad_vert = h - (patches_n_vert % h)
+        pad_vert = int(h - (patches_n_vert % h))
     if patches_n_hor % w == 0:
         pad_hor = 0
     else:
-        pad_hor = w - (patches_n_hor % w)
+        pad_hor = int(w - (patches_n_hor % w))
 
     patch_h, patch_w = raster_patches.shape[1:]
     primitives_n, parameters_n = model_output.shape[1:]
-    raster_patches = raster_patches.reshape(patches_n_vert, patches_n_hor, patch_h, patch_w)
-    patch_offsets = patch_offsets.reshape(patches_n_vert, patches_n_hor, 2)
-    model_output = model_output.reshape(patches_n_vert, patches_n_hor, primitives_n, parameters_n)
+    raster_patches = raster_patches.reshape(int(patches_n_vert), int(patches_n_hor), patch_h, patch_w)
+    patch_offsets = patch_offsets.reshape(int(patches_n_vert), int(patches_n_hor), 2)
+    model_output = model_output.reshape(int(patches_n_vert), int(patches_n_hor), primitives_n, parameters_n)
 
     raster_patches = torch.nn.functional.pad(raster_patches, [0, 0, 0, 0, 0, pad_hor, 0, pad_vert], value=255)
     patch_offsets = torch.nn.functional.pad(patch_offsets, [0, 0, 0, pad_hor, 0, pad_vert])
     model_output = torch.nn.functional.pad(model_output, [0, 0, 0, 0, 0, pad_hor, 0, pad_vert])
 
-    patches_n_vert, patches_n_hor = raster_patches.shape[:2]
-    patches_n_vert = patches_n_vert // h
-    patches_n_hor = patches_n_hor // w
+    patches_n_vert, patches_n_hor = int(raster_patches.shape[0]), int(raster_patches.shape[1])
+    patches_n_vert = int(patches_n_vert // h)
+    patches_n_hor = int(patches_n_hor // w)
 
     raster_patches = raster_patches.reshape(patches_n_vert, h, patches_n_hor, w, patch_h, patch_w)
     patch_offsets = patch_offsets.reshape(patches_n_vert, h, patches_n_hor, w, 2)
@@ -973,8 +985,7 @@ def binarize(raster: torch.Tensor) -> torch.Tensor:
     return raster > 0.5
 
 
-def merge_close(model_output: torch.Tensor, min_confidence: float,
-               width_percentile: int = 90) -> torch.Tensor:
+def merge_close(model_output: torch.Tensor, min_confidence: float, width_percentile: int = 90) -> torch.Tensor:
     """Merge close primitives within patches to reduce redundancy.
 
     Args:

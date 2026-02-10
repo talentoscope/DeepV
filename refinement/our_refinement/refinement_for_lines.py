@@ -43,7 +43,7 @@ except ImportError:
         logging_interval = 20
         snap_interval = 20
 
-    refinement_config = FallbackConfig()
+    refinement_config = FallbackConfig()  # type: ignore[assignment]
 
 
 def register_sigint_flag(flag_list: List[bool]) -> None:
@@ -129,7 +129,7 @@ def render_optimization_hard(
 
         # Initialize batch processor
         batch_processor = BatchProcessor(
-            patches_rgb.squeeze(1), patches_vector, refinement_config.batch_size
+            patches_rgb.squeeze(1), patches_vector, refinement_config.batch_size  # type: ignore[arg-type]
         )
 
         # Process batches
@@ -162,7 +162,7 @@ def render_optimization_hard(
 
             # Skip empty batches
             batch_rgb = patches_rgb.squeeze(1)[batch_indices]
-            if torch.mean(batch_rgb) == 0:
+            if torch.mean(batch_rgb) == 0:  # type: ignore[call-overload]
                 batch_logger.debug("Skipping empty batch")
                 continue
 
@@ -182,7 +182,7 @@ def render_optimization_hard(
             initial_vector[removed_lines, [1]] = rand_y1
             initial_vector[removed_lines, [3]] = rand_y1 + 1
             initial_vector[removed_lines, [4]] = refinement_config.initial_probability
-            initial_vector = initial_vector[..., :5].numpy()
+            initial_vector = initial_vector[..., :5].numpy()  # type: ignore[assignment]
 
             # Initialize tracer for this batch/image if enabled
             tracer = Tracer(
@@ -194,7 +194,7 @@ def render_optimization_hard(
             # Initialize optimization loop
             opt_loop = OptimizationLoop(
                 rasters_batch,
-                initial_vector,
+                initial_vector.numpy(),
                 device,
                 options.rendering_type,
                 batch_logger,
@@ -206,8 +206,8 @@ def render_optimization_hard(
             register_sigint_flag(its_time_to_stop)
 
             # Optimization loop
-            iou_mass = []
-            mass_for_iou_one = []
+            iou_mass: List[float] = []
+            mass_for_iou_one: List[float] = []
             early_stop_threshold = 0.001  # Stop if IOU improvement < 0.1% over last 3 measurements
             min_iterations = 20  # Run at least 20 iterations before checking early stopping
 

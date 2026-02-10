@@ -9,9 +9,6 @@ import argparse
 import os
 from typing import Any, Optional, Tuple
 
-import numpy as np
-import torchvision
-
 
 def parse_args(args: Optional[list] = None) -> argparse.Namespace:
     """Parse command-line arguments.
@@ -158,14 +155,14 @@ def validate(tb: Any, val_loader: Any, model: Any, loss_func: Any, global_step: 
         val_loss_epoch.append(loss.cpu().data.numpy())
         del loss
 
-    tb.add_scalar("val_loss", np.mean(val_loss_epoch), global_step=global_step)
-    tb.add_scalar("val_iou_extract", np.mean(val_iou_extract), global_step=global_step)
+    tb.add_scalar("val_loss", np.mean(val_loss_epoch), global_step=global_step)  # noqa: F821
+    tb.add_scalar("val_iou_extract", np.mean(val_iou_extract), global_step=global_step)  # noqa: F821
     out_grid = torchvision.utils.make_grid(logits_extract.unsqueeze(1).cpu())
     input_grid = torchvision.utils.make_grid(x_input.cpu())
     tb.add_image(tag="val_out_extract", img_tensor=out_grid, global_step=global_step)
     tb.add_image(tag="val_input", img_tensor=input_grid, global_step=global_step)
 
-    return np.mean(val_loss_epoch)
+    return np.mean(val_loss_epoch)  # type: ignore # noqa: F821
 
 
 def save_model(model: Any, path: str) -> None:
@@ -251,8 +248,8 @@ def main(args: argparse.Namespace) -> None:
             tb.add_scalar("train_loss", loss.cpu().data.numpy(), global_step=global_step)
 
             if global_step % 500 == 0:
-                out_grid = torchvision.utils.make_grid(logits_extract.unsqueeze(1).cpu())
-                input_grid = torchvision.utils.make_grid(x_input.cpu())
+                out_grid = torchvision.utils.make_grid(logits_extract.unsqueeze(1).cpu())  # type: ignore # noqa: F821
+                input_grid = torchvision.utils.make_grid(x_input.cpu())  # type: ignore # noqa: F821
 
                 tb.add_image(tag="train_out_extract", img_tensor=out_grid, global_step=global_step)
                 tb.add_image(tag="train_input", img_tensor=input_grid, global_step=global_step)

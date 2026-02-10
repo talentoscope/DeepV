@@ -6,7 +6,7 @@ and synthetic data generation for the cleaning pipeline.
 """
 
 from .dataloader import MakeData, MakeDataSynt, MakeDataVectorField
-from .loss import CleaningLoss, IOU, PSNR
+from .loss import IOU, PSNR, CleaningLoss
 from .synthetic_data_generation import Synthetic
 
 __all__ = [

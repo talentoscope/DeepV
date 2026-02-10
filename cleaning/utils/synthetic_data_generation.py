@@ -26,9 +26,7 @@ import PIL.ImageOps
 from PIL import Image
 
 from util_files.color_utils import gray_float_to_8bit, img_8bit_to_float, rgb_to_gray
-from util_files.data.transforms.degradation_models import (
-    DegradationGenerator,
-)
+from util_files.data.transforms.degradation_models import DegradationGenerator
 
 
 class Synthetic:
@@ -56,8 +54,8 @@ class Synthetic:
         Args:
             ctx: Cairo drawing context
         """
-        x = []
-        y = []
+        x: list[int] = []
+        y: list[int] = []
         for it in range(3):
             x.append(np.random.randint(self.border, self.MAX_X - self.border))
             y.append(np.random.randint(self.border, self.MAX_Y - self.border))
@@ -71,8 +69,8 @@ class Synthetic:
 
     def bowtie(self, ctx: Any) -> None:
         """Draw a random bowtie shape on the Cairo context."""
-        x = []
-        y = []
+        x: list[int] = []
+        y: list[int] = []
         for it in range(4):
             x.append(np.random.randint(self.border, self.MAX_X - self.border))
             y.append(np.random.randint(self.border, self.MAX_Y - self.border))
@@ -88,8 +86,8 @@ class Synthetic:
 
     def line(self, ctx: Any) -> None:
         """Draw a random line on the Cairo context."""
-        x = []
-        y = []
+        x: list[int] = []
+        y: list[int] = []
         for it in range(2):
             x.append(np.random.randint(self.border, self.MAX_X - self.border))
             y.append(np.random.randint(self.border, self.MAX_Y - self.border))
@@ -100,8 +98,8 @@ class Synthetic:
 
     def rectangle(self, ctx: Any) -> None:
         """Draw a random rectangle on the Cairo context."""
-        x = []
-        y = []
+        x: list[int] = []
+        y: list[int] = []
         for it in range(2):
             if it == 1:
                 x.append(np.random.randint(0, self.MAX_X - x[0] - self.border))
@@ -117,8 +115,8 @@ class Synthetic:
 
     def circle(self, ctx: Any) -> None:
         """Draw a random circle on the Cairo context."""
-        x = []
-        y = []
+        x: list[int] = []
+        y: list[int] = []
         for it in range(3):
             if it == 1:
                 x.append(np.random.randint(0, self.MAX_X - x[0] - self.border))
@@ -136,8 +134,8 @@ class Synthetic:
     def arc(self, ctx: Any) -> None:
         """Draw a random arc on the Cairo context."""
 
-        x = []
-        y = []
+        x: list[int] = []
+        y: list[int] = []
         for it in range(3):
             if it == 1:
                 x.append(np.random.randint(0, self.MAX_X - x[0] - self.border))

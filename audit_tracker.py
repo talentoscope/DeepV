@@ -18,7 +18,7 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 
 class AuditTracker:
@@ -74,7 +74,7 @@ class AuditTracker:
         """Load audit progress from file."""
         if self.audit_file.exists():
             with open(self.audit_file, "r") as f:
-                return json.load(f)  # type: ignore
+                return cast(Dict[str, Any], json.load(f))
         return {
             "total_files": 0,
             "audited_files": {},
@@ -82,7 +82,7 @@ class AuditTracker:
             "last_updated": datetime.now().isoformat(),
         }
 
-    def save_progress(self, progress: Dict[str, Any]):
+    def save_progress(self, progress: Dict):
         """Save audit progress to file."""
         progress["last_updated"] = datetime.now().isoformat()
         with open(self.audit_file, "w") as f:
@@ -238,7 +238,7 @@ class AuditTracker:
         if all_issues:
             print()
             print("🚨 Issues Found:")
-            issue_counts: dict[str, int] = {}
+            issue_counts: Dict[str, int] = {}
             for issue in all_issues:
                 issue_counts[issue] = issue_counts.get(issue, 0) + 1
 

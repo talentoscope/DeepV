@@ -41,7 +41,6 @@
     "merging\\utils\\merging_functions.py",
     "pipeline_unified.py",
     "refinement\\our_refinement\\optimization_classes.py",
-    "refinement\\our_refinement\\refinement_for_curves.py",
     "refinement\\our_refinement\\refinement_for_lines.py",
     "refinement\\our_refinement\\utils\\lines_refinement_functions.py",
     "regenerate_splits.py",
@@ -181,7 +180,9 @@
   "audit_categories": {
     "core_pipeline": [],
     "vectorization": [],
-    "refinement": [],
+    "refinement": [
+      "refinement\\our_refinement\\refinement_for_curves.py"
+    ],
     "merging": [],
     "cleaning": [
       "cleaning\\__init__.py"

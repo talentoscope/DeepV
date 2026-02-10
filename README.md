@@ -1,12 +1,6 @@
 # DeepV: Deep Vectorization of Technical Drawings
 
-[![Paper](https://img.shields.io/badge/arXiv-2003.05471-b31b1b.svg)](https://arxiv.org/abs/2003.05471)
-[![Video](https://img.shields.io/badge/YouTube-Demo-red)](https://www.youtube.com/watch?v=lnQNzHJOLvE)
-[![Slides](https://img.shields.io/badge/Google%20Slides-Presentation-blue)](https://drive.google.com/file/d1ZrykQeA2PE4_8yf1JwuEBk9sS4OP8KeM/view?usp=sharing)
-
 **DeepV** - Modern PyTorch implementation of deep vectorization for technical drawings. Based on the ECCV 2020 paper: **Deep Vectorization of Technical Drawings**
-
-![DeepV Pipeline](https://drive.google.com/uc?export=view&id=191r0QAaNhOUIaHPOlPWH5H4Jg7qxCMRA)
 
 ## Table of Contents
 
@@ -287,23 +281,6 @@ black .
 isort .
 ```
 
-## Citation
-
-If you use this code in your research, please cite our paper:
-
-```bibtex
-@InProceedings{egiazarian2020deep,
-  title="Deep Vectorization of Technical Drawings",
-  author="Egiazarian, Vage and Voynov, Oleg and Artemov, Alexey and Volkhonskiy, Denis and Safin, Aleksandr and Taktasheva, Maria and Zorin, Denis and Burnaev, Evgeny",
-  booktitle="Computer Vision -- ECCV 2020",
-  year="2020",
-  publisher="Springer International Publishing",
-  address="Cham",
-  pages="582--598",
-  isbn="978-3-030-58601-0"
-}
-```
-
 ---
 
 ## Requirements
@@ -352,13 +329,5 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for active development status and [docs/PLA
 3. **Memory Errors**: Reduce batch size or use smaller patch sizes
 4. **Rendering Issues**: Install system cairo library (`libcairo2-dev` on Ubuntu)
 5. **Poor Results on Real Images**: This is expected—see "Known Limitations" above
-
-### Getting Help
-
-- **Issues**: [GitHub Issues](https://github.com/your-repo/DeepV/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-repo/DeepV/discussions)
-- **Documentation**: See module-specific READMEs, [docs/QA.md](docs/QA.md), and docstrings
-
----
 
 *DeepV is actively maintained. For questions about specific modules, see the README in each subdirectory. This fork extends the original ECCV 2020 implementation with modern features like extended primitives, unified pipelines, and intelligent reconstruction for degraded scans.*

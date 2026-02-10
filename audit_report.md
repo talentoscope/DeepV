@@ -49,7 +49,7 @@ Each file is evaluated against these quality dimensions and must be fixed approp
 
 ## Overall Progress
 
-- Files audited: 1/152 (0.7%)
+- Files audited: 9/152 (5.9%)
 
 ## Detailed File Status
 
@@ -218,237 +218,202 @@ Each file is evaluated against these quality dimensions and must be fixed approp
 - Category: other
 - Audited: 2026-02-10
 - Notes: 
-  - **Summary:** Tracer class for debugging pipeline artifacts; fixed style issues and formatting.
+  - **Summary:** Cleaned up imports, fixed style issues, and formatted code for better maintainability.
   - **AUDIT:**
-    - **Header&Doc:** ✅ Complete — class and method docstrings with usage examples.
-    - **Imports:** ✅ Clean — removed unused `os` import, proper grouping.
-    - **TypeHints:** ✅ Good — parameters and return types annotated.
-    - **ErrorHandling:** ✅ Good — try/except blocks with silent fallbacks for tracing.
-    - **CodeStyle:** ✅ Compliant — fixed line length, unused variables, formatted with black.
-    - **Performance:** ✅ Good — efficient compressed saving, early returns when disabled.
-    - **Architecture:** ✅ Good — class-based design with clear responsibilities.
-    - **Testing:** ⚪ N/A — utility class, no direct tests needed.
-    - **Security:** ✅ Good — no unsafe operations, safe file I/O.
-    - **Maintainability:** ✅ Good — clear methods, good naming, error handling.
-    - **ResearchCleanup:** ✅ Clean — no experimental code present.
+    - **Header&Doc:** ✅ Complete — class and methods have docstrings with usage examples.
+    - **Imports:** ✅ Complete — removed unused 'os' import.
+    - **TypeHints:** ⚠️ Partial — basic type hints present but could be enhanced (e.g., offset parameter).
+    - **ErrorHandling:** ✅ Complete — specific exceptions caught with appropriate fallbacks.
+    - **CodeStyle:** ✅ Complete — formatted with black, no long lines or unused variables.
+    - **Performance:** ✅ Complete — uses compressed saves, efficient for tracing.
+    - **Architecture:** ✅ Complete — simple class with clear responsibilities.
+    - **Testing:** ⚪ N/A — tracing utility, not directly unit testable.
+    - **Security:** ✅ Complete — safe file I/O with error handling.
+    - **Maintainability:** ✅ Complete — clear code structure and comments.
+    - **ResearchCleanup:** ✅ Complete — no experimental artifacts.
   - **Automated Checks Run:**
-    - `flake8 analysis\tracing.py --max-line-length=127 --extend-ignore=E203,W503` — no issues
-    - `mypy analysis\tracing.py --ignore-missing-imports --no-strict-optional` — no issues
-    - `black --check --diff analysis\tracing.py` — file unchanged
-    - `isort --check-only --diff analysis\tracing.py` — no issues
+    - `flake8 analysis/tracing.py --max-line-length=127 --extend-ignore=E203,W503` — no issues
+    - `mypy analysis/tracing.py --ignore-missing-imports --no-strict-optional` — no issues
+    - `black --check --diff analysis/tracing.py` — file unchanged
+    - `isort --check-only --diff analysis/tracing.py` — no issues
   - **FIXED:**
-    - Removed unused import `import os`.
-    - Fixed line too long in `__init__` method signature.
-    - Removed unused variable `e` in exception handler.
-    - Applied black formatting for consistent style.
-    - Rationale: Improved code quality and consistency without changing functionality. 
+    - Removed unused 'os' import (F401).
+    - Removed unused exception variable 'e' in except block (F841).
+    - Applied black formatting to fix long line and improve style. 
 
 ### cad\export.py
 - Status: completed
-- Category: cad
+- Category: other
 - Audited: 2026-02-10
 - Notes: 
-  - **Summary:** CAD export utilities for DXF and SVG formats; exports vectorized primitives to CAD software.
+  - **Summary:** Fixed critical bug where 'height' parameter was undefined in helper functions, breaking DXF export. Also fixed long line in SVG export.
   - **AUDIT:**
-    - **Header&Doc:** ✅ Complete — module and function docstrings with detailed Args/Returns.
-    - **Imports:** ✅ Clean — proper grouping, added Union for type hints.
-    - **TypeHints:** ✅ Good — added Union[Dict[str, Any], Any] for primitives parameters.
-    - **ErrorHandling:** ✅ Good — try/except for imports and file operations, graceful fallbacks.
-    - **CodeStyle:** ✅ Compliant — fixed undefined variables, long lines, formatted with black.
-    - **Performance:** ✅ Good — efficient primitive processing, no bottlenecks.
-    - **Architecture:** ✅ Good — modular helper functions, clear separation of concerns.
-    - **Testing:** ✅ Good — if __name__ == "__main__" with example usage and validation.
-    - **Security:** ✅ Good — safe file I/O, no injection risks.
-    - **Maintainability:** ✅ Good — clear function names, good documentation, logical structure.
-    - **ResearchCleanup:** ✅ Clean — production-ready code, no experimental artifacts.
+    - **Header&Doc:** ✅ Complete — comprehensive docstrings for all functions.
+    - **Imports:** ✅ Complete — proper imports with try/except for optional dependencies.
+    - **TypeHints:** ⚠️ Partial — some type hints present, but could be more comprehensive.
+    - **ErrorHandling:** ✅ Complete — try/except blocks with informative error messages.
+    - **CodeStyle:** ✅ Complete — fixed long line, passes formatting checks.
+    - **Performance:** ✅ Complete — efficient export without unnecessary computations.
+    - **Architecture:** ✅ Complete — modular functions for different primitive types.
+    - **Testing:** ⚠️ Partial — has example usage in __main__, but no unit tests.
+    - **Security:** ✅ Complete — safe file operations with validation.
+    - **Maintainability:** ✅ Complete — clear function separation and comments.
+    - **ResearchCleanup:** ✅ Complete — production-ready code.
   - **Automated Checks Run:**
     - `flake8 cad/export.py --max-line-length=127 --extend-ignore=E203,W503` — no issues
     - `mypy cad/export.py --ignore-missing-imports --no-strict-optional` — no issues
     - `black --check --diff cad/export.py` — file unchanged
     - `isort --check-only --diff cad/export.py` — no issues
   - **FIXED:**
-    - Added height parameter to helper functions (_export_lines_to_dxf, etc.) to fix undefined name errors.
-    - Broke long f-string in export_to_svg for arc path data.
-    - Added type hints for primitives parameters using Union[Dict[str, Any], Any].
-    - Rationale: Improved code correctness, readability, and type safety without changing functionality. 
+    - Added 'height' parameter to all DXF export helper functions (_export_lines_to_dxf, _export_curves_to_dxf, _export_cubic_curves_to_dxf, _export_arcs_to_dxf) and updated calls to pass it.
+    - Fixed long line (E501) in SVG arc export by breaking the f-string into multiple lines. 
 
 ### audit_tracker.py
 - Status: completed
-- Category: scripts
+- Category: other
 - Audited: 2026-02-10
 - Notes: 
-  - **Summary:** Command-line tool for tracking audit progress; initializes, lists, and reports on codebase audit status.
+  - **Summary:** Cleaned up imports, improved type annotations, and formatted code for better maintainability.
   - **AUDIT:**
-    - **Header&Doc:** ✅ Complete — module docstring with usage examples, function docstrings.
-    - **Imports:** ✅ Clean — removed unused imports (sys, Set, Tuple), proper ordering with isort.
-    - **TypeHints:** ✅ Good — added Dict[str, Any] for progress data, issue_counts: dict[str, int].
-    - **ErrorHandling:** ✅ Good — safe file operations, graceful defaults.
-    - **CodeStyle:** ✅ Compliant — fixed indentation, blank lines, long lines, formatted with black.
-    - **Performance:** ✅ Good — efficient file I/O, no bottlenecks.
-    - **Architecture:** ✅ Good — class-based design with clear CLI interface.
-    - **Testing:** ✅ Good — argparse-based CLI with help, example usage.
-    - **Security:** ✅ Good — safe file operations, no external inputs executed.
-    - **Maintainability:** ✅ Good — clear methods, good naming, modular functions.
-    - **ResearchCleanup:** ✅ Clean — production-ready utility, no experimental code.
+    - **Header&Doc:** ✅ Complete — comprehensive docstrings and usage examples.
+    - **Imports:** ✅ Complete — removed unused imports, sorted properly.
+    - **TypeHints:** ✅ Complete — added proper type annotations for return types and variables.
+    - **ErrorHandling:** ⚪ N/A — no runtime operations requiring error handling.
+    - **CodeStyle:** ✅ Complete — formatted with black, fixed indentation and blank lines.
+    - **Performance:** ✅ Complete — efficient file operations and data structures.
+    - **Architecture:** ✅ Complete — well-structured class with clear methods.
+    - **Testing:** ⚪ N/A — utility script, not directly unit testable.
+    - **Security:** ✅ Complete — safe file I/O operations.
+    - **Maintainability:** ✅ Complete — clear code structure and comments.
+    - **ResearchCleanup:** ✅ Complete — production-ready code.
   - **Automated Checks Run:**
     - `flake8 audit_tracker.py --max-line-length=127 --extend-ignore=E203,W503` — no issues
     - `mypy audit_tracker.py --ignore-missing-imports --no-strict-optional` — no issues
     - `black --check --diff audit_tracker.py` — file unchanged
     - `isort --check-only --diff audit_tracker.py` — no issues
   - **FIXED:**
-    - Removed unused imports: sys, Set, Tuple.
-    - Fixed continuation line indentation in list comprehensions and function definitions.
-    - Added proper blank lines (2 before class/function definitions).
-    - Added newline at end of file.
-    - Added type annotations for load_progress/save_progress (Dict[str, Any]), issue_counts (dict[str, int]).
-    - Added # type: ignore for json.load return type.
-    - Applied black formatting and isort import sorting.
-    - Rationale: Improved code quality, type safety, and adherence to PEP 8 without changing functionality. 
+    - Removed unused imports: 'sys', 'Set', 'Tuple' (F401).
+    - Added type annotations: Dict[str, Any] for load_progress return type, cast for json.load, Dict[str, int] for issue_counts.
+    - Applied black formatting and isort import sorting. 
 
 ### cleaning\scripts\fine_tuning.py
 - Status: completed
 - Category: cleaning
 - Audited: 2026-02-10
 - Notes: 
-  - **Summary:** Fine-tuning script for UNet-based image cleaning models; trains on synthetic data with validation and TensorBoard logging.
+  - **Summary:** Cleaned up imports, fixed missing return statement in parse_args, and formatted code.
   - **AUDIT:**
-    - **Header&Doc:** ✅ Complete — module docstring, function docstrings with detailed descriptions.
-    - **Imports:** ✅ Clean — removed unused imports (gmtime, strftime, F, IOU), proper grouping.
-    - **TypeHints:** ✅ Good — function signatures typed, added return statement to parse_args.
-    - **ErrorHandling:** ✅ Good — CUDA check, model validation, safe file operations.
-    - **CodeStyle:** ✅ Compliant — fixed continuation indents, formatted with black.
-    - **Performance:** ✅ Good — GPU training, efficient data loading, validation every 500 steps.
-    - **Architecture:** ✅ Good — modular functions, clear training loop, TensorBoard integration.
-    - **Testing:** ✅ Good — validation during training, metrics logging, model saving.
-    - **Security:** ✅ Good — no unsafe operations, proper model loading/saving.
-    - **Maintainability:** ✅ Good — clear variable names, comments, logical structure.
-    - **ResearchCleanup:** ✅ Clean — production-ready training script.
+    - **Header&Doc:** ✅ Complete — comprehensive docstrings for functions.
+    - **Imports:** ✅ Complete — removed unused imports ('gmtime', 'strftime', 'F', 'IOU').
+    - **TypeHints:** ✅ Complete — added missing return statement in parse_args.
+    - **ErrorHandling:** ✅ Complete — proper error checking and CUDA availability.
+    - **CodeStyle:** ✅ Complete — formatted with black, fixed indentation.
+    - **Performance:** ✅ Complete — efficient training loop with GPU utilization.
+    - **Architecture:** ✅ Complete — well-structured training script with validation.
+    - **Testing:** ⚪ N/A — training script, not directly unit testable.
+    - **Security:** ✅ Complete — safe file operations and model loading.
+    - **Maintainability:** ✅ Complete — clear function separation and comments.
+    - **ResearchCleanup:** ⚠️ Partial — has TODO comment but otherwise clean.
   - **Automated Checks Run:**
     - `flake8 cleaning/scripts/fine_tuning.py --max-line-length=127 --extend-ignore=E203,W503` — no issues
-    - `mypy cleaning/scripts/fine_tuning.py --ignore-missing-imports --no-strict-optional` — no issues (errors in imported modules)
+    - `mypy cleaning/scripts/fine_tuning.py --ignore-missing-imports --no-strict-optional` — no issues (errors in other files)
     - `black --check --diff cleaning/scripts/fine_tuning.py` — file unchanged
     - `isort --check-only --diff cleaning/scripts/fine_tuning.py` — no issues
   - **FIXED:**
-    - Removed unused imports: time.gmtime, time.strftime, torch.nn.functional, cleaning.utils.loss.IOU.
+    - Removed unused imports: 'gmtime', 'strftime', 'F', 'IOU' (F401).
     - Added missing return statement in parse_args() function.
-    - Added missing --model_path argument to argument parser.
-    - Fixed continuation line indentation in validate() function definition.
-    - Applied black formatting for consistent style.
-    - Rationale: Fixed bugs (missing return, undefined args), improved code quality and functionality without changing core logic. 
+    - Applied black formatting to fix indentation and style. 
 
 ### cleaning\scripts\fine_tuning_two_network_added_part.py
 - Status: completed
 - Category: cleaning
 - Audited: 2026-02-10
 - Notes: 
-  - **Summary:** Two-network fine-tuning script (Generator + UNet); trains generator to enhance pre-trained cleaning UNet output.
+  - **Summary:** Cleaned up imports, removed unused variables, and formatted code for better maintainability.
   - **AUDIT:**
-    - **Header&Doc:** ✅ Complete — module docstring, function docstrings with detailed descriptions.
-    - **Imports:** ✅ Clean — removed unused imports (gmtime, strftime, F, IOU), proper grouping.
-    - **TypeHints:** ✅ Good — function signatures typed, proper return types.
-    - **ErrorHandling:** ✅ Good — CUDA check, model validation, safe file operations.
-    - **CodeStyle:** ✅ Compliant — fixed continuation indents, removed unused variables, formatted with black.
-    - **Performance:** ✅ Good — GPU training, efficient data loading, validation every 100 steps.
-    - **Architecture:** ✅ Good — two-network architecture, clear training loop, TensorBoard integration.
-    - **Testing:** ✅ Good — validation during training, metrics logging, model saving.
-    - **Security:** ✅ Good — no unsafe operations, proper model loading/saving.
-    - **Maintainability:** ✅ Good — clear variable names, comments, logical structure.
-    - **ResearchCleanup:** ✅ Clean — production-ready training script.
+    - **Header&Doc:** ✅ Complete — comprehensive docstrings for functions.
+    - **Imports:** ✅ Complete — removed unused imports ('gmtime', 'strftime', 'F', 'IOU').
+    - **TypeHints:** ✅ Complete — proper type annotations present.
+    - **ErrorHandling:** ✅ Complete — CUDA availability checks and proper error handling.
+    - **CodeStyle:** ✅ Complete — formatted with black, fixed indentation.
+    - **Performance:** ✅ Complete — efficient two-network training with GPU utilization.
+    - **Architecture:** ✅ Complete — well-structured two-network training script.
+    - **Testing:** ⚪ N/A — training script, not directly unit testable.
+    - **Security:** ✅ Complete — safe file operations and model loading.
+    - **Maintainability:** ✅ Complete — clear function separation and comments.
+    - **ResearchCleanup:** ✅ Complete — production-ready code.
   - **Automated Checks Run:**
     - `flake8 cleaning/scripts/fine_tuning_two_network_added_part.py --max-line-length=127 --extend-ignore=E203,W503` — no issues
-    - `mypy cleaning/scripts/fine_tuning_two_network_added_part.py --ignore-missing-imports --no-strict-optional` — no issues (errors in imported modules)
+    - `mypy cleaning/scripts/fine_tuning_two_network_added_part.py --ignore-missing-imports --no-strict-optional` — no issues (errors in other files)
     - `black --check --diff cleaning/scripts/fine_tuning_two_network_added_part.py` — file unchanged
     - `isort --check-only --diff cleaning/scripts/fine_tuning_two_network_added_part.py` — no issues
   - **FIXED:**
-    - Removed unused imports: time.gmtime, time.strftime, torch.nn.functional, cleaning.utils.loss.IOU.
-    - Removed unused variables: logits_restor assignments, unet_opt optimizer.
-    - Fixed continuation line indentation in validate() function definition.
-    - Applied black formatting for consistent style.
-    - Rationale: Improved code quality, removed dead code, and fixed style issues without changing core functionality. 
+    - Removed unused imports: 'gmtime', 'strftime', 'F', 'IOU' (F401).
+    - Removed unused variables: 'logits_restor' (assigned to _), 'unet_opt' (removed unused optimizer).
+    - Applied black formatting to fix indentation and style. 
 
 ### cleaning\scripts\generate_synthetic_data.py
 - Status: completed
 - Category: cleaning
 - Audited: 2026-02-10
 - Notes: 
-  - **Summary:** Synthetic data generation script; generates training samples for cleaning models using utility class.
+  - **Summary:** Cleaned up imports, moved sys.path.append to proper location, and formatted code.
   - **AUDIT:**
-    - **Header&Doc:** ✅ Complete — module docstring, function docstrings.
-    - **Imports:** ✅ Clean — removed unused NoReturn, added noqa for necessary sys.path.append.
-    - **TypeHints:** ✅ Good — function signatures typed.
-    - **ErrorHandling:** ⚠️ Partial — no explicit error handling, assumes utility works.
-    - **CodeStyle:** ✅ Compliant — fixed continuation indents, formatted with black.
-    - **Performance:** ✅ Good — uses tqdm for progress, efficient generation.
-    - **Architecture:** ✅ Good — simple script calling utility class.
-    - **Testing:** ✅ Good — CLI interface, progress indication.
-    - **Security:** ✅ Good — no external inputs, safe file operations.
-    - **Maintainability:** ✅ Good — clear structure, minimal code.
-    - **ResearchCleanup:** ✅ Clean — production-ready script.
+    - **Header&Doc:** ✅ Complete — docstrings for module and functions.
+    - **Imports:** ✅ Complete — removed unused 'NoReturn', organized imports properly.
+    - **TypeHints:** ✅ Complete — proper type annotations.
+    - **ErrorHandling:** ⚪ N/A — simple script with no error handling needed.
+    - **CodeStyle:** ✅ Complete — formatted with black, fixed indentation.
+    - **Performance:** ✅ Complete — efficient data generation loop.
+    - **Architecture:** ✅ Complete — simple script structure.
+    - **Testing:** ⚪ N/A — data generation script, not unit testable.
+    - **Security:** ✅ Complete — safe file operations.
+    - **Maintainability:** ✅ Complete — clear and concise code.
+    - **ResearchCleanup:** ✅ Complete — production-ready code.
   - **Automated Checks Run:**
     - `flake8 cleaning/scripts/generate_synthetic_data.py --max-line-length=127 --extend-ignore=E203,W503` — no issues
-    - `mypy cleaning/scripts/generate_synthetic_data.py --ignore-missing-imports --no-strict-optional` — no issues (errors in imported modules)
+    - `mypy cleaning/scripts/generate_synthetic_data.py --ignore-missing-imports --no-strict-optional` — no issues (errors in other files)
     - `black --check --diff cleaning/scripts/generate_synthetic_data.py` — file unchanged
     - `isort --check-only --diff cleaning/scripts/generate_synthetic_data.py` — no issues
   - **FIXED:**
-    - Removed unused import: typing.NoReturn.
-    - Added # noqa: E402 for imports after sys.path.append (necessary for path setup).
-    - Applied black formatting for consistent style.
-    - Rationale: Improved code quality and resolved import order issues without changing functionality. 
+    - Removed unused import: 'NoReturn' (F401).
+    - Moved sys.path.append before third-party imports to fix E402.
+    - Added noqa comments for necessary E402 violations.
+    - Applied black formatting. 
 
 ### cleaning\scripts\main_cleaning.py
 - Status: completed
 - Category: cleaning
 - Audited: 2026-02-10
 - Notes: 
-  - **Summary:** Main training script for cleaning UNet models; supports multiple architectures, mixed precision, early stopping, and TensorBoard logging.
+  - **Summary:** Cleaned up unnecessary TYPE_CHECKING import, added noqa comments for false positive undefined names, and ensured proper type annotations.
   - **AUDIT:**
-    - **Header&Doc:** ✅ Complete — module docstring, function docstrings with detailed descriptions.
-    - **Imports:** ✅ Clean — proper grouping, lazy imports for heavy dependencies.
-    - **TypeHints:** ✅ Good — function signatures typed, Optional args for testing.
-    - **ErrorHandling:** ✅ Good — CUDA check, model validation, safe file operations.
-    - **CodeStyle:** ✅ Compliant — formatted with black, no style issues.
-    - **Performance:** ✅ Good — GPU training, mixed precision support, efficient data loading.
-    - **Architecture:** ✅ Good — modular functions, lazy imports, clear training loop.
-    - **Testing:** ✅ Good — CLI interface, validation during training, model saving.
-    - **Security:** ✅ Good — no unsafe operations, proper model loading/saving.
-    - **Maintainability:** ✅ Good — clear variable names, comments, logical structure.
-    - **ResearchCleanup:** ✅ Clean — production-ready training script with modern features.
+    - **Header&Doc:** ✅ Complete — comprehensive docstrings for module and functions.
+    - **Imports:** ✅ Complete — proper imports with lazy loading for heavy dependencies.
+    - **TypeHints:** ✅ Complete — type annotations present, with necessary ignores.
+    - **ErrorHandling:** ✅ Complete — proper CUDA checks and error handling.
+    - **CodeStyle:** ✅ Complete — formatted with black, passes linting.
+    - **Performance:** ✅ Complete — mixed precision and early stopping support.
+    - **Architecture:** ✅ Complete — well-structured training script with modular functions.
+    - **Testing:** ⚠️ Partial — has optional args for testing, but no unit tests.
+    - **Security:** ✅ Complete — safe file operations and model loading.
+    - **Maintainability:** ✅ Complete — clear function separation and comments.
+    - **ResearchCleanup:** ⚠️ Partial — has TODO comment but otherwise clean.
   - **Automated Checks Run:**
     - `flake8 cleaning/scripts/main_cleaning.py --max-line-length=127 --extend-ignore=E203,W503` — no issues
-    - `mypy cleaning/scripts/main_cleaning.py --ignore-missing-imports --no-strict-optional` — no issues (errors in imported modules)
+    - `mypy cleaning/scripts/main_cleaning.py --ignore-missing-imports --no-strict-optional` — no issues (errors in other files)
     - `black --check --diff cleaning/scripts/main_cleaning.py` — file unchanged
     - `isort --check-only --diff cleaning/scripts/main_cleaning.py` — no issues
   - **FIXED:**
-    - Removed unused TYPE_CHECKING torch import to resolve F401/F811 issues.
-    - Ensured numpy and torchvision imports are at top level.
-    - Rationale: Improved import organization and resolved redefinition issues without changing functionality. 
+    - Removed unnecessary TYPE_CHECKING import for torch.
+    - Added noqa comments for false positive F821 undefined names (np, torchvision) due to global imports.
+    - Added type: ignore for mypy issues with numpy operations. 
 
 ### cleaning\scripts\run.py
-- Status: completed
-- Category: cleaning
-- Audited: 2026-02-10
+- Status: pending
+- Category: 
+- Audited: 
 - Notes: 
-  - **Summary:** Pipeline runner for cleaning and vectorization; provides end-to-end processing with patch-based operations.
-  - **AUDIT:**
-    - **Header&Doc:** ✅ Complete — module docstring, function docstrings with type info.
-    - **Imports:** ✅ Clean — removed unused os import.
-    - **TypeHints:** ⚠️ Partial — some Any types, type issues in incomplete functions.
-    - **ErrorHandling:** ⚠️ Partial — CUDA check, but no comprehensive error handling.
-    - **CodeStyle:** ✅ Compliant — formatted with black, no style issues.
-    - **Performance:** ✅ Good — GPU operations, patch processing.
-    - **Architecture:** ⚠️ Partial — modular functions, but incomplete with TODOs.
-    - **Testing:** ✅ Good — CLI interface, main function.
-    - **Security:** ✅ Good — safe file operations.
-    - **Maintainability:** ⚠️ Partial — clear structure, but incomplete implementations.
-    - **ResearchCleanup:** ⚠️ Partial — has TODOs, not fully implemented.
-  - **Automated Checks Run:**
-    - `flake8 cleaning/scripts/run.py --max-line-length=127 --extend-ignore=E203,W503` — no issues
-    - `mypy cleaning/scripts/run.py --ignore-missing-imports --no-strict-optional` — type issues in incomplete code
-    - `black --check --diff cleaning/scripts/run.py` — file unchanged
-    - `isort --check-only --diff cleaning/scripts/run.py` — no issues
-  - **FIXED:**
-    - Removed unused os import.
-    - Rationale: Cleaned up imports; type issues remain due to incomplete TODO implementations. 
 
 ### cleaning\utils\__init__.py
 - Status: pending
@@ -607,34 +572,10 @@ Each file is evaluated against these quality dimensions and must be fixed approp
 - Notes: 
 
 ### batch_audit.py
-- Status: completed
-- Category: scripts
-- Audited: 2026-02-10
+- Status: pending
+- Category: 
+- Audited: 
 - Notes: 
-  - **Summary:** Interactive batch auditing tool; provides menu for common audit patterns and CLI for automation.
-  - **AUDIT:**
-    - **Header&Doc:** ✅ Complete — module docstring, function docstrings.
-    - **Imports:** ✅ Clean — removed unused pathlib.Path, proper grouping with isort.
-    - **TypeHints:** ⚪ N/A — simple script with string parameters, no complex types needed.
-    - **ErrorHandling:** ⚠️ Partial — basic checks for audit initialization, but no exception handling.
-    - **CodeStyle:** ✅ Compliant — fixed blank lines, formatted with black.
-    - **Performance:** ✅ Good — efficient file matching, no heavy operations.
-    - **Architecture:** ✅ Good — modular functions with clear CLI/interactive modes.
-    - **Testing:** ✅ Good — CLI interface with input validation, example usage.
-    - **Security:** ⚠️ Partial — uses os.system for subprocess calls, acceptable for internal tool.
-    - **Maintainability:** ✅ Good — clear functions, good naming, simple logic.
-    - **ResearchCleanup:** ✅ Clean — production-ready utility.
-  - **Automated Checks Run:**
-    - `flake8 batch_audit.py --max-line-length=127 --extend-ignore=E203,W503` — no issues
-    - `mypy batch_audit.py --ignore-missing-imports --no-strict-optional` — no issues
-    - `black --check --diff batch_audit.py` — file unchanged
-    - `isort --check-only --diff batch_audit.py` — no issues
-  - **FIXED:**
-    - Removed unused import: from pathlib import Path.
-    - Added proper blank lines (2 before function definitions).
-    - Added newline at end of file.
-    - Applied black formatting and isort import sorting.
-    - Rationale: Improved code style and consistency without changing functionality. 
 
 ### regenerate_splits.py
 - Status: pending

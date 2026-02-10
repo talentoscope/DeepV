@@ -15,13 +15,12 @@ Used by cleaning model training pipelines.
 """
 
 import os
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import numpy as np
 import PIL
 import torch
 from PIL import Image
-from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Dataset
 from torchvision import transforms
 
@@ -29,7 +28,9 @@ from torchvision import transforms
 class MakeData(Dataset):
     """Dataset class for loading image pairs (input/target) for cleaning training."""
 
-    def __init__(self, img_path: str, img_y_path: str, transform: Optional[transforms.Compose] = None, tr: Optional[int] = None):
+    def __init__(
+        self, img_path: str, img_y_path: str, transform: Optional[transforms.Compose] = None, tr: Optional[int] = None
+    ):
         """Initialize dataset with image paths.
 
         :param img_path: path to input images
@@ -105,7 +106,9 @@ class MakeData(Dataset):
 class MakeDataSynt(Dataset):
     """Dataset class for synthetic data with hole/non-hole ground truths."""
 
-    def __init__(self, img_path: str, img_y_path: str, transform: Optional[transforms.Compose] = None, tr: Optional[int] = None):
+    def __init__(
+        self, img_path: str, img_y_path: str, transform: Optional[transforms.Compose] = None, tr: Optional[int] = None
+    ):
         """Initialize synthetic dataset.
 
         :param img_path: path to input images
