@@ -2,7 +2,7 @@
 
 import pickle
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from .base import Processor
 
@@ -26,8 +26,7 @@ class ResPlanProcessor(Processor):
         Dict containing processing metadata (SVG/PNG counts, directory paths)
     """
 
-    def standardize(self, input_dir: Path, output_base: Path,
-                    dry_run: bool = False) -> Dict[str, Any]:
+    def standardize(self, input_dir: Path, output_base: Path, dry_run: bool = False) -> Dict[str, Any]:
         """Process ResPlan dataset files.
 
         Loads pickled floorplan geometries and converts them to SVG vector
@@ -96,7 +95,7 @@ class ResPlanProcessor(Processor):
             "dry_run": dry_run,
         }
 
-    def _create_svg_from_resplan(self, plan: Dict, plan_id: str) -> str:
+    def _create_svg_from_resplan(self, plan: Dict, plan_id: str) -> Optional[str]:
         """Create SVG from ResPlan Shapely geometry data.
 
         Converts floorplan geometries (walls, doors, windows, rooms) into
@@ -190,8 +189,7 @@ class ResPlanProcessor(Processor):
             print(f"Error creating SVG for {plan_id}: {e}")
             return None
 
-    def _geometry_to_svg_paths(self, geom, scale: float, offset_x: float,
-                               offset_y: float) -> List[str]:
+    def _geometry_to_svg_paths(self, geom, scale: float, offset_x: float, offset_y: float) -> List[str]:
         """Convert Shapely geometry to SVG path data.
 
         Transforms Shapely Polygon/MultiPolygon objects into SVG path strings

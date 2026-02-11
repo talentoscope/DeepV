@@ -1,7 +1,7 @@
 import os
 import sys
 from argparse import ArgumentParser, Namespace
-from typing import Optional, Any
+from typing import Any, Optional
 
 import numpy as np
 
@@ -18,7 +18,7 @@ def main(
     width_percentile: int = 90,
     fit_tol: float = 0.5,
     w_tol: float = np.inf,
-    join_tol: float = 0.5
+    join_tol: float = 0.5,
 ) -> Any:
     """
     Postprocess refined curve primitives by merging and simplifying Bézier curves.
@@ -68,9 +68,7 @@ def main(
         logger.info(f"\tfit_tol is {fit_tol}")
         logger.info(f"\tw_tol is {w_tol}")
         logger.info(f"\tjoin_tol is {join_tol}")
-        curves = join_quad_beziers(
-            curves, fit_tol=join_tol, w_tol=w_tol, join_tol=join_tol
-        ).numpy()
+        curves = join_quad_beziers(curves, fit_tol=join_tol, w_tol=w_tol, join_tol=join_tol).numpy()
         logger.info(f"\tnumber of curves after merging is {len(curves)}")
     curves = np.asarray(curves)
     paths = [Path.from_primitive(PT_QBEZIER, prim) for prim in curves] + [
@@ -94,9 +92,7 @@ def parse_args() -> Namespace:
         choices=["synthetic", "custom"],
     )
     parser.add_argument("--job_id", type=int, required=True)
-    parser.add_argument(
-        "--init_random", action="store_true", help="init optimization randomly"
-    )
+    parser.add_argument("--init_random", action="store_true", help="init optimization randomly")
 
     return parser.parse_args()
 

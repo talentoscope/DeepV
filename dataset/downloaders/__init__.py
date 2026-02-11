@@ -5,12 +5,12 @@ the current implementations in `dataset_downloaders`.
 """
 
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 from . import download_dataset as _dlmod
 
 
-def download(dataset_name: str, output_dir: Path | str = "./data", test: bool = False, **kwargs: Any) -> Dict[str, Any]:
+def download(dataset_name: str, output_dir: Path | str = "./data", test: bool = False, **kwargs: Any) -> Any:
     """Download `dataset_name` into `output_dir` using existing downloaders.
 
     Additional keyword args are forwarded to the underlying downloader when

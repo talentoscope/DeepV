@@ -3,7 +3,7 @@
 import base64
 import shutil
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import cv2
 import numpy as np
@@ -98,7 +98,7 @@ class CubiCasa5KProcessor(Processor):
             "dry_run": dry_run,
         }
 
-    def _save_raster_image(self, image_data: dict, raster_dir: Path, key_str: str) -> Path:
+    def _save_raster_image(self, image_data: dict, raster_dir: Path, key_str: str) -> Optional[Path]:
         """Save raster image from CubiCasa data."""
         try:
             # CubiCasa stores images as base64 encoded data or numpy arrays
@@ -113,12 +113,12 @@ class CubiCasa5KProcessor(Processor):
                     image = image_array.reshape((height, width, channels))
                 else:
                     # Try to decode as PNG/JPEG
-                    image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+                    image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)  # type: ignore[assignment]
 
                 if image is not None:
                     # Convert BGR to RGB if needed
                     if len(image.shape) == 3 and image.shape[2] == 3:
-                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # type: ignore[assignment]
 
                     # Save as PNG
                     png_path = raster_dir / f"{key_str}.png"
@@ -141,7 +141,7 @@ class CubiCasa5KProcessor(Processor):
             print(f"Error saving raster image for {key_str}: {e}")
             return None
 
-    def _create_svg_from_annotations(self, svg_data: dict, key_str: str) -> str:
+    def _create_svg_from_annotations(self, svg_data: dict, key_str: str) -> Optional[str]:
         """Create SVG from CubiCasa polygon annotations."""
         try:
             # CubiCasa SVG data contains polygon annotations for rooms, walls, etc.
@@ -163,7 +163,7 @@ class CubiCasa5KProcessor(Processor):
                 return None
 
             # Flatten points and find bounds
-            flat_points = []
+            flat_points: list[float] = []
             for point in all_points:
                 if isinstance(point, (list, tuple)) and len(point) >= 2:
                     flat_points.extend(point)
@@ -237,7 +237,7 @@ class CubiCasa5KProcessor(Processor):
             print(f"Error creating SVG for {key_str}: {e}")
             return None
 
-    def _polygon_to_svg_path(self, polygon: list, offset_x: float, offset_y: float) -> str:
+    def _polygon_to_svg_path(self, polygon: list, offset_x: float, offset_y: float) -> Optional[str]:
         """Convert polygon coordinates to SVG path data."""
         try:
             if len(polygon) < 6 or len(polygon) % 2 != 0:
@@ -265,7 +265,7 @@ class CubiCasa5KProcessor(Processor):
             print(f"Error converting polygon to path: {e}")
             return None
 
-    def _calculate_centroid(self, polygon: list) -> tuple:
+    def _calculate_centroid(self, polygon: list) -> Optional[tuple]:
         """Calculate centroid of polygon."""
         try:
             if len(polygon) < 6 or len(polygon) % 2 != 0:
@@ -299,7 +299,7 @@ class CubiCasa5KProcessor(Processor):
         # Default color
         return color_map.get(label.lower().replace(" ", "_"), "#CCCCCC")
 
-    def _process_svg_annotations(self, svg_path: Path, floorplan_id: str) -> str:
+    def _process_svg_annotations(self, svg_path: Path, floorplan_id: str) -> Optional[str]:
         """Process SVG annotations from CubiCasa model.svg file.
 
         Extracts wall and space polygons and converts them to line segments

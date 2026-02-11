@@ -1,7 +1,7 @@
 """Processor for SketchGraphs Dataset."""
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from tqdm import tqdm
 
@@ -27,8 +27,7 @@ class SketchGraphsProcessor(Processor):
         Dict containing processing metadata (SVG/PNG counts, directory paths)
     """
 
-    def standardize(self, input_dir: Path, output_base: Path,
-                    dry_run: bool = False) -> Dict[str, Any]:
+    def standardize(self, input_dir: Path, output_base: Path, dry_run: bool = False) -> Dict[str, Any]:
         """Process SketchGraphs dataset files.
 
         Loads sequence data from .npy files, reconstructs sketches from sequences,
@@ -69,9 +68,7 @@ class SketchGraphsProcessor(Processor):
                 print(f"Loaded {len(sequences)} sequences from {split_name}")
 
                 # Process sequences up to the total limit
-                max_sequences = 100 if dry_run else min(
-                    total_limit - total_processed, len(sequences)
-                )
+                max_sequences = 100 if dry_run else min(total_limit - total_processed, len(sequences))
 
                 for i in range(max_sequences):
                     sequence = sequences[i]
@@ -117,7 +114,7 @@ class SketchGraphsProcessor(Processor):
             "dry_run": dry_run,
         }
 
-    def _sequence_to_sketch(self, sequence):
+    def _sequence_to_sketch(self, sequence) -> Optional[Any]:
         """Convert a sequence back to a Sketch object.
 
         Reconstructs a SketchGraphs Sketch object from a tokenized sequence
@@ -138,7 +135,7 @@ class SketchGraphsProcessor(Processor):
             print(f"Error converting sequence to sketch: {e}")
             return None
 
-    def _create_svg_from_sketch(self, sketch, sketch_id: str) -> str:
+    def _create_svg_from_sketch(self, sketch, sketch_id: str) -> Optional[str]:
         """Create SVG from SketchGraphs Sketch object.
 
         Converts geometric entities (lines, circles, points) from a Sketch
@@ -206,9 +203,7 @@ class SketchGraphsProcessor(Processor):
 
             # Create SVG elements for each entity
             for entity in sketch.entities.values():
-                element = self._entity_to_svg_element(
-                    entity, offset_x, offset_y, scale, width, height
-                )
+                element = self._entity_to_svg_element(entity, offset_x, offset_y, scale, width, height)
                 if element:
                     svg_elements.append(element)
 
@@ -228,7 +223,7 @@ class SketchGraphsProcessor(Processor):
             print(f"Error creating SVG for sketch {sketch_id}: {e}")
             return None
 
-    def _entity_to_svg_element(self, entity, offset_x, offset_y, scale, svg_width, svg_height):
+    def _entity_to_svg_element(self, entity, offset_x, offset_y, scale, svg_width, svg_height) -> Optional[str]:
         """Convert a SketchGraphs entity to an SVG element.
 
         Transforms individual geometric entities (Line, Circle, Point) into
@@ -259,10 +254,7 @@ class SketchGraphsProcessor(Processor):
                 x2 = (end[0] - offset_x) * scale + svg_width * 0.1
                 y2 = svg_height - ((end[1] - offset_y) * scale + svg_height * 0.1)  # Flip Y
 
-                return (
-                    f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" '
-                    'stroke="black" stroke-width="2"/>'
-                )
+                return f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" ' 'stroke="black" stroke-width="2"/>'
 
             elif entity_type == "Circle":
                 # Convert circle to SVG
@@ -270,10 +262,7 @@ class SketchGraphsProcessor(Processor):
                 cy = svg_height - ((entity.yCenter - offset_y) * scale + svg_height * 0.1)  # Flip Y
                 r = entity.radius * scale
 
-                return (
-                    f'<circle cx="{cx}" cy="{cy}" r="{r}" '
-                    'stroke="black" stroke-width="2" fill="none"/>'
-                )
+                return f'<circle cx="{cx}" cy="{cy}" r="{r}" ' 'stroke="black" stroke-width="2" fill="none"/>'
 
             elif entity_type == "Point":
                 # Convert point to SVG
@@ -282,9 +271,7 @@ class SketchGraphsProcessor(Processor):
                     py = svg_height - ((entity.y - offset_y) * scale + svg_height * 0.1)  # Flip Y
                 elif hasattr(entity, "coordinates"):
                     px = (entity.coordinates[0] - offset_x) * scale + svg_width * 0.1
-                    py = svg_height - (
-                        (entity.coordinates[1] - offset_y) * scale + svg_height * 0.1
-                    )  # Flip Y
+                    py = svg_height - ((entity.coordinates[1] - offset_y) * scale + svg_height * 0.1)  # Flip Y
                 else:
                     return None
 

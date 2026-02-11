@@ -2,7 +2,7 @@
 
 import pickle
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from tqdm import tqdm
 
@@ -29,8 +29,7 @@ class MSDProcessor(Processor):
         Dict containing processing metadata (SVG/PNG counts, directory paths)
     """
 
-    def standardize(self, input_dir: Path, output_base: Path,
-                    dry_run: bool = False) -> Dict[str, Any]:
+    def standardize(self, input_dir: Path, output_base: Path, dry_run: bool = False) -> Dict[str, Any]:
         """Process MSD dataset files.
 
         Extracts SVG floor plans from NetworkX graphs and PNG structural images
@@ -111,7 +110,7 @@ class MSDProcessor(Processor):
             "dry_run": dry_run,
         }
 
-    def _create_svg_from_msd_graph(self, graph, plan_id: str) -> str:
+    def _create_svg_from_msd_graph(self, graph, plan_id: str) -> Optional[str]:
         """Create SVG from MSD NetworkX graph containing room geometries.
 
         Converts NetworkX graph nodes with Shapely polygon geometries into
@@ -126,7 +125,6 @@ class MSDProcessor(Processor):
             SVG content as string, or None if conversion fails
         """
         try:
-
             svg_elements = []
             width, height = 1000, 800
 
@@ -188,8 +186,7 @@ class MSDProcessor(Processor):
 
                         if scaled_coords:
                             path_data = (
-                                f"M {scaled_coords[0]} " +
-                                " ".join(f"L {coord}" for coord in scaled_coords[1:]) + " Z"
+                                f"M {scaled_coords[0]} " + " ".join(f"L {coord}" for coord in scaled_coords[1:]) + " Z"
                             )
                             svg_elements.append(
                                 f'<path d="{path_data}" fill="{color}" '
@@ -223,7 +220,7 @@ class MSDProcessor(Processor):
             print(f"Error creating SVG for plan {plan_id}: {e}")
             return None
 
-    def _create_png_from_msd_struct(self, npy_file: Path, plan_id: str) -> bytes:
+    def _create_png_from_msd_struct(self, npy_file: Path, plan_id: str) -> Optional[bytes]:
         """Create PNG from MSD structural numpy array.
 
         Converts 3D numpy array (512x512x3) structural data into a binary

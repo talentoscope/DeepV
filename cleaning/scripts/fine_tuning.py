@@ -53,6 +53,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--added_part", type=str, default="No", choices=["Yes", "No"], help="Use added part training mode"
     )
+    parser.add_argument("--model_path", type=str, default=None, help="Path to pre-trained model for loading")
 
     return parser.parse_args()
 

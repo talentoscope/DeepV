@@ -101,7 +101,7 @@ def validate(
             x_input = torch.FloatTensor(x_input).cuda()
 
             # Cleaning prediction
-            _, logits_extract = None, unet(x_input)
+            logits_extract = unet(x_input)
             # 1 - Cleaning prediction
             logits_extract = 1 - logits_extract.unsqueeze(1)
 
@@ -201,7 +201,7 @@ def main(args: argparse.Namespace) -> None:
 
             unet.eval()
             with torch.no_grad():
-                _, logits_extract = None, unet(x_input)
+                logits_extract = unet(x_input)
                 logits_extract = 1 - logits_extract.unsqueeze(1)
 
             logits_restore = gen.forward(logits_extract).unsqueeze(1)  # restoration + extraction

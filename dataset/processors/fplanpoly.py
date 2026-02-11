@@ -25,8 +25,7 @@ class FPLANPOLYProcessor(Processor):
         Dict containing processing metadata (DXF counts, copy statistics)
     """
 
-    def standardize(self, input_dir: Path, output_base: Path,
-                    dry_run: bool = True) -> Dict[str, Any]:
+    def standardize(self, input_dir: Path, output_base: Path, dry_run: bool = True) -> Dict[str, Any]:
         input_dir = Path(input_dir)
         output_base = Path(output_base)
         vec_dir = output_base / "vector" / "fplanpoly"

@@ -7,7 +7,6 @@ technical drawings using pre-trained models.
 """
 
 import argparse
-import os
 from itertools import product
 from typing import Any, Tuple
 
@@ -18,7 +17,7 @@ import torch
 from util_files.patchify import patchify
 
 
-def clean_image(rgb: np.ndarray, cleaning_model: Any) -> np.ndarray:
+def clean_image(rgb: np.ndarray, cleaning_model: Any) -> Any:
     """Run cleaning operation on the input line drawing,
     leaving clean (non-dirty, non-shaded) and
     full (without gaps) line drawing.
@@ -50,7 +49,8 @@ def clean_image(rgb: np.ndarray, cleaning_model: Any) -> np.ndarray:
 
     input = torch.from_numpy(np.ascontiguousarray(input_np[None])).cuda()
     cleaned, _ = cleaning_model(input)
-    return cleaned[0, 0].cpu().detach().numpy()[..., None]
+    result = cleaned[0, 0].cpu().detach().numpy()[..., None].astype(np.float32)
+    return result
 
 
 def split_to_patches(rgb: np.ndarray, patch_size: int, overlap: int = 0) -> Tuple[np.ndarray, np.ndarray]:

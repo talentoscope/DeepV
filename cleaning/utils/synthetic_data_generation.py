@@ -67,7 +67,7 @@ class Synthetic:
 
         ctx.close_path()
 
-    def bowtie(self, ctx: Any) -> None:
+    def bowtie(self, ctx: cairo.Context) -> None:
         """Draw a random bowtie shape on the Cairo context."""
         x: list[int] = []
         y: list[int] = []
@@ -84,7 +84,7 @@ class Synthetic:
 
         ctx.close_path()
 
-    def line(self, ctx: Any) -> None:
+    def line(self, ctx: cairo.Context) -> None:
         """Draw a random line on the Cairo context."""
         x: list[int] = []
         y: list[int] = []
@@ -96,7 +96,7 @@ class Synthetic:
         ctx.stroke()
         ctx.close_path()
 
-    def rectangle(self, ctx: Any) -> None:
+    def rectangle(self, ctx: cairo.Context) -> None:
         """Draw a random rectangle on the Cairo context."""
         x: list[int] = []
         y: list[int] = []
@@ -113,7 +113,7 @@ class Synthetic:
         ctx.stroke()
         ctx.close_path()
 
-    def circle(self, ctx: Any) -> None:
+    def circle(self, ctx: cairo.Context) -> None:
         """Draw a random circle on the Cairo context."""
         x: list[int] = []
         y: list[int] = []
@@ -131,7 +131,7 @@ class Synthetic:
         ctx.close_path()
         ctx.restore()
 
-    def arc(self, ctx: Any) -> None:
+    def arc(self, ctx: cairo.Context) -> None:
         """Draw a random arc on the Cairo context."""
 
         x: list[int] = []
@@ -152,7 +152,7 @@ class Synthetic:
         ctx.close_path()
         ctx.restore()
 
-    def curve(self, ctx: Any) -> None:
+    def curve(self, ctx: cairo.Context) -> None:
         """Draw a random curve on the Cairo context."""
         x = []
         y = []
@@ -164,7 +164,7 @@ class Synthetic:
         ctx.stroke()
         ctx.close_path()
 
-    def circle_fill(self, ctx: Any) -> None:
+    def circle_fill(self, ctx: cairo.Context) -> None:
         """Draw a filled random circle on the Cairo context."""
         x = []
         y = []
@@ -178,7 +178,7 @@ class Synthetic:
         ctx.close_path()
         ctx.restore()
 
-    def radial(self, cr: Any) -> None:
+    def radial(self, cr: cairo.Context) -> None:
         cr.save()
         x = []
         y = []

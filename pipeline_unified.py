@@ -46,13 +46,11 @@ class UnifiedPipeline:
         self.primitive_type = primitive_type.lower()
         if self.primitive_type not in ["line", "curve"]:
             raise ValueError(
-                f"Unsupported primitive type: {primitive_type}. "
-                "Supported types are 'line' and 'curve'."
+                f"Unsupported primitive type: {primitive_type}. " "Supported types are 'line' and 'curve'."
             )
 
     def run_refinement(
-        self, patches_rgb: np.ndarray, patches_vector: torch.Tensor,
-        device: torch.device, options: Any
+        self, patches_rgb: np.ndarray, patches_vector: torch.Tensor, device: torch.device, options: Any
     ) -> torch.Tensor:
         """
         Run refinement for the specified primitive type.
@@ -79,9 +77,7 @@ class UnifiedPipeline:
                 render_optimization_hard,
             )
 
-            return render_optimization_hard(
-                patches_rgb, patches_vector, device, options, options.sample_name
-            )
+            return render_optimization_hard(patches_rgb, patches_vector, device, options, options.sample_name)
         elif self.primitive_type == "curve":
             # Curve refinement has a different interface - would need adaptation
             raise NotImplementedError("Curve refinement unification pending")

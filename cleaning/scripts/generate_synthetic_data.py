@@ -9,7 +9,6 @@ import argparse
 import sys
 
 sys.path.append("../../")
-
 from tqdm import tqdm  # noqa: E402
 
 from cleaning.utils.synthetic_data_generation import Synthetic  # noqa: E402

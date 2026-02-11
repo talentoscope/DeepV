@@ -18,7 +18,7 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List, Optional
 
 
 class AuditTracker:
@@ -74,7 +74,7 @@ class AuditTracker:
         """Load audit progress from file."""
         if self.audit_file.exists():
             with open(self.audit_file, "r") as f:
-                return cast(Dict[str, Any], json.load(f))
+                return json.load(f)  # type: ignore
         return {
             "total_files": 0,
             "audited_files": {},
@@ -82,16 +82,15 @@ class AuditTracker:
             "last_updated": datetime.now().isoformat(),
         }
 
-    def save_progress(self, progress: Dict):
+    def save_progress(self, progress: Dict[str, Any]) -> None:
         """Save audit progress to file."""
         progress["last_updated"] = datetime.now().isoformat()
         with open(self.audit_file, "w") as f:
             json.dump(progress, f, indent=2)
 
-    def initialize_audit(self):
+    def initialize_audit(self) -> None:
         """Initialize the audit tracking system."""
         print("🔍 Initializing DeepV Codebase Audit Tracker...")
-
         # Get all Python files
         python_files = self.get_python_files()
         print(f"📁 Found {len(python_files)} Python files to audit")
@@ -143,7 +142,9 @@ class AuditTracker:
         else:
             return "other"
 
-    def mark_file_audited(self, filepath: str, status: str = "completed", notes: str = "", issues: List[str] = None):
+    def mark_file_audited(
+        self, filepath: str, status: str = "completed", notes: str = "", issues: Optional[List[str]] = None
+    ):
         """Mark a file as audited."""
         progress = self.load_progress()
 
@@ -238,7 +239,7 @@ class AuditTracker:
         if all_issues:
             print()
             print("🚨 Issues Found:")
-            issue_counts: Dict[str, int] = {}
+            issue_counts: dict[str, int] = {}
             for issue in all_issues:
                 issue_counts[issue] = issue_counts.get(issue, 0) + 1
 

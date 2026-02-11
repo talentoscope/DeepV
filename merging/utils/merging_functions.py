@@ -107,7 +107,6 @@ def _assemble_vector_patches(patches_vector, patches_offsets, x_indices, y_indic
 
 
 def tensor_vector_graph_numpy(y_pred_render, patches_offsets, options):
-
     nump = np.array(list(map(clip_to_box, y_pred_render.reshape(-1, 6).cpu().detach().numpy())))
 
     nump = assemble_vector_patches_lines(
@@ -432,7 +431,6 @@ def merge_close(
     merged = set()
 
     for i in range(n):
-
         if line_length(lines[i, :4]) < 3:
             continue
 

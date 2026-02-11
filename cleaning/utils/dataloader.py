@@ -143,7 +143,7 @@ class MakeDataSynt(Dataset):
 
         self.trans = transforms.Compose([transforms.ToTensor()])
 
-    def crop(self, img, mask, mask_1, width, height):
+    def crop(self, img: Image.Image, mask: Image.Image, mask_1: Image.Image, width: int, height: int) -> Tuple[Image.Image, Image.Image, Image.Image]:
         assert img.size[0] >= height
         assert img.size[1] >= width
         assert img.size[0] == mask.size[0]
@@ -155,7 +155,7 @@ class MakeDataSynt(Dataset):
         mask_1 = mask_1.crop((y, x, y + height, x + width))
         return img, mask, mask_1
 
-    def transformation(self, img, img_y, img_y_nh):
+    def transformation(self, img: Image.Image, img_y: Image.Image, img_y_nh: Image.Image) -> Tuple[Image.Image, Image.Image, Image.Image]:
         img = PIL.ImageOps.invert(img)
         img_y = PIL.ImageOps.invert(img_y)
         img_y_nh = PIL.ImageOps.invert(img_y_nh)
@@ -169,7 +169,7 @@ class MakeDataSynt(Dataset):
         img_y_nh = PIL.ImageOps.invert(img_y_nh)
         return img, img_y, img_y_nh
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int):
         img = Image.open(os.path.join(self.img_path_x, self.X_train[index]))
         img = img.convert("RGB")
         img_y_h = Image.open(os.path.join(self.img_path_y_h, self.y_train_h[index]))
@@ -215,7 +215,7 @@ class MakeDataSynt(Dataset):
 
             return img_t, label_h_t, label_nh_t
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.X_train)
 
 

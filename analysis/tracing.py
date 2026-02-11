@@ -1,9 +1,12 @@
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 
 class Tracer:
@@ -23,7 +26,7 @@ class Tracer:
         image_id: str = "unknown",
         seed: int = None,
         device: str = "cpu",
-    ):
+    ) -> None:
         self.enabled = enabled
         self.base_dir = Path(base_dir)
         self.image_id = str(image_id)
@@ -66,7 +69,10 @@ class Tracer:
             except Exception:
                 pass  # Silent failure for tracing
         # save metadata
-        meta = {"patch_id": str(patch_id), "offset": offset}
+        meta = {
+            "patch_id": str(patch_id),
+            "offset": offset if offset is not None else (0, 0),
+        }
         with open(pdir / "meta.json", "w", encoding="utf-8") as f:
             json.dump(meta, f)
 
@@ -77,11 +83,11 @@ class Tracer:
         pdir.mkdir(parents=True, exist_ok=True)
         # store numeric arrays in compressed npz and small metadata
         arrays = {k: v for k, v in model_output.items() if isinstance(v, (np.ndarray, list))}
+        meta = {k: v for k, v in model_output.items() if not isinstance(v, (np.ndarray, list)) and not callable(v)}
         # convert lists to arrays
         arrays = {k: np.asarray(v) for k, v in arrays.items()}
         if arrays:
             np.savez_compressed(pdir / "model_output.npz", **arrays)
-        meta = {k: v for k, v in model_output.items() if not isinstance(v, (np.ndarray, list))}
         if meta:
             with open(pdir / "model_output_meta.json", "w", encoding="utf-8") as f:
                 json.dump(meta, f)
@@ -110,7 +116,12 @@ class Tracer:
         with open(self.image_dir / "provenance.json", "w", encoding="utf-8") as f:
             json.dump(prov, f)
 
-    def save_iteration(self, iteration: int, lines_batch: np.ndarray = None, renderings: np.ndarray = None):
+    def save_iteration(
+        self,
+        iteration: int,
+        lines_batch: np.ndarray = None,
+        renderings: np.ndarray = None,
+    ):
         """Save per-iteration numeric and small image snapshots.
 
         Args:
@@ -122,7 +133,7 @@ class Tracer:
             return
         it_dir = self.image_dir / "iterations"
         it_dir.mkdir(parents=True, exist_ok=True)
-        meta = {"iteration": int(iteration)}
+        meta = {"iteration": int(iteration), "timestamp": datetime.now().isoformat()}
         if lines_batch is not None:
             try:
                 np.savez_compressed(it_dir / f"lines_iter_{iteration}.npz", lines=lines_batch)
@@ -141,7 +152,10 @@ class Tracer:
                     Image.fromarray(arrn).save(it_dir / f"render_{iteration}_{i}.png")
             except (ValueError, TypeError, OSError, IndexError):
                 try:
-                    np.savez_compressed(it_dir / f"renderings_iter_{iteration}.npz", renderings=renderings)
+                    np.savez_compressed(
+                        it_dir / f"renderings_iter_{iteration}.npz",
+                        renderings=renderings,
+                    )
                 except (OSError, ValueError):
                     pass
         with open(it_dir / f"meta_{iteration}.json", "w", encoding="utf-8") as f:
@@ -156,12 +170,12 @@ class Tracer:
             return
         try:
             np.savez_compressed(self.image_dir / "primitive_history.npz", history=history_array)
-        except Exception:
-            # fallback to json (less efficient)
+        except (OSError, ValueError, TypeError) as e:
+            logger.warning(f"Failed to save primitive history: {str(e)}")
             try:
                 with open(self.image_dir / "primitive_history.json", "w", encoding="utf-8") as f:
-                    json.dump({"history_len": int(len(history_array))}, f)
-            except Exception:
+                    json.dump({"history_len": int(len(history_array)), "error": str(e)}, f)
+            except (OSError, ValueError, TypeError):
                 pass
 
     def save_metrics(self, metrics: dict) -> None:
