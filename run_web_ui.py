@@ -12,17 +12,17 @@ Or directly:
 import sys
 from pathlib import Path
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent))
+import torch
 
 from web_ui.app import create_interface
 
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent))
+
 if __name__ == "__main__":
     # Enforce GPU usage
-    import torch
     if not torch.cuda.is_available():
-        print("Error: GPU is required for DeepV but CUDA is not available "
-              "on this machine.")
+        print("Error: GPU is required for DeepV but CUDA is not available on this machine.")
         sys.exit(1)
 
     print("Starting DeepV Web UI...")
@@ -30,5 +30,4 @@ if __name__ == "__main__":
     print("For full vectorization, use the main pipeline scripts.")
 
     interface = create_interface()
-    interface.launch(server_name="0.0.0.0", server_port=7860, share=False,
-                     show_error=True)
+    interface.launch(server_name="0.0.0.0", server_port=7860, share=False, show_error=True)
